@@ -101,9 +101,9 @@ impl FromStr for Date {
             return Err(DomainParseError("invalid date string".to_string()));
         }
         Self::new(
-            str_list[0].parse().context("Int Parse Error")?,
-            str_list[1].parse().context("Int Parse Error")?,
-            str_list[2].parse().context("Int Parse Error")?,
+            str_list[0].parse().context("Invalid int for parse")?,
+            str_list[1].parse().context("Invalid int for parse")?,
+            str_list[2].parse().context("Invalid int for parse")?,
         )
     }
 }
@@ -118,11 +118,32 @@ impl TryFrom<String> for Date {
 #[cfg(test)]
 mod test {
     use super::Date;
+    use crate::DomainError;
     use assert_matches::assert_matches;
 
     #[test]
     fn test_constructor() {
         let date_ok = Date::new(2022, 12, 1);
         assert_matches!(date_ok, Ok(_));
+        let date_err = Date::new(2020, 13, 1);
+        assert_matches!(date_err, Err(DomainError::DomainLogicError(_)));
+    }
+
+    #[test]
+    fn test_parse() {
+        let parsed_date_ok = "2022-12-01".parse::<Date>();
+        assert_eq!(parsed_date_ok.unwrap(), Date::new(2022, 12, 1).unwrap());
+
+        let parsed_date_err = "2022-12-1".parse::<Date>();
+        assert_matches!(parsed_date_err, Err(DomainError::DomainParseError(_)));
+
+        let parsed_date_err = "2022 12 1".parse::<Date>();
+        assert_matches!(parsed_date_err, Err(DomainError::DomainParseError(_)));
+
+        let parsed_date_err = "12-01-2022".parse::<Date>();
+        assert_matches!(parsed_date_err, Err(DomainError::DomainLogicError(_)));
+
+        let parsed_date_err = "2022-12-aa".parse::<Date>();
+        assert_matches!(parsed_date_err, Err(DomainError::OtherParseError(_)));
     }
 }
