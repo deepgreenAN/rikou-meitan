@@ -1,14 +1,17 @@
-use anyhow::Context;
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use crate::DomainError::{self, DomainLogicError, DomainParseError};
+use crate::GenericParseError;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Year(u32);
 
 impl Year {
     fn new(year: u32) -> Self {
         Self(year)
+    }
+    fn to_u32(self) -> u32 {
+        self.0
     }
 }
 
@@ -17,7 +20,8 @@ impl From<u32> for Year {
         Year::new(value)
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Month(u32);
 
 impl Month {
@@ -28,6 +32,9 @@ impl Month {
             Err(DomainLogicError("Month must be in [1, 12]".to_string()))
         }
     }
+    pub fn to_u32(self) -> u32 {
+        self.0
+    }
 }
 
 impl TryFrom<u32> for Month {
@@ -37,7 +44,7 @@ impl TryFrom<u32> for Month {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Day(u32);
 
 impl Day {
@@ -47,6 +54,9 @@ impl Day {
         } else {
             Err(DomainLogicError("Day must be in [1, 31]".to_string()))
         }
+    }
+    pub fn to_u32(self) -> u32 {
+        self.0
     }
 }
 
@@ -72,14 +82,14 @@ impl Date {
             day: Day::new(day)?,
         })
     }
-    pub fn year(&self) -> &Year {
-        &self.year
+    pub fn year(&self) -> Year {
+        self.year
     }
-    pub fn month(&self) -> &Month {
-        &self.month
+    pub fn month(&self) -> Month {
+        self.month
     }
-    pub fn day(&self) -> &Day {
-        &self.day
+    pub fn day(&self) -> Day {
+        self.day
     }
 }
 
@@ -101,9 +111,15 @@ impl FromStr for Date {
             return Err(DomainParseError("invalid date string".to_string()));
         }
         Self::new(
-            str_list[0].parse().context("Invalid int for parse")?,
-            str_list[1].parse().context("Invalid int for parse")?,
-            str_list[2].parse().context("Invalid int for parse")?,
+            str_list[0]
+                .parse()
+                .map_err(Into::<GenericParseError>::into)?,
+            str_list[1]
+                .parse()
+                .map_err(Into::<GenericParseError>::into)?,
+            str_list[2]
+                .parse()
+                .map_err(Into::<GenericParseError>::into)?,
         )
     }
 }
@@ -112,6 +128,18 @@ impl TryFrom<String> for Date {
     type Error = DomainError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
         value.parse()
+    }
+}
+
+impl Display for Date {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:>04}-{:>02}-{:>02}",
+            self.year.to_u32(),
+            self.month.to_u32(),
+            self.day.to_u32()
+        )
     }
 }
 
@@ -144,6 +172,12 @@ mod test {
         assert_matches!(parsed_date_err, Err(DomainError::DomainLogicError(_)));
 
         let parsed_date_err = "2022-12-aa".parse::<Date>();
-        assert_matches!(parsed_date_err, Err(DomainError::OtherParseError(_)));
+        assert_matches!(parsed_date_err, Err(DomainError::GenericParseError(_)));
+    }
+
+    #[test]
+    fn to_sring() {
+        assert_eq!("2021-12-01", Date::new(2021, 12, 1).unwrap().to_string());
+        assert_eq!("2021-09-05", Date::new(2021, 9, 5).unwrap().to_string())
     }
 }
