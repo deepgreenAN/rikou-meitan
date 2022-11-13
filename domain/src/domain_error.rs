@@ -14,7 +14,4 @@ pub enum DomainError {
 pub enum GenericParseError {
     #[error(transparent)]
     ParseIntError(#[from] std::num::ParseIntError),
-
-    #[error(transparent)]
-    UuidParseError(#[from] uuid::Error),
 }

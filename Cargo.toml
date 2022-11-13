@@ -8,4 +8,4 @@
 # [dependencies]
 
 [workspace]
-members = ["app","application/server","domain","infrastructure"]  # プレゼンテーション層はtargetに含めない
+members = ["app","application/server","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない

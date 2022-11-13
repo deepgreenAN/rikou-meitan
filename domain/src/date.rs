@@ -32,7 +32,7 @@ impl Month {
             Err(DomainLogicError("Month must be in [1, 12]".to_string()))
         }
     }
-    pub fn to_u32(self) -> u32 {
+    fn to_u32(self) -> u32 {
         self.0
     }
 }
@@ -55,7 +55,7 @@ impl Day {
             Err(DomainLogicError("Day must be in [1, 31]".to_string()))
         }
     }
-    pub fn to_u32(self) -> u32 {
+    fn to_u32(self) -> u32 {
         self.0
     }
 }
