@@ -1,11 +1,11 @@
-use config::Config;
+use config::CONFIG;
 
 pub enum Platform {
     Youtube, // いまのところyoutubeのみ
 }
 
 pub struct Url {
+    row_url: String,
     video_id: String,
-    start_time: u32,
-    end_time: u32,
+    platform: Platform,
 }
