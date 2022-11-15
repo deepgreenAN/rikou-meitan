@@ -1,12 +1,7 @@
 use std::{fmt::Display, marker::PhantomData};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Id<T>([u8; 16], PhantomData<T>);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ClipIdType;
-
-pub type ClipId = Id<ClipIdType>;
 
 impl<T> Id<T> {
     pub fn from_bytes(id_u8: [u8; 16]) -> Id<T> {
@@ -31,7 +26,12 @@ impl<T> Display for Id<T> {
 
 #[cfg(test)]
 mod test {
-    use super::{ClipId, Id};
+    use super::Id;
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct FakeIdType;
+
+    pub type FakeId = Id<FakeIdType>;
 
     #[test]
     fn id_eq() {
@@ -40,8 +40,8 @@ mod test {
             0xd7, 0xd8,
         ];
 
-        let id_1: ClipId = Id::from_bytes(bytes);
-        let id_2 = ClipId::from_bytes(bytes);
+        let id_1: FakeId = Id::from_bytes(bytes);
+        let id_2 = FakeId::from_bytes(bytes);
         assert_eq!(id_1, id_2);
     }
 
@@ -57,8 +57,8 @@ mod test {
             0xa2, 0xa1,
         ];
 
-        let id_1 = ClipId::from_bytes(bytes_1);
-        let id_2 = ClipId::from_bytes(bytes_2);
+        let id_1 = FakeId::from_bytes(bytes_1);
+        let id_2 = FakeId::from_bytes(bytes_2);
         assert_ne!(id_1, id_2);
     }
 }

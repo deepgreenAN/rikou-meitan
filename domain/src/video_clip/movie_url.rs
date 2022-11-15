@@ -5,6 +5,7 @@ use config::CONFIG;
 
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MovieUrl {
     url_string: String, // 成型されたurl全体
     video_id: String,   // 動画プラットフォームの動画ID
@@ -90,7 +91,7 @@ impl TryFrom<String> for MovieUrl {
 
 impl Display for MovieUrl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Url({})", self.url_string)
+        write!(f, "{}", self.url_string)
     }
 }
 
