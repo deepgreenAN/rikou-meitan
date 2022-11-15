@@ -3,8 +3,11 @@ pub enum DomainError {
     #[error("DomainError: Invalid Domain Value:{0}")]
     DomainLogicError(String),
 
-    #[error("DomainError: Parse Error:{0}")]
+    #[error("DomainError: ParseError:{0}")]
     DomainParseError(String),
+
+    #[error("DomainError: UrlParseError:{0}")]
+    UrlParseError(String),
 
     #[error(transparent)]
     GenericParseError(#[from] GenericParseError),

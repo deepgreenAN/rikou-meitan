@@ -75,7 +75,7 @@ pub struct Date {
 }
 
 impl Date {
-    pub fn new(year: u32, month: u32, day: u32) -> Result<Self, DomainError> {
+    pub fn from_ymd(year: u32, month: u32, day: u32) -> Result<Self, DomainError> {
         Ok(Self {
             year: Year::new(year),
             month: Month::new(month)?,
@@ -96,7 +96,7 @@ impl Date {
 impl TryFrom<(u32, u32, u32)> for Date {
     type Error = DomainError;
     fn try_from(value: (u32, u32, u32)) -> Result<Self, Self::Error> {
-        Self::new(value.0, value.1, value.2)
+        Self::from_ymd(value.0, value.1, value.2)
     }
 }
 
@@ -110,7 +110,7 @@ impl FromStr for Date {
         if str_list.len() != 3 {
             return Err(DomainParseError("invalid date string".to_string()));
         }
-        Self::new(
+        Self::from_ymd(
             str_list[0]
                 .parse()
                 .map_err(Into::<GenericParseError>::into)?,
@@ -151,16 +151,19 @@ mod test {
 
     #[test]
     fn test_constructor() {
-        let date_ok = Date::new(2022, 12, 1);
+        let date_ok = Date::from_ymd(2022, 12, 1);
         assert_matches!(date_ok, Ok(_));
-        let date_err = Date::new(2020, 13, 1);
+        let date_err = Date::from_ymd(2020, 13, 1);
         assert_matches!(date_err, Err(DomainError::DomainLogicError(_)));
     }
 
     #[test]
     fn test_parse() {
         let parsed_date_ok = "2022-12-01".parse::<Date>();
-        assert_eq!(parsed_date_ok.unwrap(), Date::new(2022, 12, 1).unwrap());
+        assert_eq!(
+            parsed_date_ok.unwrap(),
+            Date::from_ymd(2022, 12, 1).unwrap()
+        );
 
         let parsed_date_err = "2022-12-1".parse::<Date>();
         assert_matches!(parsed_date_err, Err(DomainError::DomainParseError(_)));
@@ -177,7 +180,13 @@ mod test {
 
     #[test]
     fn to_sring() {
-        assert_eq!("2021-12-01", Date::new(2021, 12, 1).unwrap().to_string());
-        assert_eq!("2021-09-05", Date::new(2021, 9, 5).unwrap().to_string())
+        assert_eq!(
+            "2021-12-01",
+            Date::from_ymd(2021, 12, 1).unwrap().to_string()
+        );
+        assert_eq!(
+            "2021-09-05",
+            Date::from_ymd(2021, 9, 5).unwrap().to_string()
+        )
     }
 }

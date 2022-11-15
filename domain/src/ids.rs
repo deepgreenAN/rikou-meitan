@@ -9,7 +9,7 @@ pub struct ClipIdType;
 pub type ClipId = Id<ClipIdType>;
 
 impl<T> Id<T> {
-    pub fn new(id_u8: [u8; 16]) -> Id<T> {
+    pub fn from_bytes(id_u8: [u8; 16]) -> Id<T> {
         Id(id_u8, PhantomData)
     }
     pub fn to_bytes(&self) -> [u8; 16] {
@@ -40,8 +40,8 @@ mod test {
             0xd7, 0xd8,
         ];
 
-        let id_1: ClipId = Id::new(bytes);
-        let id_2 = ClipId::new(bytes);
+        let id_1: ClipId = Id::from_bytes(bytes);
+        let id_2 = ClipId::from_bytes(bytes);
         assert_eq!(id_1, id_2);
     }
 
@@ -57,8 +57,8 @@ mod test {
             0xa2, 0xa1,
         ];
 
-        let id_1 = ClipId::new(bytes_1);
-        let id_2 = ClipId::new(bytes_2);
+        let id_1 = ClipId::from_bytes(bytes_1);
+        let id_2 = ClipId::from_bytes(bytes_2);
         assert_ne!(id_1, id_2);
     }
 }
