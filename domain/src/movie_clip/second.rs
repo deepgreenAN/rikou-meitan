@@ -8,10 +8,10 @@ impl Second {
     pub fn from_hms(hours: u32, minutes: u32, seconds: u32) -> Self {
         Self(hours * 60 * 60 + minutes * 60 + seconds)
     }
-    pub fn to_u32(&self) -> u32 {
+    pub fn to_u32(self) -> u32 {
         self.0
     }
-    pub fn to_hms(&self) -> (u32, u32, u32) {
+    pub fn to_hms(self) -> (u32, u32, u32) {
         let mut all_seconds = self.0;
         let hours = all_seconds / (60 * 60);
         all_seconds -= hours * (60 * 60);

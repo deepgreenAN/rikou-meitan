@@ -82,15 +82,18 @@ impl Date {
             day: Day::new(day)?,
         })
     }
-    pub fn year(&self) -> Year {
-        self.year
+    pub fn to_ymd(&self) -> (u32, u32, u32) {
+        (self.year.to_u32(), self.month.to_u32(), self.day.to_u32())
     }
-    pub fn month(&self) -> Month {
-        self.month
-    }
-    pub fn day(&self) -> Day {
-        self.day
-    }
+    // pub fn year(&self) -> Year {
+    //     self.year
+    // }
+    // pub fn month(&self) -> Month {
+    //     self.month
+    // }
+    // pub fn day(&self) -> Day {
+    //     self.day
+    // }
 }
 
 impl TryFrom<(u32, u32, u32)> for Date {
@@ -179,7 +182,7 @@ mod test {
     }
 
     #[test]
-    fn to_sring() {
+    fn to_string() {
         assert_eq!(
             "2021-12-01",
             Date::from_ymd(2021, 12, 1).unwrap().to_string()

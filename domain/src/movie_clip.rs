@@ -2,9 +2,9 @@ mod movie_clip_title;
 mod movie_url;
 mod second;
 
-use movie_clip_title::MovieClipTtile;
-use movie_url::MovieUrl;
-use second::Second;
+pub use movie_clip_title::MovieClipTtile;
+pub use movie_url::MovieUrl;
+pub use second::Second;
 
 use crate::ids::Id;
 use crate::DomainError::{self, DomainLogicError};
