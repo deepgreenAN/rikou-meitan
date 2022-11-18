@@ -4,9 +4,9 @@ use crate::DomainError::{self, DomainParseError};
 use config::CONFIG;
 
 #[derive(Debug, Clone)]
-pub struct MovieClipTtile(String);
+pub struct MovieClipTitle(String);
 
-impl FromStr for MovieClipTtile {
+impl FromStr for MovieClipTitle {
     type Err = DomainError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.chars().count() > CONFIG.video_clip_title_string_lim {
@@ -16,18 +16,18 @@ impl FromStr for MovieClipTtile {
             )));
         }
 
-        Ok(MovieClipTtile(s.to_string()))
+        Ok(MovieClipTitle(s.to_string()))
     }
 }
 
-impl TryFrom<String> for MovieClipTtile {
+impl TryFrom<String> for MovieClipTitle {
     type Error = DomainError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
         value.parse()
     }
 }
 
-impl Display for MovieClipTtile {
+impl Display for MovieClipTitle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -35,13 +35,13 @@ impl Display for MovieClipTtile {
 
 #[cfg(test)]
 mod test {
-    use super::MovieClipTtile;
+    use super::MovieClipTitle;
     use crate::DomainError::DomainParseError;
     use assert_matches::assert_matches;
 
     #[test]
     fn parse_video_clip_title() {
-        let video_clip_title = "some_video_clip_title".parse::<MovieClipTtile>().unwrap();
+        let video_clip_title = "some_video_clip_title".parse::<MovieClipTitle>().unwrap();
         assert_eq!(
             "some_video_clip_title".to_string(),
             video_clip_title.to_string()
@@ -53,7 +53,7 @@ mod test {
         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         ".to_string();
-        let video_clip_res = too_big_title.parse::<MovieClipTtile>();
+        let video_clip_res = too_big_title.parse::<MovieClipTitle>();
 
         assert_matches!(video_clip_res, Err(DomainParseError(_)));
     }

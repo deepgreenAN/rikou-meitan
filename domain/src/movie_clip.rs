@@ -2,7 +2,7 @@ mod movie_clip_title;
 mod movie_url;
 mod second;
 
-pub use movie_clip_title::MovieClipTtile;
+pub use movie_clip_title::MovieClipTitle;
 pub use movie_url::MovieUrl;
 pub use second::Second;
 
@@ -23,7 +23,7 @@ pub type ClipId = Id<ClipIdType>;
 /// VideoClipのエンティティ
 #[derive(Debug, Clone)]
 pub struct MovieClip {
-    title: MovieClipTtile,
+    title: MovieClipTitle,
     url: MovieUrl,
     start: Second,
     end: Second,
@@ -60,7 +60,7 @@ impl MovieClip {
         self.title = new_title.try_into()?;
         Ok(())
     }
-    pub fn title(&self) -> &MovieClipTtile {
+    pub fn title(&self) -> &MovieClipTitle {
         &self.title
     }
     pub fn url(&self) -> &MovieUrl {

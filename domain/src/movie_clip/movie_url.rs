@@ -75,7 +75,7 @@ impl FromStr for MovieUrl {
             }
         } else {
             Err(UrlParseError(format!(
-                "Invalid Url. url must have preffix: {:?}",
+                "Invalid Url. url must have prefix: {:?}",
                 MOVIE_URL_ALLOW_PREFIX
             )))
         }
