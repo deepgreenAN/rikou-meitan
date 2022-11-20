@@ -3,20 +3,28 @@ use std::{fmt::Display, str::FromStr};
 use crate::DomainError::{self, DomainLogicError, DomainParseError};
 use crate::GenericParseError;
 
+#[cfg(feature = "server")]
+use chrono::{Datelike, NaiveDate};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Year(u32);
 
 impl Year {
-    fn new(year: u32) -> Self {
-        Self(year)
+    fn new(year: u32) -> Result<Self, DomainError> {
+        if (2018..=2050).contains(&year) {
+            Ok(Self(year))
+        } else {
+            Err(DomainLogicError("Year is too small".to_string()))
+        }
     }
     fn to_u32(self) -> u32 {
         self.0
     }
 }
 
-impl From<u32> for Year {
-    fn from(value: u32) -> Self {
+impl TryFrom<u32> for Year {
+    type Error = DomainError;
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         Year::new(value)
     }
 }
@@ -77,7 +85,7 @@ pub struct Date {
 impl Date {
     pub fn from_ymd(year: u32, month: u32, day: u32) -> Result<Self, DomainError> {
         Ok(Self {
-            year: Year::new(year),
+            year: Year::new(year)?,
             month: Month::new(month)?,
             day: Day::new(day)?,
         })
@@ -85,15 +93,15 @@ impl Date {
     pub fn to_ymd(&self) -> (u32, u32, u32) {
         (self.year.to_u32(), self.month.to_u32(), self.day.to_u32())
     }
-    // pub fn year(&self) -> Year {
-    //     self.year
-    // }
-    // pub fn month(&self) -> Month {
-    //     self.month
-    // }
-    // pub fn day(&self) -> Day {
-    //     self.day
-    // }
+    #[cfg(feature = "server")]
+    pub fn to_chrono(&self) -> Result<NaiveDate, DomainError> {
+        NaiveDate::from_ymd_opt(
+            self.year.to_u32() as i32,
+            self.month.to_u32(),
+            self.day.to_u32(),
+        )
+        .ok_or_else(|| DomainLogicError("Invalid Date".to_string()))
+    }
 }
 
 impl TryFrom<(u32, u32, u32)> for Date {
@@ -131,6 +139,14 @@ impl TryFrom<String> for Date {
     type Error = DomainError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
         value.parse()
+    }
+}
+
+#[cfg(feature = "server")]
+impl TryFrom<NaiveDate> for Date {
+    type Error = DomainError;
+    fn try_from(value: NaiveDate) -> Result<Self, Self::Error> {
+        Self::from_ymd(value.year() as u32, value.month(), value.day())
     }
 }
 

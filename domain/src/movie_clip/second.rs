@@ -27,6 +27,12 @@ impl From<u32> for Second {
     }
 }
 
+impl From<i32> for Second {
+    fn from(second: i32) -> Self {
+        (second as u32).into()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

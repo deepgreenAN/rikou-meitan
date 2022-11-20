@@ -18,3 +18,10 @@ pub enum GenericParseError {
     #[error(transparent)]
     ParseIntError(#[from] std::num::ParseIntError),
 }
+
+#[cfg(feature = "server")]
+impl From<DomainError> for sqlx::Error {
+    fn from(domain_error: DomainError) -> Self {
+        sqlx::Error::Decode(Box::new(domain_error))
+    }
+}

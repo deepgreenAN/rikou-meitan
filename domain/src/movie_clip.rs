@@ -1,18 +1,22 @@
-mod movie_clip_title;
 mod movie_url;
 mod second;
 
-pub use movie_clip_title::MovieClipTitle;
 pub use movie_url::MovieUrl;
 pub use second::Second;
 
 use crate::ids::Id;
 use crate::DomainError::{self, DomainLogicError};
 
+#[cfg(feature = "server")]
+use sqlx::{postgres::PgRow, FromRow, Row};
+
+#[cfg(feature = "server")]
+use uuid::Uuid;
+
 // -------------------------------------------------------------------------------------------------
 // # ClipId
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ClipIdType;
 
 pub type ClipId = Id<ClipIdType>;
@@ -23,7 +27,7 @@ pub type ClipId = Id<ClipIdType>;
 /// VideoClipのエンティティ
 #[derive(Debug, Clone)]
 pub struct MovieClip {
-    title: MovieClipTitle,
+    title: String,
     url: MovieUrl,
     start: Second,
     end: Second,
@@ -39,11 +43,11 @@ impl MovieClip {
             return Err(DomainLogicError("It is needed start < end".to_string()));
         }
         Ok(Self {
-            title: title.try_into()?,
+            title,
             url: url.try_into()?,
             start: start.into(),
             end: end.into(),
-            id: Default::default(),
+            id: ClipId::generate(),
             like: 0_u32,
             dislike: 0_u32,
         })
@@ -56,11 +60,10 @@ impl MovieClip {
     pub fn dislike_increment(&mut self) {
         self.dislike += 1;
     }
-    pub fn edit_title(&mut self, new_title: String) -> Result<(), DomainError> {
-        self.title = new_title.try_into()?;
-        Ok(())
+    pub fn edit_title(&mut self, new_title: String) {
+        self.title = new_title;
     }
-    pub fn title(&self) -> &MovieClipTitle {
+    pub fn title(&self) -> &str {
         &self.title
     }
     pub fn url(&self) -> &MovieUrl {
@@ -80,6 +83,32 @@ impl MovieClip {
     }
     pub fn dislike(&self) -> u32 {
         self.dislike
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// MovieClip as entity
+
+#[cfg(feature = "server")]
+impl FromRow<'_, PgRow> for MovieClip {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        let title: String = row.try_get("title")?;
+        let url: String = row.try_get("url")?;
+        let start: i32 = row.try_get("start")?;
+        let end: i32 = row.try_get("end")?;
+        let id: Uuid = row.try_get("id")?;
+        let like: i32 = row.try_get("like")?;
+        let dislike: i32 = row.try_get("dislike")?;
+
+        Ok(Self {
+            title,
+            url: url.try_into()?,
+            start: start.into(),
+            end: end.into(),
+            id: id.into(),
+            like: like as u32,
+            dislike: dislike as u32,
+        })
     }
 }
 

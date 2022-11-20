@@ -1,0 +1,1 @@
+let-env DATABASE_URL = "postgres://postgres:gami3377@localhost/rikou_meitan"

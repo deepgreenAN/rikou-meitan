@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.cargo.features": [
+        "server"
+    ],
+    "rust-analyzer.server.extraEnv": {
+        "DATABASE_URL": "postgres://postgres:gami3377@localhost/rikou_meitan"
+    }
+}
