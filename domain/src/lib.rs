@@ -11,3 +11,4 @@ pub use date::Date;
 pub use domain_error::DomainError;
 pub use domain_error::GenericParseError;
 pub use ids::Id;
+pub use repositories::{EpisodeRepository, MovieClipRepository};
