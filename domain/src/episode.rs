@@ -14,7 +14,7 @@ use uuid::Uuid;
 // -------------------------------------------------------------------------------------------------
 // # EpisodeId
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EpisodeIdType;
 
 pub type EpisodeId = Id<EpisodeIdType>;
@@ -23,8 +23,7 @@ pub type EpisodeId = Id<EpisodeIdType>;
 // # Episode
 
 /// Episodeのエンティティ
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Episode {
     date: Date,
     content: String,
@@ -39,8 +38,8 @@ impl Episode {
             id: EpisodeId::generate(),
         })
     }
-    pub fn date(&self) -> &Date {
-        &self.date
+    pub fn date(&self) -> Date {
+        self.date
     }
     pub fn content(&self) -> &str {
         &self.content

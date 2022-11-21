@@ -79,7 +79,7 @@ impl TryFrom<u32> for Day {
 }
 
 /// 軽量なDate
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Date {
     year: Year,
     month: Month,

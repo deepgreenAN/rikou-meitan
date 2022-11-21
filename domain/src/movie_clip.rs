@@ -20,7 +20,7 @@ use chrono::NaiveDate;
 // -------------------------------------------------------------------------------------------------
 // # ClipId
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MovieClipIdType;
 
 /// MovieClipに対応するID
@@ -88,8 +88,8 @@ impl MovieClip {
     pub fn like(&self) -> u32 {
         self.like
     }
-    pub fn create_date(&self) -> &Date {
-        &self.create_date
+    pub fn create_date(&self) -> Date {
+        self.create_date
     }
 }
 

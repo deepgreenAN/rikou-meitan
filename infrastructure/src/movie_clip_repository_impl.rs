@@ -93,7 +93,7 @@ DELETE FROM movie_clips WHERE id = $1
 // -------------------------------------------------------------------------------------------------
 // MovieClipPgDBRepository
 
-/// MovieClipに関するPostgresqlのリポジトリ
+/// MovieClipのPostgresqlのリポジトリ
 pub struct MovieClipPgDBRepository {
     pool: PgPool,
 }
@@ -107,45 +107,36 @@ impl MovieClipPgDBRepository {
 #[async_trait]
 impl MovieClipRepository for MovieClipPgDBRepository {
     type Error = InfraError;
-    async fn save(
-        &mut self,
-        movie_clip: MovieClip,
-    ) -> Result<(), <Self as MovieClipRepository>::Error> {
+    async fn save(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
         movie_clip_sql_runner::save(&mut conn, movie_clip).await?;
         Ok(())
     }
 
-    async fn all(&mut self) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
+    async fn all(&self) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
         let movie_clips = movie_clip_sql_runner::all(&mut conn).await?;
         Ok(movie_clips)
     }
 
-    async fn order_by_like_limit(
-        &mut self,
-        length: usize,
-    ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
+    async fn order_by_like_limit(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
         let movie_clips = movie_clip_sql_runner::order_by_like_limit(&mut conn, length).await?;
         Ok(movie_clips)
     }
 
     async fn order_by_create_date_range(
-        &mut self,
+        &self,
         start: Date,
         end: Date,
-    ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
+    ) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
         let movie_clips =
             movie_clip_sql_runner::order_by_create_date_range(&mut conn, start, end).await?;
         Ok(movie_clips)
     }
 
-    async fn remove_by_id(
-        &mut self,
-        id: MovieClipId,
-    ) -> Result<(), <Self as MovieClipRepository>::Error> {
+    async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
         movie_clip_sql_runner::remove_by_id(&mut conn, id).await?;
         Ok(())
@@ -158,6 +149,7 @@ mod test {
     use crate::InfraError;
     use domain::movie_clip::MovieClip;
     use domain::Date;
+    use pretty_assertions::assert_eq;
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
 
@@ -213,9 +205,9 @@ mod test {
         }
 
         let mut movie_clips_res = movie_clip_sql_runner::all(&mut transaction).await?;
-        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
 
         assert_eq!(movie_clips_res, movie_clips);
 
@@ -254,11 +246,14 @@ mod test {
             movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
         }
 
+        let length = 2_usize;
+
         let ordered_by_like_movie_clips =
-            movie_clip_sql_runner::order_by_like_limit(&mut transaction, movie_clips_length)
-                .await?;
+            movie_clip_sql_runner::order_by_like_limit(&mut transaction, length).await?;
 
         movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順なため
+        let movie_clips = movie_clips.into_iter().take(length).collect::<Vec<_>>();
+
         assert_eq!(movie_clips, ordered_by_like_movie_clips);
 
         // ロールバック
@@ -284,14 +279,19 @@ mod test {
             movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
         }
 
-        let ordered_by_date_range = movie_clip_sql_runner::order_by_create_date_range(
-            &mut transaction,
-            Date::from_ymd(2022, 11, 19)?,
-            Date::from_ymd(2022, 11, 23)?,
-        )
-        .await?;
+        let start = Date::from_ymd(2022, 11, 19)?;
+        let end = Date::from_ymd(2022, 11, 22)?;
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.create_date().clone());
+        let ordered_by_date_range =
+            movie_clip_sql_runner::order_by_create_date_range(&mut transaction, start, end).await?;
+
+        movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
+        let movie_clips = movie_clips
+            .into_iter()
+            .filter(|movie_clip| {
+                start <= movie_clip.create_date() && movie_clip.create_date() < end
+            })
+            .collect::<Vec<_>>();
 
         assert_eq!(movie_clips, ordered_by_date_range);
 
@@ -322,9 +322,9 @@ mod test {
         movie_clip_sql_runner::remove_by_id(&mut transaction, removed_movie_clip.id()).await?;
 
         let mut rest_movie_clips = movie_clip_sql_runner::all(&mut transaction).await?;
-        rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+        rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id());
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
 
         assert_eq!(movie_clips, rest_movie_clips);
 
