@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS movie_clips (
     "end" INT4 NOT NULL,
     id uuid PRIMARY KEY NOT NULL,
     "like" INT4 NOT NULL,
-    dislike INT4 NOT NULL
+    create_date DATE NOT NULL
 );
 CREATE TABLE IF NOT EXISTS episodes (
     "date" DATE NOT NULL,

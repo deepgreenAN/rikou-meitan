@@ -6,6 +6,7 @@ use crate::GenericParseError;
 #[cfg(feature = "server")]
 use chrono::{Datelike, NaiveDate};
 
+/// Date型のYear
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Year(u32);
 
@@ -29,6 +30,7 @@ impl TryFrom<u32> for Year {
     }
 }
 
+/// Date型のMonth
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Month(u32);
 
@@ -52,6 +54,7 @@ impl TryFrom<u32> for Month {
     }
 }
 
+/// Date型のDay
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Day(u32);
 
@@ -75,6 +78,7 @@ impl TryFrom<u32> for Day {
     }
 }
 
+/// 軽量なDate
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Date {
     year: Year,

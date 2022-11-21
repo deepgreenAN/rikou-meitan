@@ -24,6 +24,7 @@ pub type EpisodeId = Id<EpisodeIdType>;
 
 /// Episodeのエンティティ
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Episode {
     date: Date,
     content: String,

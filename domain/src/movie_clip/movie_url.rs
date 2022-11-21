@@ -5,7 +5,8 @@ use config::CONFIG;
 
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
 
-#[derive(Debug, Clone)]
+/// MovieClipで用いるURL
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MovieUrl {
     url_string: String, // 成型されたurl全体
     video_id: String,   // 動画プラットフォームの動画ID

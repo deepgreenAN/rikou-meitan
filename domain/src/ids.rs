@@ -1,6 +1,7 @@
 use std::{fmt::Display, marker::PhantomData};
 use uuid::Uuid;
 
+/// ジェネリックなUUID
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Id<T>(Uuid, PhantomData<T>);
 

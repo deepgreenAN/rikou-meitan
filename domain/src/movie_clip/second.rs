@@ -1,3 +1,4 @@
+/// MovieClipで用いる秒指定のための秒型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Second(u32);
 

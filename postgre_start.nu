@@ -1,1 +1,1 @@
-pg_ctl start -D "C:/Program Files/PostgreSQL/13/data" -l "D:/rust_tutorial/sqlx_tutorial/todo_tutorial/log/log.txt"
+pg_ctl start -D "C:/Program Files/PostgreSQL/13/data" -l "D:/orikou_fan_site/rikou_meitan/log/log.txt"
