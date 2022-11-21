@@ -49,7 +49,7 @@ VALUES ($1, $2, $3, $4,  $5, $6, $7)
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_by_limited_movie_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
-SELECT * FROM movie_clips ORDER BY like DESC LIMIT $1
+SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
                 "#,
         )
         .bind(length as i32)
@@ -157,44 +157,145 @@ mod test {
     use super::movie_clip_sql_runner;
     use crate::InfraError;
     use domain::movie_clip::MovieClip;
-    use sqlx::postgres::PgPoolOptions;
+    use domain::Date;
+    use rstest::{fixture, rstest};
+    use sqlx::postgres::{PgPool, PgPoolOptions};
 
-    #[ignore]
-    #[tokio::test]
-    async fn test_movie_clip_save_and_all() -> Result<(), InfraError> {
+    #[fixture]
+    fn movie_clips() -> Result<Vec<MovieClip>, InfraError> {
+        Ok(vec![
+            MovieClip::new(
+                "MovieClip 1".to_string(),
+                "https://www.youtube.com/watch?v=B7OPlsdBuVc".to_string(),
+                100,
+                200,
+                (2022, 11, 21),
+            )?,
+            MovieClip::new(
+                "MovieClip 2".to_string(),
+                "https://www.youtube.com/watch?v=NHpILI4NpCI".to_string(),
+                200,
+                300,
+                (2022, 11, 22),
+            )?,
+            MovieClip::new(
+                "MovieClip 3".to_string(),
+                "https://www.youtube.com/watch?v=6LAn0lbMpZ8".to_string(),
+                400,
+                500,
+                (2022, 11, 19),
+            )?,
+        ])
+    }
+
+    #[fixture]
+    async fn pool() -> Result<PgPool, InfraError> {
         let database_url = std::env::var("DATABASE_URL").unwrap();
         let pool = PgPoolOptions::new().connect(&database_url).await?;
+        Ok(pool)
+    }
 
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_all(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut movie_clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
-        let movie_clip_1 = MovieClip::new(
-            "MovieClip 1".to_string(),
-            "https://www.youtube.com/watch?v=B7OPlsdBuVc".to_string(),
-            100,
-            200,
-            (2022, 11, 21),
-        )?;
-
-        movie_clip_sql_runner::save(&mut transaction, movie_clip_1.clone()).await?;
-
-        let movie_clip_2 = MovieClip::new(
-            "MovieClip 2".to_string(),
-            "https://www.youtube.com/watch?v=NHpILI4NpCI".to_string(),
-            200,
-            300,
-            (2022, 11, 22),
-        )?;
-
-        movie_clip_sql_runner::save(&mut transaction, movie_clip_2.clone()).await?;
+        for movie_clip in movie_clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
+        }
 
         let mut movie_clips_res = movie_clip_sql_runner::all(&mut transaction).await?;
         movie_clips_res.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
 
-        let mut movie_clips = vec![movie_clip_1, movie_clip_2];
         movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
 
         assert_eq!(movie_clips_res, movie_clips);
 
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_like_limit(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let movie_clips = movie_clips?;
+        let movie_clips_length = movie_clips.len();
+        let mut movie_clips = movie_clips
+            .into_iter()
+            .enumerate()
+            .map(|(i, mut movie_clip)| {
+                for _ in 0..(movie_clips_length - i) {
+                    movie_clip.like_increment(); // likeをインクリメント
+                }
+                movie_clip
+            })
+            .collect::<Vec<_>>();
+
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for movie_clip in movie_clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
+        }
+
+        let ordered_by_like_movie_clips =
+            movie_clip_sql_runner::order_by_like_limit(&mut transaction, movie_clips_length)
+                .await?;
+
+        movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順なため
+        assert_eq!(movie_clips, ordered_by_like_movie_clips);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_date_range(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut movie_clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for movie_clip in movie_clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
+        }
+
+        let ordered_by_date_range = movie_clip_sql_runner::order_by_create_date_range(
+            &mut transaction,
+            Date::from_ymd(2022, 11, 19)?,
+            Date::from_ymd(2022, 11, 23)?,
+        )
+        .await?;
+
+        movie_clips.sort_by_key(|movie_clip| movie_clip.create_date().clone());
+
+        assert_eq!(movie_clips, ordered_by_date_range);
+
+        // ロールバック
         transaction.rollback().await?;
 
         Ok(())
