@@ -80,7 +80,7 @@ SELECT * FROM movie_clips WHERE $1 <= create_date AND create_date < $2 ORDER BY 
     pub async fn remove_by_id(conn: &mut PgConnection, id: MovieClipId) -> Result<(), InfraError> {
         sqlx::query(
             r#"
-DELETE FROM movie_clips WHERE id == $1
+DELETE FROM movie_clips WHERE id = $1
             "#,
         )
         .bind(id.to_uuid())
@@ -294,6 +294,39 @@ mod test {
         movie_clips.sort_by_key(|movie_clip| movie_clip.create_date().clone());
 
         assert_eq!(movie_clips, ordered_by_date_range);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_remove_and_all(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut movie_clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for movie_clip in movie_clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
+        }
+
+        let removed_movie_clip = movie_clips.remove(1); // 二番目のデータ
+        movie_clip_sql_runner::remove_by_id(&mut transaction, removed_movie_clip.id()).await?;
+
+        let mut rest_movie_clips = movie_clip_sql_runner::all(&mut transaction).await?;
+        rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+
+        movie_clips.sort_by_key(|movie_clip| movie_clip.id().to_uuid());
+
+        assert_eq!(movie_clips, rest_movie_clips);
 
         // ロールバック
         transaction.rollback().await?;
