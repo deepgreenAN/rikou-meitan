@@ -4,6 +4,8 @@ use domain::episode::{Episode, EpisodeId};
 use domain::Date;
 use domain::EpisodeRepository;
 
+use sqlx::Error::RowNotFound;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -34,6 +36,15 @@ impl EpisodeRepository for MockEpisodeRepository {
             .insert(episode.id().to_uuid(), episode);
         Ok(())
     }
+    async fn edit(&self, episode: Episode) -> Result<(), InfraError> {
+        match self.map.lock().unwrap().entry(episode.id().to_uuid()) {
+            Entry::Vacant(_) => Err(InfraError::SQLXError(RowNotFound)),
+            Entry::Occupied(mut o) => {
+                *o.get_mut() = episode;
+                Ok(())
+            }
+        }
+    }
     async fn all(&self) -> Result<Vec<Episode>, InfraError> {
         let episodes = self
             .map
@@ -59,8 +70,10 @@ impl EpisodeRepository for MockEpisodeRepository {
         Ok(episodes)
     }
     async fn remove_by_id(&self, id: EpisodeId) -> Result<(), InfraError> {
-        self.map.lock().unwrap().remove(&id.to_uuid());
-        Ok(())
+        match self.map.lock().unwrap().remove(&id.to_uuid()) {
+            None => Err(InfraError::SQLXError(RowNotFound)),
+            Some(_) => Ok(()),
+        }
     }
 }
 

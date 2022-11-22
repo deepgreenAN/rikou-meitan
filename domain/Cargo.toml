@@ -21,3 +21,4 @@ async-trait = { version = "0.1.*", optional = true}
 
 [dev-dependencies]
 assert_matches = "1.*"
+rstest = { version = "0.15.*"}

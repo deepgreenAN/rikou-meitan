@@ -35,6 +35,24 @@ VALUES ($1, $2, $3, $4,  $5, $6, $7)
         Ok(())
     }
 
+    pub async fn edit(conn: &mut PgConnection, movie_clip: MovieClip) -> Result<(), InfraError> {
+        sqlx::query(
+            r#"
+UPDATE movie_clips SET title = $1, "start" = $2, "end" = $3, "like" = $4
+WHERE id = $5 RETURNING *
+            "#,
+        )
+        .bind(movie_clip.title().to_string())
+        .bind(movie_clip.start().to_u32() as i32)
+        .bind(movie_clip.end().to_u32() as i32)
+        .bind(movie_clip.like() as i32)
+        .bind(movie_clip.id().to_uuid())
+        .fetch_one(conn)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn all(conn: &mut PgConnection) -> Result<Vec<MovieClip>, InfraError> {
         let all_movie_clips = sqlx::query_as::<Postgres, MovieClip>(r#"SELECT * FROM movie_clips"#)
             .fetch_all(conn)
@@ -80,11 +98,11 @@ SELECT * FROM movie_clips WHERE $1 <= create_date AND create_date < $2 ORDER BY 
     pub async fn remove_by_id(conn: &mut PgConnection, id: MovieClipId) -> Result<(), InfraError> {
         sqlx::query(
             r#"
-DELETE FROM movie_clips WHERE id = $1
+DELETE FROM movie_clips WHERE id = $1 RETURNING *
             "#,
         )
         .bind(id.to_uuid())
-        .execute(conn)
+        .fetch_one(conn)
         .await?;
         Ok(())
     }
@@ -110,6 +128,12 @@ impl MovieClipRepository for MovieClipPgDBRepository {
     async fn save(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
         movie_clip_sql_runner::save(&mut conn, movie_clip).await?;
+        Ok(())
+    }
+
+    async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        movie_clip_sql_runner::edit(&mut conn, movie_clip).await?;
         Ok(())
     }
 
@@ -147,11 +171,13 @@ impl MovieClipRepository for MovieClipPgDBRepository {
 mod test {
     use super::movie_clip_sql_runner;
     use crate::InfraError;
-    use domain::movie_clip::MovieClip;
+    use assert_matches::assert_matches;
+    use domain::movie_clip::{MovieClip, MovieClipId};
     use domain::Date;
     use pretty_assertions::assert_eq;
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
+    use std::time::Duration;
 
     #[fixture]
     fn movie_clips() -> Result<Vec<MovieClip>, InfraError> {
@@ -183,7 +209,10 @@ mod test {
     #[fixture]
     async fn pool() -> Result<PgPool, InfraError> {
         let database_url = std::env::var("DATABASE_URL").unwrap();
-        let pool = PgPoolOptions::new().connect(&database_url).await?;
+        let pool = PgPoolOptions::new()
+            .idle_timeout(Duration::from_secs(1))
+            .connect(&database_url)
+            .await?;
         Ok(pool)
     }
 
@@ -203,6 +232,44 @@ mod test {
         for movie_clip in movie_clips.iter().cloned() {
             movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
         }
+
+        let mut movie_clips_res = movie_clip_sql_runner::all(&mut transaction).await?;
+        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
+
+        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+
+        assert_eq!(movie_clips_res, movie_clips);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_edit_and_all(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut movie_clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for movie_clip in movie_clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, movie_clip).await?;
+        }
+
+        // 編集
+        let mut edited_movie_clip = movie_clips[1].clone(); // 二番目を編集
+        edited_movie_clip.edit_title("Another Movie Clip".to_string())?;
+        edited_movie_clip.edit_start_and_end(1200.into(), 1300.into())?;
+        movie_clips[1] = edited_movie_clip.clone();
+
+        movie_clip_sql_runner::edit(&mut transaction, edited_movie_clip).await?;
 
         let mut movie_clips_res = movie_clip_sql_runner::all(&mut transaction).await?;
         movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
@@ -327,6 +394,54 @@ mod test {
         movie_clips.sort_by_key(|movie_clip| movie_clip.id());
 
         assert_eq!(movie_clips, rest_movie_clips);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_edit_no_exists(
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+        let movie_clip = MovieClip::new(
+            "Another Title".to_string(),
+            "https://www.youtube.com/watch?v=lwSEI1ATLWQ".to_string(),
+            1000,
+            1500,
+            (2022, 11, 23),
+        )?;
+
+        let res = movie_clip_sql_runner::edit(&mut transaction, movie_clip).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_remove_no_exists(
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let pool = pool.await?;
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        let res =
+            movie_clip_sql_runner::remove_by_id(&mut transaction, MovieClipId::generate()).await;
+
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
 
         // ロールバック
         transaction.rollback().await?;

@@ -1,6 +1,6 @@
 use crate::date::Date;
 use crate::ids::Id;
-use crate::DomainError;
+use crate::DomainError::{self, NotChangedError};
 
 #[cfg(feature = "server")]
 use chrono::NaiveDate;
@@ -38,6 +38,21 @@ impl Episode {
             id: EpisodeId::generate(),
         })
     }
+    pub fn edit_date(&mut self, new_date: Date) -> Result<(), DomainError> {
+        if self.date == new_date {
+            return Err(NotChangedError("date not changed".to_string()));
+        }
+        self.date = new_date;
+        Ok(())
+    }
+    pub fn edit_content(&mut self, new_content: String) -> Result<(), DomainError> {
+        if self.content == new_content {
+            return Err(NotChangedError("content not changed".to_string()));
+        }
+        self.content = new_content;
+        Ok(())
+    }
+
     pub fn date(&self) -> Date {
         self.date
     }
@@ -64,5 +79,32 @@ impl FromRow<'_, PgRow> for Episode {
             content,
             id: id.into(),
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Episode;
+    use crate::DomainError::NotChangedError;
+    use crate::{Date, DomainError};
+    use assert_matches::assert_matches;
+    use rstest::{fixture, rstest};
+
+    #[fixture]
+    fn episode() -> Episode {
+        Episode::new((2022, 11, 22), "Some content".to_string()).unwrap()
+    }
+
+    #[rstest]
+    #[test]
+    fn episode_edits(mut episode: Episode) -> Result<(), DomainError> {
+        let same_date = episode.date();
+        let res_err = episode.edit_date(same_date);
+        assert_matches!(res_err, Err(NotChangedError(_)));
+
+        let res_ok = episode.edit_date(Date::from_ymd(2022, 11, 23)?);
+        assert_matches!(res_ok, Ok(_));
+
+        Ok(())
     }
 }

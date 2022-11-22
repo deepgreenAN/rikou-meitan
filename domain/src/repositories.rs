@@ -9,6 +9,8 @@ pub trait MovieClipRepository {
     type Error;
     async fn save(&self, movie_clip: MovieClip)
         -> Result<(), <Self as MovieClipRepository>::Error>;
+    async fn edit(&self, movie_clip: MovieClip)
+        -> Result<(), <Self as MovieClipRepository>::Error>;
     async fn all(&self) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error>;
     async fn order_by_like_limit(
         &self,
@@ -30,6 +32,7 @@ pub trait MovieClipRepository {
 pub trait EpisodeRepository {
     type Error;
     async fn save(&self, episode: Episode) -> Result<(), <Self as EpisodeRepository>::Error>;
+    async fn edit(&self, episode: Episode) -> Result<(), <Self as EpisodeRepository>::Error>;
     async fn all(&self) -> Result<Vec<Episode>, <Self as EpisodeRepository>::Error>;
     async fn order_by_date_range(
         &self,

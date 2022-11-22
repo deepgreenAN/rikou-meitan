@@ -26,6 +26,19 @@ INSERT INTO episodes ("date", content, id) VALUES ($1, $2, $3)
         .await?;
         Ok(())
     }
+    pub async fn edit(conn: &mut PgConnection, episode: Episode) -> Result<(), InfraError> {
+        sqlx::query(
+            r#"
+UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
+        "#,
+        )
+        .bind(episode.date().to_chrono()?)
+        .bind(episode.content())
+        .bind(episode.id().to_uuid())
+        .fetch_one(conn)
+        .await?;
+        Ok(())
+    }
     pub async fn all(conn: &mut PgConnection) -> Result<Vec<Episode>, InfraError> {
         let episodes = sqlx::query_as::<Postgres, Episode>(r#"SELECT * FROM episodes"#)
             .fetch_all(conn)
@@ -48,9 +61,9 @@ INSERT INTO episodes ("date", content, id) VALUES ($1, $2, $3)
         Ok(ordered_by_date_range)
     }
     pub async fn remove_by_id(conn: &mut PgConnection, id: EpisodeId) -> Result<(), InfraError> {
-        sqlx::query(r#"DELETE FROM episodes WHERE id = $1"#)
+        sqlx::query(r#"DELETE FROM episodes WHERE id = $1 RETURNING *"#)
             .bind(id.to_uuid())
-            .execute(conn)
+            .fetch_one(conn)
             .await?;
         Ok(())
     }
@@ -76,6 +89,11 @@ impl EpisodeRepository for EpisodePgDBRepository {
     async fn save(&self, episode: Episode) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
         episode_sql_runner::save(&mut conn, episode).await?;
+        Ok(())
+    }
+    async fn edit(&self, episode: Episode) -> Result<(), InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        episode_sql_runner::edit(&mut conn, episode).await?;
         Ok(())
     }
     async fn all(&self) -> Result<Vec<Episode>, InfraError> {
@@ -109,6 +127,7 @@ mod test {
     use pretty_assertions::assert_eq;
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
+    use std::time::Duration;
 
     #[fixture]
     fn episodes() -> Result<Vec<Episode>, InfraError> {
@@ -122,7 +141,10 @@ mod test {
     #[fixture]
     async fn pool() -> Result<PgPool, InfraError> {
         let database_url = std::env::var("DATABASE_URL").unwrap();
-        let pool = PgPoolOptions::new().connect(&database_url).await?;
+        let pool = PgPoolOptions::new()
+            .idle_timeout(Duration::from_secs(1))
+            .connect(&database_url)
+            .await?;
         Ok(pool)
     }
 

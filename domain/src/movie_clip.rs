@@ -6,7 +6,7 @@ pub use second::Second;
 
 use crate::date::Date;
 use crate::ids::Id;
-use crate::DomainError::{self, DomainLogicError};
+use crate::DomainError::{self, DomainLogicError, NotChangedError};
 
 #[cfg(feature = "server")]
 use sqlx::{postgres::PgRow, FromRow, Row};
@@ -67,8 +67,49 @@ impl MovieClip {
     pub fn like_increment(&mut self) {
         self.like += 1;
     }
-    pub fn edit_title(&mut self, new_title: String) {
+    pub fn edit_title(&mut self, new_title: String) -> Result<(), DomainError> {
+        if self.title == new_title {
+            return Err(NotChangedError("title not changed".to_string()));
+        }
         self.title = new_title;
+        Ok(())
+    }
+    pub fn edit_start(&mut self, new_start: Second) -> Result<(), DomainError> {
+        if self.start == new_start {
+            return Err(NotChangedError("start not changed".to_string()));
+        }
+        if new_start >= self.end {
+            return Err(DomainLogicError("start must be less than end".to_string()));
+        }
+        self.start = new_start;
+        Ok(())
+    }
+    pub fn edit_end(&mut self, new_end: Second) -> Result<(), DomainError> {
+        if self.end == new_end {
+            return Err(NotChangedError("end not changed".to_string()));
+        }
+        if new_end <= self.start {
+            return Err(DomainLogicError(
+                "end must be larger than start".to_string(),
+            ));
+        }
+        self.end = new_end;
+        Ok(())
+    }
+    pub fn edit_start_and_end(
+        &mut self,
+        new_start: Second,
+        new_end: Second,
+    ) -> Result<(), DomainError> {
+        if self.start == new_start && self.end == new_end {
+            return Err(NotChangedError("start and end not changed".to_string()));
+        }
+        if new_start >= new_end {
+            return Err(DomainLogicError("It must be start < end".to_string()));
+        }
+        self.start = new_start;
+        self.end = new_end;
+        Ok(())
     }
     pub fn title(&self) -> &str {
         &self.title
@@ -121,20 +162,74 @@ impl FromRow<'_, PgRow> for MovieClip {
 
 #[cfg(test)]
 mod test {
+    use crate::DomainError::{DomainLogicError, NotChangedError};
+    use assert_matches::assert_matches;
+
     use super::MovieClip;
-    #[test]
-    fn movie_clip_like_dislike() {
-        let mut movie_clip = MovieClip::new(
+    use rstest::{fixture, rstest};
+    #[fixture]
+    fn movie_clip() -> MovieClip {
+        MovieClip::new(
             "Some Movie Clip".to_string(),
             "https://www.youtube.com/watch?v=SOMEvideoID".to_string(),
             500,
             600,
             (2018, 6, 20),
         )
-        .unwrap();
+        .unwrap()
+    }
 
+    #[rstest]
+    #[test]
+    fn movie_clip_like_increment(mut movie_clip: MovieClip) {
         assert_eq!(movie_clip.like(), 0);
         movie_clip.like_increment();
         assert_eq!(movie_clip.like(), 1);
+    }
+
+    #[rstest]
+    #[test]
+    fn movie_clip_edits(mut movie_clip: MovieClip) {
+        // edit_title
+        let same_title = movie_clip.title().to_string();
+        let res_err = movie_clip.edit_title(same_title);
+        assert_matches!(res_err, Err(NotChangedError(_)));
+
+        let res_ok = movie_clip.edit_title("Another Movie Clip".to_string());
+        assert_matches!(res_ok, Ok(_));
+
+        // edit_start
+        let same_start = movie_clip.start();
+        let res_err = movie_clip.edit_start(same_start);
+        assert_matches!(res_err, Err(NotChangedError(_)));
+
+        let res_err = movie_clip.edit_start(700.into());
+        assert_matches!(res_err, Err(DomainLogicError(_)));
+
+        let res_ok = movie_clip.edit_start(300.into());
+        assert_matches!(res_ok, Ok(_));
+
+        // edit_end
+        let same_end = movie_clip.end();
+        let res_err = movie_clip.edit_end(same_end);
+        assert_matches!(res_err, Err(NotChangedError(_)));
+
+        let res_err = movie_clip.edit_end(200.into());
+        assert_matches!(res_err, Err(DomainLogicError(_)));
+
+        let res_ok = movie_clip.edit_end(800.into());
+        assert_matches!(res_ok, Ok(_));
+
+        // edit_start_and_end
+        let same_start = movie_clip.start();
+        let same_end = movie_clip.end();
+        let res_err = movie_clip.edit_start_and_end(same_start, same_end);
+        assert_matches!(res_err, Err(NotChangedError(_)));
+
+        let res_err = movie_clip.edit_start_and_end(500.into(), 400.into());
+        assert_matches!(res_err, Err(DomainLogicError(_)));
+
+        let res_ok = movie_clip.edit_start_and_end(400.into(), 500.into());
+        assert_matches!(res_ok, Ok(_));
     }
 }

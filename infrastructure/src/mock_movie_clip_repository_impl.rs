@@ -4,6 +4,8 @@ use domain::movie_clip::{MovieClip, MovieClipId};
 use domain::Date;
 use domain::MovieClipRepository;
 
+use sqlx::Error::RowNotFound;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -35,6 +37,17 @@ impl MovieClipRepository for MockMovieClipRepository {
             .insert(movie_clip.id().to_uuid(), movie_clip);
         Ok(())
     }
+
+    async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
+        match self.map.lock().unwrap().entry(movie_clip.id().to_uuid()) {
+            Entry::Vacant(_) => Err(InfraError::SQLXError(RowNotFound)),
+            Entry::Occupied(mut o) => {
+                *o.get_mut() = movie_clip;
+                Ok(())
+            }
+        }
+    }
+
     async fn all(&self) -> Result<Vec<MovieClip>, InfraError> {
         let movie_clips = self
             .map
@@ -65,8 +78,10 @@ impl MovieClipRepository for MockMovieClipRepository {
             .collect::<Vec<_>>())
     }
     async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
-        self.map.lock().unwrap().remove(&id.to_uuid());
-        Ok(())
+        match self.map.lock().unwrap().remove(&id.to_uuid()) {
+            None => Err(InfraError::SQLXError(RowNotFound)),
+            Some(_) => Ok(()),
+        }
     }
 }
 
@@ -74,6 +89,7 @@ impl MovieClipRepository for MockMovieClipRepository {
 mod test {
     use super::MockMovieClipRepository;
     use crate::InfraError;
+    use assert_matches::assert_matches;
     use domain::movie_clip::MovieClip;
     use domain::Date;
     use domain::MovieClipRepository;
@@ -119,6 +135,36 @@ mod test {
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
         }
+
+        let mut movie_clips_res = repo.all().await?;
+        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
+
+        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+
+        assert_eq!(movie_clips, movie_clips_res);
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_edit_and_all(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut movie_clips = movie_clips?;
+
+        let repo = MockMovieClipRepository::new();
+
+        for i in movie_clips.iter().cloned() {
+            repo.save(i).await?;
+        }
+
+        // 編集
+        let mut edited_movie_clip = movie_clips[1].clone(); // 二番目を編集
+        edited_movie_clip.edit_title("Another Movie Clip".to_string())?;
+        edited_movie_clip.edit_start_and_end(1200.into(), 1300.into())?;
+        movie_clips[1] = edited_movie_clip.clone();
+
+        repo.edit(edited_movie_clip).await?;
 
         let mut movie_clips_res = repo.all().await?;
         movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
@@ -213,6 +259,42 @@ mod test {
         movie_clips.sort_by_key(|movie_clip| movie_clip.id());
 
         assert_eq!(movie_clips, rest_movie_clips);
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_edit_no_exists() -> Result<(), InfraError> {
+        let repo = MockMovieClipRepository::new();
+
+        let movie_clip = MovieClip::new(
+            "Another Title".to_string(),
+            "https://www.youtube.com/watch?v=lwSEI1ATLWQ".to_string(),
+            1000,
+            1500,
+            (2022, 11, 23),
+        )?;
+
+        let res = repo.edit(movie_clip).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_remove_no_exists() -> Result<(), InfraError> {
+        let repo = MockMovieClipRepository::new();
+
+        let movie_clip = MovieClip::new(
+            "Another Title".to_string(),
+            "https://www.youtube.com/watch?v=lwSEI1ATLWQ".to_string(),
+            1000,
+            1500,
+            (2022, 11, 23),
+        )?;
+
+        let res = repo.remove_by_id(movie_clip.id()).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
         Ok(())
     }
 }

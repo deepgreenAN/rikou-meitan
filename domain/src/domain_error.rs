@@ -10,6 +10,9 @@ pub enum DomainError {
     #[error("DomainError: UrlParseError:{0}")]
     UrlParseError(String),
 
+    #[error("DomainError: NotChangeError:{0}")]
+    NotChangedError(String),
+
     #[error(transparent)]
     GenericParseError(#[from] GenericParseError),
 }
