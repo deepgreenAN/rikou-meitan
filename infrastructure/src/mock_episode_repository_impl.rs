@@ -81,6 +81,7 @@ impl EpisodeRepository for MockEpisodeRepository {
 mod test {
     use super::MockEpisodeRepository;
     use crate::InfraError;
+    use assert_matches::assert_matches;
     use domain::Date;
     use domain::{episode::Episode, EpisodeRepository};
     use pretty_assertions::assert_eq;
@@ -106,6 +107,34 @@ mod test {
         for episode in episodes.iter().cloned() {
             repo.save(episode).await?;
         }
+
+        let mut episodes_res = repo.all().await?;
+        episodes_res.sort_by_key(|episode| episode.id());
+
+        episodes.sort_by_key(|episode| episode.id());
+
+        assert_eq!(episodes, episodes_res);
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_save_and_edit_and_all(
+        episodes: Result<Vec<Episode>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut episodes = episodes?;
+
+        let repo = MockEpisodeRepository::new();
+        for episode in episodes.iter().cloned() {
+            repo.save(episode).await?;
+        }
+
+        let mut edited_episode = episodes[1].clone();
+        edited_episode.edit_date(Date::from_ymd(2022, 11, 23)?)?;
+        edited_episode.edit_content("Another Episode Content".to_string())?;
+        episodes[1] = edited_episode.clone();
+
+        repo.edit(edited_episode).await?;
 
         let mut episodes_res = repo.all().await?;
         episodes_res.sort_by_key(|episode| episode.id());
@@ -164,6 +193,32 @@ mod test {
         episodes.sort_by_key(|episode| episode.id());
 
         assert_eq!(episodes, rest_episodes);
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_edit_no_exists() -> Result<(), InfraError> {
+        let repo = MockEpisodeRepository::new();
+
+        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+
+        let res = repo.edit(episode).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_remove_no_exists() -> Result<(), InfraError> {
+        let repo = MockEpisodeRepository::new();
+
+        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+
+        let res = repo.remove_by_id(episode.id()).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
+
         Ok(())
     }
 }

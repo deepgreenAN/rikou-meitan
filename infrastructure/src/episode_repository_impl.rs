@@ -122,6 +122,7 @@ impl EpisodeRepository for EpisodePgDBRepository {
 mod test {
     use super::episode_sql_runner;
     use crate::InfraError;
+    use assert_matches::assert_matches;
     use domain::episode::Episode;
     use domain::Date;
     use pretty_assertions::assert_eq;
@@ -164,6 +165,43 @@ mod test {
         for episode in episodes.iter().cloned() {
             episode_sql_runner::save(&mut transaction, episode).await?;
         }
+
+        let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
+        episodes_res.sort_by_key(|episode| episode.id());
+
+        episodes.sort_by_key(|episode| episode.id());
+
+        assert_eq!(episodes, episodes_res);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_save_and_edit_and_all(
+        episodes: Result<Vec<Episode>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut episodes = episodes?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for episode in episodes.iter().cloned() {
+            episode_sql_runner::save(&mut transaction, episode).await?;
+        }
+
+        let mut edited_episode = episodes[1].clone();
+        edited_episode.edit_date(Date::from_ymd(2022, 11, 23)?)?;
+        edited_episode.edit_content("Another Episode Content".to_string())?;
+        episodes[1] = edited_episode.clone();
+
+        episode_sql_runner::edit(&mut transaction, edited_episode).await?;
 
         let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
         episodes_res.sort_by_key(|episode| episode.id());
@@ -242,6 +280,48 @@ mod test {
         episodes.sort_by_key(|episode| episode.id());
 
         assert_eq!(episodes, rest_episodes);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_edit_no_exists(
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let res = episode_sql_runner::edit(&mut transaction, episode).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_episode_remove_no_exists(
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let res = episode_sql_runner::remove_by_id(&mut transaction, episode.id()).await;
+        assert_matches!(res, Err(InfraError::SQLXError(_)));
 
         // ロールバック
         transaction.rollback().await?;
