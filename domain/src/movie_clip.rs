@@ -7,6 +7,7 @@ pub use second::Second;
 use crate::date::Date;
 use crate::ids::Id;
 use crate::DomainError::{self, DomainLogicError, NotChangedError};
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
 use sqlx::{postgres::PgRow, FromRow, Row};
@@ -30,7 +31,7 @@ pub type MovieClipId = Id<MovieClipIdType>;
 // # VideoClip
 
 /// VideoClipのエンティティ
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MovieClip {
     title: String,
     url: MovieUrl,

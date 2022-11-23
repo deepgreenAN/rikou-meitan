@@ -1,6 +1,7 @@
 use crate::date::Date;
 use crate::ids::Id;
 use crate::DomainError::{self, NotChangedError};
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
 use chrono::NaiveDate;
@@ -23,7 +24,7 @@ pub type EpisodeId = Id<EpisodeIdType>;
 // # Episode
 
 /// Episodeのエンティティ
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Episode {
     date: Date,
     content: String,

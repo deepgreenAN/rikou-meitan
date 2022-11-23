@@ -1,7 +1,8 @@
-use std::{fmt::Display, str::FromStr};
-
 use crate::DomainError::{self, DomainLogicError, DomainParseError};
 use crate::GenericParseError;
+
+use serde::{Deserialize, Serialize};
+use std::{fmt::Display, str::FromStr};
 
 #[cfg(feature = "server")]
 use chrono::{Datelike, NaiveDate};
@@ -79,7 +80,8 @@ impl TryFrom<u32> for Day {
 }
 
 /// 軽量なDate
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct Date {
     year: Year,
     month: Month,
@@ -146,14 +148,6 @@ impl TryFrom<String> for Date {
     }
 }
 
-#[cfg(feature = "server")]
-impl TryFrom<NaiveDate> for Date {
-    type Error = DomainError;
-    fn try_from(value: NaiveDate) -> Result<Self, Self::Error> {
-        Self::from_ymd(value.year() as u32, value.month(), value.day())
-    }
-}
-
 impl Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -166,11 +160,34 @@ impl Display for Date {
     }
 }
 
+impl From<Date> for String {
+    fn from(date: Date) -> Self {
+        date.to_string()
+    }
+}
+
+#[cfg(feature = "server")]
+impl TryFrom<NaiveDate> for Date {
+    type Error = DomainError;
+    fn try_from(value: NaiveDate) -> Result<Self, Self::Error> {
+        Self::from_ymd(value.year() as u32, value.month(), value.day())
+    }
+}
+
+#[cfg(feature = "server")]
+impl TryFrom<Date> for NaiveDate {
+    type Error = DomainError;
+    fn try_from(value: Date) -> Result<Self, Self::Error> {
+        value.to_chrono()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Date;
     use crate::DomainError;
     use assert_matches::assert_matches;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_constructor() {
@@ -211,5 +228,18 @@ mod test {
             "2021-09-05",
             Date::from_ymd(2021, 9, 5).unwrap().to_string()
         )
+    }
+
+    #[test]
+    fn serialize_and_deserialize() {
+        let date = Date::from_ymd(2022, 11, 23).unwrap();
+        let json_str = serde_json::to_string(&date).unwrap();
+
+        assert_eq!(r#""2022-11-23""#.to_string(), json_str);
+
+        let json_str = r#""2022-11-24""#.to_string();
+        let date = serde_json::from_str::<Date>(&json_str).unwrap();
+
+        assert_eq!(date, Date::from_ymd(2022, 11, 24).unwrap())
     }
 }

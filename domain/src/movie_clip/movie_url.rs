@@ -1,12 +1,13 @@
 use crate::DomainError::{self, UrlParseError};
-use std::{fmt::Display, str::FromStr};
-
 use config::CONFIG;
+use serde::{Deserialize, Serialize};
+use std::{fmt::Display, str::FromStr};
 
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
 
 /// MovieClipで用いるURL
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct MovieUrl {
     url_string: String, // 成型されたurl全体
     video_id: String,   // 動画プラットフォームの動画ID
@@ -90,6 +91,12 @@ impl TryFrom<String> for MovieUrl {
     }
 }
 
+impl From<MovieUrl> for String {
+    fn from(value: MovieUrl) -> Self {
+        value.to_string()
+    }
+}
+
 impl Display for MovieUrl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.url_string)
@@ -99,6 +106,7 @@ impl Display for MovieUrl {
 #[cfg(test)]
 mod test {
     use super::MovieUrl;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn parse_url() {
@@ -146,5 +154,24 @@ mod test {
             movie_url.url_str()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
+    }
+
+    #[test]
+    fn serialize_and_deserialize() {
+        let movie_url =
+            MovieUrl::from_url_str("https://www.youtube.com/watch?v=LjU5OOHu_As").unwrap();
+        let json_url = serde_json::to_string(&movie_url).unwrap();
+        assert_eq!(
+            r#""https://www.youtube.com/watch?v=LjU5OOHu_As""#.to_string(),
+            json_url
+        );
+
+        let json_url = r#""https://www.youtube.com/watch?v=LjU5OOHu_As&t=100s""#.to_string();
+        let movie_url = serde_json::from_str::<MovieUrl>(&json_url).unwrap();
+
+        assert_eq!(
+            "https://www.youtube.com/watch?v=LjU5OOHu_As".to_string(),
+            TryInto::<String>::try_into(movie_url).unwrap()
+        );
     }
 }

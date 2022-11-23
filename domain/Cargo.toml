@@ -13,6 +13,8 @@ repo = ["dep:async-trait"]
 thiserror = "1.*"
 config = { path = "../config"}
 uuid = { version = "1.*", features = ["v4", "js"] }
+serde = { version = "1.*", features = ["derive"]}
+
 # optional after it
 chrono = { version = "0.4.*", optional = true }
 sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono"], optional = true }
@@ -22,3 +24,5 @@ async-trait = { version = "0.1.*", optional = true}
 [dev-dependencies]
 assert_matches = "1.*"
 rstest = { version = "0.15.*"}
+serde_json = "1.*"
+pretty_assertions = "1.*"

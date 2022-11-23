@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 /// MovieClipで用いる秒指定のための秒型
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Second(u32);
 
 impl Second {
@@ -34,16 +37,41 @@ impl From<i32> for Second {
     }
 }
 
+impl From<Second> for u32 {
+    fn from(second: Second) -> Self {
+        second.to_u32()
+    }
+}
+
+impl From<Second> for i32 {
+    fn from(second: Second) -> Self {
+        second.to_u32() as i32
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn from_to_u32() {
         assert_eq!(100_u32, Second::from_u32(100).to_u32());
     }
+
     #[test]
     fn from_to_hms() {
         assert_eq!((1, 40, 30), Second::from_hms(1, 40, 30).to_hms());
+    }
+
+    #[test]
+    fn serialize_and_deserialize() {
+        let second = Second::from_u32(100);
+        let json_str = serde_json::to_string(&second).unwrap();
+        assert_eq!(json_str, r#"100"#);
+
+        let json_str = r#"200"#.to_string();
+        let second = serde_json::from_str::<Second>(&json_str).unwrap();
+        assert_eq!(second, Second::from_u32(200));
     }
 }

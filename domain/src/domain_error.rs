@@ -10,7 +10,7 @@ pub enum DomainError {
     #[error("DomainError: UrlParseError:{0}")]
     UrlParseError(String),
 
-    #[error("DomainError: NotChangeError:{0}")]
+    #[error("DomainError: NotChangedError:{0}")]
     NotChangedError(String),
 
     #[error(transparent)]
@@ -19,9 +19,13 @@ pub enum DomainError {
 
 /// ジェネリックなパースに関するエラー
 #[derive(thiserror::Error, Debug)]
+
 pub enum GenericParseError {
     #[error(transparent)]
     ParseIntError(#[from] std::num::ParseIntError),
+
+    #[error(transparent)]
+    ParseUuidError(#[from] uuid::Error),
 }
 
 #[cfg(feature = "server")]
