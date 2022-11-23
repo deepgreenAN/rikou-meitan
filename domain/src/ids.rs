@@ -6,7 +6,7 @@ use uuid::Uuid;
 /// ジェネリックなUUID
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
-pub struct Id<T: Clone>(Uuid, #[serde(skip)] PhantomData<T>);
+pub struct Id<T: Clone>(Uuid, PhantomData<T>);
 
 impl<T: Clone> Id<T> {
     pub fn generate() -> Id<T> {
