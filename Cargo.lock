@@ -135,6 +135,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "domain",
+ "infrastructure",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "config"
 version = "0.1.0"
 
@@ -255,6 +265,17 @@ name = "cxxbridge-macro"
 version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a08a6e2fcc370a089ad3b4aaf54db3b1b4cee38ddabce5896b33eb693275f470"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "derive-new"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3418329ca0ad70234b9735dc4ceed10af4df60eff9c8e7b06cb5e520d92c3535"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1136,6 +1157,16 @@ dependencies = [
 [[package]]
 name = "server"
 version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "common",
+ "derive-new",
+ "domain",
+ "infrastructure",
+ "pretty_assertions",
+ "rstest",
+ "tokio",
+]
 
 [[package]]
 name = "sha1"

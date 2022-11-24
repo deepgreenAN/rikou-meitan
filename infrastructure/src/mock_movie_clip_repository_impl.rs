@@ -4,7 +4,6 @@ use domain::movie_clip::{MovieClip, MovieClipId};
 use domain::Date;
 use domain::MovieClipRepository;
 
-use sqlx::Error::RowNotFound;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -40,7 +39,7 @@ impl MovieClipRepository for MockMovieClipRepository {
 
     async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         match self.map.lock().unwrap().entry(movie_clip.id().to_uuid()) {
-            Entry::Vacant(_) => Err(InfraError::SQLXError(RowNotFound)),
+            Entry::Vacant(_) => Err(InfraError::RemovedRecordError),
             Entry::Occupied(mut o) => {
                 *o.get_mut() = movie_clip;
                 Ok(())
@@ -79,7 +78,7 @@ impl MovieClipRepository for MockMovieClipRepository {
     }
     async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
         match self.map.lock().unwrap().remove(&id.to_uuid()) {
-            None => Err(InfraError::SQLXError(RowNotFound)),
+            None => Err(InfraError::RemovedRecordError),
             Some(_) => Ok(()),
         }
     }
@@ -276,7 +275,7 @@ mod test {
         )?;
 
         let res = repo.edit(movie_clip).await;
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
         Ok(())
     }
 
@@ -294,7 +293,7 @@ mod test {
         )?;
 
         let res = repo.remove_by_id(movie_clip.id()).await;
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
         Ok(())
     }
 }

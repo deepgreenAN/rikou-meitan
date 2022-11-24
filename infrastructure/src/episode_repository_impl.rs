@@ -36,7 +36,8 @@ UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
         .bind(episode.content())
         .bind(episode.id().to_uuid())
         .fetch_one(conn)
-        .await?;
+        .await
+        .map_err(|_| InfraError::RemovedRecordError)?;
         Ok(())
     }
     pub async fn all(conn: &mut PgConnection) -> Result<Vec<Episode>, InfraError> {
@@ -64,7 +65,8 @@ UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
         sqlx::query(r#"DELETE FROM episodes WHERE id = $1 RETURNING *"#)
             .bind(id.to_uuid())
             .fetch_one(conn)
-            .await?;
+            .await
+            .map_err(|_| InfraError::RemovedRecordError)?;
         Ok(())
     }
 }
@@ -300,7 +302,7 @@ mod test {
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
         let res = episode_sql_runner::edit(&mut transaction, episode).await;
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
 
         // ロールバック
         transaction.rollback().await?;
@@ -321,7 +323,7 @@ mod test {
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
         let res = episode_sql_runner::remove_by_id(&mut transaction, episode.id()).await;
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
 
         // ロールバック
         transaction.rollback().await?;

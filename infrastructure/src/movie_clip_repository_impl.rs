@@ -48,7 +48,8 @@ WHERE id = $5 RETURNING *
         .bind(movie_clip.like() as i32)
         .bind(movie_clip.id().to_uuid())
         .fetch_one(conn)
-        .await?;
+        .await
+        .map_err(|_| InfraError::RemovedRecordError)?;
 
         Ok(())
     }
@@ -103,7 +104,8 @@ DELETE FROM movie_clips WHERE id = $1 RETURNING *
         )
         .bind(id.to_uuid())
         .fetch_one(conn)
-        .await?;
+        .await
+        .map_err(|_| InfraError::RemovedRecordError)?;
         Ok(())
     }
 }
@@ -420,7 +422,7 @@ mod test {
         )?;
 
         let res = movie_clip_sql_runner::edit(&mut transaction, movie_clip).await;
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
 
         // ロールバック
         transaction.rollback().await?;
@@ -441,7 +443,7 @@ mod test {
         let res =
             movie_clip_sql_runner::remove_by_id(&mut transaction, MovieClipId::generate()).await;
 
-        assert_matches!(res, Err(InfraError::SQLXError(_)));
+        assert_matches!(res, Err(InfraError::RemovedRecordError));
 
         // ロールバック
         transaction.rollback().await?;
