@@ -12,6 +12,9 @@ pub enum InfraError {
     #[error("OtherSQLXError:{0}")]
     OtherSQLXError(String),
 
+    #[error("DecodeError:{0}")]
+    DBDecodeError(String),
+
     #[error("RemovedRecordError: Removed row accessed")]
     RemovedRecordError,
 }
@@ -57,7 +60,7 @@ impl From<sqlx::Error> for InfraError {
                 sqlx::Error::ColumnDecode { index, source }
             )),
             sqlx::Error::Decode(err) => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::Decode(err)))
+                InfraError::DBDecodeError(format!("{}", sqlx::Error::Decode(err)))
             }
             sqlx::Error::WorkerCrashed => {
                 InfraError::OtherSQLXError(format!("{}", sqlx::Error::WorkerCrashed))

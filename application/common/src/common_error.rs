@@ -11,6 +11,9 @@ pub enum AppCommonError {
     #[error("{0}")]
     OtherSQLXError(String),
 
+    #[error("{0}")]
+    DBDecodeError(String),
+
     #[error("RemovedRecordError: Removed row accessed")]
     RemovedRecordError,
 
@@ -45,6 +48,9 @@ mod from_errors_into_response {
                 )),
                 InfraError::OtherSQLXError(err) => {
                     AppCommonError::OtherSQLXError(format!("{}", InfraError::OtherSQLXError(err)))
+                }
+                InfraError::DBDecodeError(err) => {
+                    AppCommonError::DBDecodeError(format!("{}", InfraError::DBDecodeError(err)))
                 }
                 InfraError::RemovedRecordError => AppCommonError::RemovedRecordError,
             }

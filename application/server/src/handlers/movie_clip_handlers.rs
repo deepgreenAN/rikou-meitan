@@ -88,11 +88,11 @@ pub async fn order_by_create_date_range_movie_clips_handler(
 }
 
 pub async fn remove_by_id_movie_clip_handler(
-    movie_clip_id_res: Result<Path<MovieClipId>, PathRejection>,
+    id: Result<Path<MovieClipId>, PathRejection>,
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
 ) -> Result<(), AppCommonError> {
-    let movie_clip_id = movie_clip_id_res?.0;
-    let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(movie_clip_id);
+    let id = id?.0;
+    let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(id);
     movie_clip_usecases::remove_by_id_movie_clip_usecase(movie_clip_repo, cmd).await?;
     Ok(())
 }
@@ -131,11 +131,11 @@ mod test {
                 get(super::order_by_like_limit_movie_clips_handler),
             )
             .route(
-                "/movie_clip/order_date",
+                "/movie_clip/order_create_date",
                 get(super::order_by_create_date_range_movie_clips_handler),
             )
             .route(
-                "/movie_clip/:movie_clip_id_res",
+                "/movie_clip/:id",
                 delete(super::remove_by_id_movie_clip_handler),
             )
             .with_state(Arc::clone(&movie_clip_repo))
@@ -307,7 +307,7 @@ mod test {
 
         let request = Request::builder()
             .method(http::Method::GET)
-            .uri("/movie_clip/order_date?start=2022-11-19&end=2022-11-22")
+            .uri("/movie_clip/order_create_date?start=2022-11-19&end=2022-11-22")
             .body(Body::empty())
             .unwrap();
 
