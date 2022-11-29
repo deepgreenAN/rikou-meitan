@@ -3,29 +3,29 @@ use domain::movie_clip::{MovieClip, MovieClipId};
 use domain::Date;
 
 #[derive(new)]
-pub struct SaveMovieClipCommand {
+pub(crate) struct SaveMovieClipCommand {
     pub movie_clip: MovieClip,
 }
 
 #[derive(new)]
-pub struct EditMovieClipCommand {
+pub(crate) struct EditMovieClipCommand {
     pub movie_clip: MovieClip,
 }
 
-pub struct AllMovieClipCommand;
+pub(crate) struct AllMovieClipCommand;
 
 #[derive(new)]
-pub struct OrderByLikeLimitMovieClipCommand {
+pub(crate) struct OrderByLikeLimitMovieClipCommand {
     pub length: usize,
 }
 
 #[derive(new)]
-pub struct OrderByCreateDateRangeMovieClipCommand {
+pub(crate) struct OrderByCreateDateRangeMovieClipCommand {
     pub start: Date,
     pub end: Date,
 }
 
 #[derive(new)]
-pub struct RemoveByIdMovieClipCommand {
+pub(crate) struct RemoveByIdMovieClipCommand {
     pub id: MovieClipId,
 }

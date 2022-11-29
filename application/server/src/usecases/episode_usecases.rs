@@ -7,7 +7,7 @@ use domain::{episode::Episode, EpisodeRepository};
 use infrastructure::InfraError;
 use std::sync::Arc;
 
-async fn save_episode_usecase<T>(
+pub(crate) async fn save_episode_usecase<T>(
     repo: Arc<T>,
     cmd: SaveEpisodeCommand,
 ) -> Result<(), AppCommonError>
@@ -18,7 +18,7 @@ where
     Ok(())
 }
 
-async fn edit_episode_usecase<T>(
+pub(crate) async fn edit_episode_usecase<T>(
     repo: Arc<T>,
     cmd: EditEpisodeCommand,
 ) -> Result<(), AppCommonError>
@@ -29,7 +29,7 @@ where
     Ok(())
 }
 
-async fn all_episodes_usecase<T>(
+pub(crate) async fn all_episodes_usecase<T>(
     repo: Arc<T>,
     _cmd: AllEpisodeCommand,
 ) -> Result<Vec<Episode>, AppCommonError>
@@ -39,7 +39,7 @@ where
     Ok(repo.all().await?)
 }
 
-async fn order_by_date_range_episodes_usecase<T>(
+pub(crate) async fn order_by_date_range_episodes_usecase<T>(
     repo: Arc<T>,
     cmd: OrderByDateRangeEpisodeCommand,
 ) -> Result<Vec<Episode>, AppCommonError>
@@ -49,7 +49,7 @@ where
     Ok(repo.order_by_date_range(cmd.start, cmd.end).await?)
 }
 
-async fn remove_by_id_episode_usecase<T>(
+pub(crate) async fn remove_by_id_episode_usecase<T>(
     repo: Arc<T>,
     cmd: RemoveByIdEpisodeCommand,
 ) -> Result<(), AppCommonError>
@@ -71,8 +71,6 @@ mod test {
     use pretty_assertions::assert_eq;
     use rstest::{fixture, rstest};
     use std::sync::Arc;
-
-    use super::remove_by_id_episode_usecase;
 
     #[fixture]
     async fn episodes_and_saved_repo(

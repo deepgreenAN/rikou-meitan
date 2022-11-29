@@ -3,24 +3,24 @@ use domain::episode::{Episode, EpisodeId};
 use domain::Date;
 
 #[derive(new)]
-pub struct SaveEpisodeCommand {
+pub(crate) struct SaveEpisodeCommand {
     pub episode: Episode,
 }
 
 #[derive(new)]
-pub struct EditEpisodeCommand {
+pub(crate) struct EditEpisodeCommand {
     pub episode: Episode,
 }
 
-pub struct AllEpisodeCommand;
+pub(crate) struct AllEpisodeCommand;
 
 #[derive(new)]
-pub struct OrderByDateRangeEpisodeCommand {
+pub(crate) struct OrderByDateRangeEpisodeCommand {
     pub start: Date,
     pub end: Date,
 }
 
 #[derive(new)]
-pub struct RemoveByIdEpisodeCommand {
+pub(crate) struct RemoveByIdEpisodeCommand {
     pub id: EpisodeId,
 }

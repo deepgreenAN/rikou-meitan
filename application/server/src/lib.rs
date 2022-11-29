@@ -1,3 +1,3 @@
 mod commands;
-mod handlers;
+pub mod handlers;
 mod usecases;

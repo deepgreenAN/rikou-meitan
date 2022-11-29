@@ -7,7 +7,7 @@ use domain::{movie_clip::MovieClip, MovieClipRepository};
 use infrastructure::InfraError;
 use std::sync::Arc;
 
-async fn save_movie_clip_usecase<T>(
+pub(crate) async fn save_movie_clip_usecase<T>(
     repo: Arc<T>,
     cmd: SaveMovieClipCommand,
 ) -> Result<(), AppCommonError>
@@ -18,7 +18,7 @@ where
     Ok(())
 }
 
-async fn edit_movie_clip_usecase<T>(
+pub(crate) async fn edit_movie_clip_usecase<T>(
     repo: Arc<T>,
     cmd: EditMovieClipCommand,
 ) -> Result<(), AppCommonError>
@@ -29,7 +29,7 @@ where
     Ok(())
 }
 
-async fn all_movie_clips_usecase<T>(
+pub(crate) async fn all_movie_clips_usecase<T>(
     repo: Arc<T>,
     _cmd: AllMovieClipCommand,
 ) -> Result<Vec<MovieClip>, AppCommonError>
@@ -39,7 +39,7 @@ where
     Ok(repo.all().await?)
 }
 
-async fn order_by_like_limit_movie_clips_usecase<T>(
+pub(crate) async fn order_by_like_limit_movie_clips_usecase<T>(
     repo: Arc<T>,
     cmd: OrderByLikeLimitMovieClipCommand,
 ) -> Result<Vec<MovieClip>, AppCommonError>
@@ -49,7 +49,7 @@ where
     Ok(repo.order_by_like_limit(cmd.length).await?)
 }
 
-async fn order_by_create_date_range_movie_clips_usecase<T>(
+pub(crate) async fn order_by_create_date_range_movie_clips_usecase<T>(
     repo: Arc<T>,
     cmd: OrderByCreateDateRangeMovieClipCommand,
 ) -> Result<Vec<MovieClip>, AppCommonError>
@@ -59,7 +59,7 @@ where
     Ok(repo.order_by_create_date_range(cmd.start, cmd.end).await?)
 }
 
-async fn remove_by_id_movie_clip_usecase<T>(
+pub(crate) async fn remove_by_id_movie_clip_usecase<T>(
     repo: Arc<T>,
     cmd: RemoveByIdMovieClipCommand,
 ) -> Result<(), AppCommonError>
