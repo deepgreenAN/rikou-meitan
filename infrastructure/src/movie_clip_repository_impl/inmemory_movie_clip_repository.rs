@@ -12,13 +12,13 @@ use uuid::Uuid;
 // -------------------------------------------------------------------------------------------------
 // # MockMovieClipRepository
 
-/// MovieClipのモックリポジトリ
+/// 即席のMovieClipリポジトリ
 #[derive(Default)]
-pub struct MockMovieClipRepository {
+pub struct InMemoryMovieClipRepository {
     map: Arc<Mutex<HashMap<Uuid, MovieClip>>>,
 }
 
-impl MockMovieClipRepository {
+impl InMemoryMovieClipRepository {
     pub fn new() -> Self {
         Self {
             map: Arc::new(Mutex::new(HashMap::new())),
@@ -27,7 +27,7 @@ impl MockMovieClipRepository {
 }
 
 #[async_trait]
-impl MovieClipRepository for MockMovieClipRepository {
+impl MovieClipRepository for InMemoryMovieClipRepository {
     type Error = InfraError;
     async fn save(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         self.map
@@ -86,7 +86,7 @@ impl MovieClipRepository for MockMovieClipRepository {
 
 #[cfg(test)]
 mod test {
-    use super::MockMovieClipRepository;
+    use super::InMemoryMovieClipRepository;
     use crate::InfraError;
     use assert_matches::assert_matches;
     use domain::movie_clip::MovieClip;
@@ -129,7 +129,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut movie_clips = movie_clips?;
 
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
@@ -151,7 +151,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut movie_clips = movie_clips?;
 
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
@@ -192,7 +192,7 @@ mod test {
             })
             .collect::<Vec<_>>();
 
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
@@ -214,7 +214,7 @@ mod test {
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
         let mut movie_clips = movie_clips?;
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
@@ -243,7 +243,7 @@ mod test {
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
         let mut movie_clips = movie_clips?;
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         for i in movie_clips.iter().cloned() {
             repo.save(i).await?;
@@ -264,7 +264,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_movie_clip_edit_no_exists() -> Result<(), InfraError> {
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         let movie_clip = MovieClip::new(
             "Another Title".to_string(),
@@ -282,7 +282,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_movie_clip_remove_no_exists() -> Result<(), InfraError> {
-        let repo = MockMovieClipRepository::new();
+        let repo = InMemoryMovieClipRepository::new();
 
         let movie_clip = MovieClip::new(
             "Another Title".to_string(),

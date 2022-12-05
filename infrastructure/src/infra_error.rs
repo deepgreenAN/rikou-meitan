@@ -1,7 +1,7 @@
 use domain::DomainError;
 
 /// インフラに関するエラー
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum InfraError {
     #[error(transparent)]
     DomainError(#[from] DomainError),
@@ -14,6 +14,9 @@ pub enum InfraError {
 
     #[error("DecodeError:{0}")]
     DBDecodeError(String),
+
+    #[error("ConflictError: duplicated row inserted")]
+    ConflictError,
 
     #[error("RemovedRecordError: Removed row accessed")]
     RemovedRecordError,

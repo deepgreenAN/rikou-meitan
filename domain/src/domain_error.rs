@@ -1,5 +1,5 @@
 /// ドメインに関するエラー
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum DomainError {
     #[error("DomainError: Invalid Domain Value:{0}")]
     DomainLogicError(String),
@@ -18,7 +18,7 @@ pub enum DomainError {
 }
 
 /// ジェネリックなパースに関するエラー
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 
 pub enum GenericParseError {
     #[error(transparent)]

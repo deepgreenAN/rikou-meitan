@@ -12,12 +12,13 @@ use uuid::Uuid;
 // -------------------------------------------------------------------------------------------------
 // # MockEpisodeRepository
 
+/// 即席のEpisodeリポジトリ
 #[derive(Default)]
-pub struct MockEpisodeRepository {
+pub struct InMemoryEpisodeRepository {
     map: Arc<Mutex<HashMap<Uuid, Episode>>>,
 }
 
-impl MockEpisodeRepository {
+impl InMemoryEpisodeRepository {
     pub fn new() -> Self {
         Self {
             map: Arc::new(Mutex::new(HashMap::new())),
@@ -26,7 +27,7 @@ impl MockEpisodeRepository {
 }
 
 #[async_trait]
-impl EpisodeRepository for MockEpisodeRepository {
+impl EpisodeRepository for InMemoryEpisodeRepository {
     type Error = InfraError;
     async fn save(&self, episode: Episode) -> Result<(), InfraError> {
         self.map
@@ -78,7 +79,7 @@ impl EpisodeRepository for MockEpisodeRepository {
 
 #[cfg(test)]
 mod test {
-    use super::MockEpisodeRepository;
+    use super::InMemoryEpisodeRepository;
     use crate::InfraError;
     use assert_matches::assert_matches;
     use domain::Date;
@@ -102,7 +103,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut episodes = episodes?;
 
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
         for episode in episodes.iter().cloned() {
             repo.save(episode).await?;
         }
@@ -123,7 +124,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut episodes = episodes?;
 
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
         for episode in episodes.iter().cloned() {
             repo.save(episode).await?;
         }
@@ -151,7 +152,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut episodes = episodes?;
 
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
         for episode in episodes.iter().cloned() {
             repo.save(episode).await?;
         }
@@ -178,7 +179,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut episodes = episodes?;
 
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
         for episode in episodes.iter().cloned() {
             repo.save(episode).await?;
         }
@@ -198,7 +199,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_episode_edit_no_exists() -> Result<(), InfraError> {
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
 
@@ -211,7 +212,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_episode_remove_no_exists() -> Result<(), InfraError> {
-        let repo = MockEpisodeRepository::new();
+        let repo = InMemoryEpisodeRepository::new();
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
 

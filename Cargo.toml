@@ -9,3 +9,4 @@
 
 [workspace]
 members = ["app","application/server","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
+exclude = ["presentation", "application/frontend"]
