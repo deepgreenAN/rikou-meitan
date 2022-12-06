@@ -39,7 +39,7 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
 
     async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         match self.map.lock().unwrap().entry(movie_clip.id().to_uuid()) {
-            Entry::Vacant(_) => Err(InfraError::RemovedRecordError),
+            Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 *o.get_mut() = movie_clip;
                 Ok(())
@@ -78,7 +78,7 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
     }
     async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
         match self.map.lock().unwrap().remove(&id.to_uuid()) {
-            None => Err(InfraError::RemovedRecordError),
+            None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
         }
     }
@@ -275,7 +275,7 @@ mod test {
         )?;
 
         let res = repo.edit(movie_clip).await;
-        assert_matches!(res, Err(InfraError::RemovedRecordError));
+        assert_matches!(res, Err(InfraError::NoRecordError));
         Ok(())
     }
 
@@ -293,7 +293,7 @@ mod test {
         )?;
 
         let res = repo.remove_by_id(movie_clip.id()).await;
-        assert_matches!(res, Err(InfraError::RemovedRecordError));
+        assert_matches!(res, Err(InfraError::NoRecordError));
         Ok(())
     }
 }

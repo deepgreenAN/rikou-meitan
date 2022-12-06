@@ -8,5 +8,5 @@
 # [dependencies]
 
 [workspace]
-members = ["app","application/server","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
-exclude = ["presentation", "application/frontend"]
+members = ["app","application/serverside","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
+exclude = ["presentation", "application/frontend", "application/integration_test"]

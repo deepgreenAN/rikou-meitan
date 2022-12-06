@@ -255,7 +255,7 @@ mod test {
                 .expect::<MockMovieClipRepositoryImpl>()
                 .withf(move |_, cmd| cmd.movie_clip == cloned_movie_clip)
                 .times(1)
-                .return_const(Err(AppCommonError::RemovedRecordError));
+                .return_const(Err(AppCommonError::NoRecordError));
 
             let request = Request::builder()
                 .method(http::Method::PATCH)
@@ -270,7 +270,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::RemovedRecordError);
+            assert_matches!(err, AppCommonError::NoRecordError);
         }
     }
 
@@ -418,7 +418,7 @@ mod test {
                 .expect::<MockMovieClipRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == movie_clip_id)
                 .times(1)
-                .return_const(Err(AppCommonError::RemovedRecordError));
+                .return_const(Err(AppCommonError::NoRecordError));
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
@@ -432,7 +432,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::RemovedRecordError);
+            assert_matches!(err, AppCommonError::NoRecordError);
         }
     }
 }

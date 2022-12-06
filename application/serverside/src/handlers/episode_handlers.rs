@@ -1,4 +1,7 @@
 use crate::commands::episode_commands;
+use common::AppCommonError;
+use domain::episode::{Episode, EpisodeId};
+use domain::Date;
 
 /// usecaseについてのダブル
 #[cfg(not(test))]
@@ -6,10 +9,6 @@ use crate::usecases::episode_usecases;
 
 #[cfg(test)]
 use crate::usecases::mock_episode_usecases as episode_usecases;
-
-use common::AppCommonError;
-use domain::episode::{Episode, EpisodeId};
-use domain::Date;
 
 /// AppStateについてのダブル
 #[cfg(all(not(test), feature = "inmemory"))]
@@ -213,7 +212,7 @@ mod test {
             mock_ctx_err
                 .expect::<MockEpisodeRepositoryImpl>()
                 .withf(move |_, cmd| cmd.episode == cloned_episode)
-                .return_const(Err(AppCommonError::RemovedRecordError));
+                .return_const(Err(AppCommonError::NoRecordError));
 
             let request = Request::builder()
                 .method(http::Method::PATCH)
@@ -228,7 +227,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::RemovedRecordError);
+            assert_matches!(err, AppCommonError::NoRecordError);
         }
     }
 
@@ -320,7 +319,7 @@ mod test {
             mock_ctx_err
                 .expect::<MockEpisodeRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == episode_id)
-                .return_const(Err(AppCommonError::RemovedRecordError));
+                .return_const(Err(AppCommonError::NoRecordError));
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
@@ -334,7 +333,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::RemovedRecordError);
+            assert_matches!(err, AppCommonError::NoRecordError);
         }
     }
 }

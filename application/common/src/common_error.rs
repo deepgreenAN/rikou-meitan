@@ -16,11 +16,11 @@ pub enum AppCommonError {
     #[error("{0}")]
     DBDecodeError(String),
 
-    #[error("ConflictError:tyied to insert duplicated row")]
+    #[error("ConflictError:tried to insert duplicated row")]
     ConflictError,
 
-    #[error("RemovedRecordError: Removed row accessed")]
-    RemovedRecordError,
+    #[error("NoRecordError: not existing row accessed")]
+    NoRecordError,
 
     #[error("JsonRejectionError: {0}")]
     JsonRejectionError(String),
@@ -65,7 +65,7 @@ mod from_server_errors_into_response {
                     AppCommonError::DBDecodeError(format!("{}", InfraError::DBDecodeError(err)))
                 }
                 InfraError::ConflictError => AppCommonError::ConflictError,
-                InfraError::RemovedRecordError => AppCommonError::RemovedRecordError,
+                InfraError::NoRecordError => AppCommonError::NoRecordError,
             }
         }
     }

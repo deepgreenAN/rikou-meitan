@@ -127,11 +127,11 @@ mod test {
             .expect_edit()
             .with(predicate::eq(episode.clone()))
             .times(1)
-            .return_const(Err(InfraError::RemovedRecordError));
+            .return_const(Err(InfraError::NoRecordError));
 
         let cmd = episode_commands::EditEpisodeCommand::new(episode.clone());
         let res_err = episode_usecases::edit_episode(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::RemovedRecordError));
+        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 
     #[tokio::test]
@@ -188,10 +188,10 @@ mod test {
         mock_repo_err
             .expect_remove_by_id()
             .with(predicate::eq(episode_id))
-            .return_const(Err(InfraError::RemovedRecordError));
+            .return_const(Err(InfraError::NoRecordError));
 
         let cmd = episode_commands::RemoveByIdEpisodeCommand::new(episode_id);
         let res_err = episode_usecases::remove_by_id_episode(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::RemovedRecordError));
+        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 }

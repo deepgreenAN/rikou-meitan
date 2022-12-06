@@ -153,11 +153,11 @@ mod test {
             .expect_edit()
             .with(predicate::eq(movie_clip.clone()))
             .times(1)
-            .return_const(Err(InfraError::RemovedRecordError));
+            .return_const(Err(InfraError::NoRecordError));
 
         let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip.clone());
         let res_err = movie_clip_usecases::edit_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::RemovedRecordError));
+        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 
     #[tokio::test]
@@ -258,11 +258,11 @@ mod test {
         mock_repo_err
             .expect_remove_by_id()
             .with(predicate::eq(movie_clip_id))
-            .return_const(Err(InfraError::RemovedRecordError));
+            .return_const(Err(InfraError::NoRecordError));
 
         let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(movie_clip_id);
         let res_err =
             movie_clip_usecases::remove_by_id_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::RemovedRecordError));
+        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 }

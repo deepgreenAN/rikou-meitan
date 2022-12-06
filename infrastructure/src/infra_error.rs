@@ -18,8 +18,8 @@ pub enum InfraError {
     #[error("ConflictError: duplicated row inserted")]
     ConflictError,
 
-    #[error("RemovedRecordError: Removed row accessed")]
-    RemovedRecordError,
+    #[error("NoRecordError: Removed row accessed")]
+    NoRecordError,
 }
 
 impl From<sqlx::Error> for InfraError {

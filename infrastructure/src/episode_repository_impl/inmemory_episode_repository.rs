@@ -38,7 +38,7 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
     }
     async fn edit(&self, episode: Episode) -> Result<(), InfraError> {
         match self.map.lock().unwrap().entry(episode.id().to_uuid()) {
-            Entry::Vacant(_) => Err(InfraError::RemovedRecordError),
+            Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 *o.get_mut() = episode;
                 Ok(())
@@ -71,7 +71,7 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
     }
     async fn remove_by_id(&self, id: EpisodeId) -> Result<(), InfraError> {
         match self.map.lock().unwrap().remove(&id.to_uuid()) {
-            None => Err(InfraError::RemovedRecordError),
+            None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
         }
     }
@@ -204,7 +204,7 @@ mod test {
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
 
         let res = repo.edit(episode).await;
-        assert_matches!(res, Err(InfraError::RemovedRecordError));
+        assert_matches!(res, Err(InfraError::NoRecordError));
 
         Ok(())
     }
@@ -217,7 +217,7 @@ mod test {
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
 
         let res = repo.remove_by_id(episode.id()).await;
-        assert_matches!(res, Err(InfraError::RemovedRecordError));
+        assert_matches!(res, Err(InfraError::NoRecordError));
 
         Ok(())
     }

@@ -25,9 +25,19 @@ impl Clone for AppState {
     }
 }
 
+#[derive(Default)]
 pub struct InMemoryAppState {
     pub movie_clip_repo: Arc<InMemoryMovieClipRepository>,
     pub episode_repo: Arc<InMemoryEpisodeRepository>,
+}
+
+impl InMemoryAppState {
+    pub fn new() -> Self {
+        Self {
+            movie_clip_repo: Arc::new(InMemoryMovieClipRepository::new()),
+            episode_repo: Arc::new(InMemoryEpisodeRepository::new()),
+        }
+    }
 }
 
 impl Clone for InMemoryAppState {
