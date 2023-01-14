@@ -1,0 +1,7 @@
+[build]
+
+# The index HTML file to drive the bundling process.
+target = "trunk_index.html"
+
+# The output dir for all final assets.
+dist = "dist"

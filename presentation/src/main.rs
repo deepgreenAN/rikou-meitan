@@ -1,14 +1,14 @@
-use yew::prelude::*;
+#![allow(clippy::derive_partial_eq_without_eq)]
+#![allow(non_snake_case)]
 
-#[function_component(App)]
-fn app() -> Html {
-    html! {
-        <>
-        {"hello world!"}
-        </>
-    }
+use dioxus::prelude::*;
+
+fn App(cx: Scope) -> Element {
+    cx.render(rsx! {
+        div { "hello, wasm!" }
+    })
 }
 
 fn main() {
-    yew::Renderer::<App>::new().render();
+    dioxus::web::launch(App);
 }

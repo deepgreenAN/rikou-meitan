@@ -6,5 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew = { version = "0.20", features = ["csr"]}
-wasm-bindgen-futures = "0.4.*"
+domain = { path = "../domain" }
+frontend = { path = "../application/frontend" }
+dioxus = { version = "0.2.4", features = ["web"] }
+
+
+[profile.release]
+# less code to include into binary
+panic = 'abort'
+# optimization over all codebase ( better optimization, slower build )
+codegen-units = 1
+# optimization for size ( more aggressive )
+opt-level = 'z'
+# link time optimization using using whole-program analysis
+lto = true
