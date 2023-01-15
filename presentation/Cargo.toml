@@ -9,6 +9,8 @@ edition = "2021"
 domain = { path = "../domain" }
 frontend = { path = "../application/frontend" }
 dioxus = { version = "0.2.4", features = ["web"] }
+gloo-events = "^0.1"
+gloo-utils = "^0.1"
 
 
 [profile.release]
