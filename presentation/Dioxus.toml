@@ -21,7 +21,7 @@ title = "example"
 [web.watcher]
 
 # when watcher trigger, regenerate the `index.html`
-reload_html = true
+reload_html = false
 
 # which files or dirs will be watcher monitoring
 watch_path = ["examples"]

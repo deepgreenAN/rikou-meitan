@@ -11,6 +11,13 @@ frontend = { path = "../application/frontend" }
 dioxus = { version = "0.2.4", features = ["web"] }
 gloo-events = "^0.1"
 gloo-utils = "^0.1"
+log = "^0.4"
+wasm-logger = "^0.2"
+
+[dev-dependencies]
+# Examples
+time = { version = "^0.3", features = ["parsing", "macros"] }
+thiserror = "^1"
 
 
 [profile.release]
