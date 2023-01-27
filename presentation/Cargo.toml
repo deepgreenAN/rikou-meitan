@@ -8,11 +8,15 @@ edition = "2021"
 [dependencies]
 domain = { path = "../domain" }
 frontend = { path = "../application/frontend" }
+wasm-bindgen = "^0.2"
+web-sys = { version = "^0.3", features = ["HtmlElement"] }
 dioxus = { version = "0.2.4", features = ["web"] }
 gloo-events = "^0.1"
 gloo-utils = "^0.1"
 log = "^0.4"
 wasm-logger = "^0.2"
+plyr = { version = "^0.0.3" }
+gloo-intersection = { git = "https://github.com/deepgreenAN/intersection-wrapper" }
 
 [dev-dependencies]
 # Examples
