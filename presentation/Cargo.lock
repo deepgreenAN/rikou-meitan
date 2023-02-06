@@ -519,6 +519,7 @@ dependencies = [
  "frontend",
  "gloo-events",
  "gloo-intersection",
+ "gloo-timers",
  "gloo-utils",
  "log",
  "plyr",
