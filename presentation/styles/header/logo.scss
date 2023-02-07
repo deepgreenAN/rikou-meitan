@@ -1,0 +1,29 @@
+#title-logo {
+    width: 25rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    #bottle-svg {
+        width: 8rem;
+    }
+
+    #double-heart-svg {
+        width: 0rem;
+        transition: width 0.5s;
+    }
+
+    #moon-svg {
+        width: 10rem;
+    }
+
+    #logo {
+        width: 20rem;
+    }
+}
+
+#title-logo:hover {
+    #double-heart-svg {
+        width: 8rem;
+    }
+}
