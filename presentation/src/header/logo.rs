@@ -1,6 +1,14 @@
 use dioxus::prelude::*;
+use fermi::use_atom_state;
 
 pub fn TitleLogo(cx: Scope) -> Element {
+    let is_dark_mode = use_atom_state(&cx, crate::IS_DARK_MODE);
+    // ロゴのカラー
+    let logo_color = match is_dark_mode.get() {
+        true => "#faeba7",
+        false => "#3d003c",
+    };
+
     let bottle_svg = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/images/release/bottle-blackandpink-edge.svg"
@@ -13,9 +21,9 @@ pub fn TitleLogo(cx: Scope) -> Element {
         env!("CARGO_MANIFEST_DIR"),
         "/images/release/double-heart.svg"
     ));
-    let dark_logo = include_str!(concat!(
+    let logo_text = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/images/release/title-logo-dark.svg"
+        "/images/release/title-logo.svg"
     ));
 
     cx.render(rsx! {
@@ -29,8 +37,8 @@ pub fn TitleLogo(cx: Scope) -> Element {
             div { id: "moon-svg",
                 dangerous_inner_html: "{moon_svg}"
             }
-            div { id: "logo",
-                dangerous_inner_html: "{dark_logo}"
+            div { id: "logo", color: "{logo_color}",
+                dangerous_inner_html: "{logo_text}"
             }
         }
     })

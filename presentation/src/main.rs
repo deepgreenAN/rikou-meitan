@@ -5,6 +5,10 @@ mod header;
 
 use crate::header::Header;
 use dioxus::prelude::*;
+use fermi::*;
+
+// Flag for Dark/Light mode.
+pub static IS_DARK_MODE: Atom<bool> = |_| false;
 
 fn App(cx: Scope) -> Element {
     cx.render(rsx! {
