@@ -1,1 +1,20 @@
 @use "./header.scss";
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    // dark
+    --dark-primary-color: #fffbeb;
+    --dark-primary-bg-color: black;
+
+    // light
+    --light-primary-color: #2d002c;
+    --light-primary-bg-color: orange;
+
+    // var
+    --primary-color: var(--light-primary-color);
+    --primary-bg-color: var(--light-primary-bg-color);
+}

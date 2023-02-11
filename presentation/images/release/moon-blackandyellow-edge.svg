@@ -52,7 +52,7 @@
          fill="#ffd983"
          d="M 10.973322,9.8027323 C 6.163993,10.367761 2.6473896,7.2782854 2.9688195,2.1824926 c -1.98783797,2.2188619 -1.869855,5.628 0.3028125,7.6961085 2.1724094,2.0683799 5.5832322,2.0189019 7.70169,-0.075869 z"
          id="path4360"
-         style="fill:#f9e97a;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#f9e97a;fill-opacity:1;stroke:currentColor;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
   </g>
 </svg>

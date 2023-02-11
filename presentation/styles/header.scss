@@ -1,33 +1,138 @@
-#title-logo {
-    width: 25rem;
+#header-container {
+    width: 100%;
+    height: 8rem;
+    background-color: rgba(166, 166, 166, 0.4);
     display: flex;
-    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
+    position: relative;
 
-    #bottle-svg {
-        width: 8rem;
+    // 変数
+    $title_logo_ml: 32px; // title-logoのmargin-left
+    $title_logo_w: 25rem; // title-logoのwidth
+
+    #header-left {
+        #title-logo {
+            color: var(--primary-color);
+            margin-left: $title_logo_ml;
+            width: $title_logo_w;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            #bottle-svg {
+                width: 8rem;
+            }
+
+            #double-heart-svg {
+                width: 0rem;
+                transition: width 0.5s;
+            }
+
+            #moon-svg {
+                width: 10rem;
+            }
+
+            #logo {
+                width: 20rem;
+            }
+
+            &:hover {
+                #double-heart-svg {
+                    width: 4rem;
+                }
+            }
+        }
+
     }
 
-    #double-heart-svg {
-        width: 0rem;
-        transition: width 0.5s;
+    #header-right {
+        #mode-change-button {
+            margin-right: 32px;
+            width: 3rem;
+            height: 3rem;
+            position: relative;
+
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+
+
+            #mode-change-cover {
+                position: absolute;
+                top: -0.7rem;
+                left: -0.6rem;
+                z-index: 2;
+                width: 140%;
+                height: 140%;
+                border-radius: 50%;
+                border-color: var(--primary-color);
+                border-width: 0px;
+                border-style: solid;
+                background-color: transparent;
+                opacity: 0.2;
+            }
+
+            #mode-change-svg {
+                z-index: 1;
+            }
+
+            &:hover {
+                #mode-change-cover {
+                    border-width: 2px;
+                }
+
+                // #mode-change-svg {
+                //     opacity: 0.7;
+                // }
+            }
+        }
     }
 
-    #moon-svg {
-        width: 10rem;
+    $header_menu_item_w : 8rem; // header-menu-itemのwidth
+    $header_menu_item_num: 2; // header-menu-itemの数
+
+    #header-menu {
+        position: absolute;
+        display: flex;
+        bottom: 0;
+        left: calc($title_logo_ml + $title_logo_w);
+        width: calc($header_menu_item_num * $header_menu_item_w);
+
+        .header-menu-item {
+            cursor: pointer;
+            width: $header_menu_item_w;
+            color: var(--primary-color);
+
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            &:hover {
+                opacity: 0.5;
+            }
+        }
+
     }
 
-    #logo {
-        width: 20rem;
-    }
-}
+    // header-menuが存在する最小画面サイズ
+    $header_menu_min_screen: calc($title_logo_ml + $title_logo_w + $header_menu_item_num * $header_menu_item_w);
 
-#title-logo:hover {
-    #double-heart-svg {
-        width: 8rem;
+    @media screen and (max-width: $header_menu_min_screen) {
+        #header-menu {
+            visibility: hidden;
+        }
     }
-}
 
-#mode-change-button {
-    width: 3rem;
+    #top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0.2rem;
+        background: linear-gradient(to right, #21ff6c, #ff4984);
+    }
 }

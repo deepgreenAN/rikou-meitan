@@ -9,7 +9,10 @@ edition = "2021"
 domain = { path = "../domain" }
 frontend = { path = "../application/frontend" }
 wasm-bindgen = "^0.2"
-web-sys = { version = "^0.3", features = ["HtmlElement"] }
+web-sys = { version = "^0.3", features = [
+    "HtmlElement",
+    "CssStyleDeclaration",
+] }
 dioxus = { version = "0.2.4", features = ["web"] }
 fermi = "0.2.1"
 gloo-events = "^0.1"
