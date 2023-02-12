@@ -15,7 +15,7 @@ pub fn TitleLogo(cx: Scope) -> Element {
     ));
     let logo_text = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/images/release/title-logo.svg"
+        "/images/release/logo-text.svg"
     ));
 
     cx.render(rsx! {
@@ -29,7 +29,7 @@ pub fn TitleLogo(cx: Scope) -> Element {
             div { id: "moon-svg",
                 dangerous_inner_html: "{moon_svg}"
             }
-            div { id: "logo",
+            div { id: "logo-text-svg",
                 dangerous_inner_html: "{logo_text}"
             }
         }

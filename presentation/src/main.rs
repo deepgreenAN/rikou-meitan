@@ -1,8 +1,11 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(non_snake_case)]
 
+mod background;
 mod header;
+pub mod utils;
 
+use crate::background::Background;
 use crate::header::Header;
 use dioxus::prelude::*;
 use fermi::*;
@@ -11,8 +14,13 @@ use fermi::*;
 pub static IS_DARK_MODE: Atom<bool> = |_| false;
 
 fn App(cx: Scope) -> Element {
+    utils::use_dark_mode(cx);
     cx.render(rsx! {
-        Header{}
+        Background{
+            Header{},
+            div{id: "contents-container"}
+        }
+
     })
 }
 

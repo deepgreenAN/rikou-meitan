@@ -1,0 +1,56 @@
+#background-container {
+    position: absolute;
+    width: 100%;
+    // heightは子要素に依存
+    z-index: -4;
+
+    #background-grad {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: -3;
+
+        &.background-grad-dark {
+            background: linear-gradient(45deg, #373000, #210007);
+            opacity: 1.0;
+        }
+
+        &.background-grad-light {
+            background: linear-gradient(45deg, #D44968, #F9E97A);
+            opacity: 0.5;
+        }
+
+    }
+
+    #background-pattern {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        background-repeat: repeat;
+
+
+        &.background-pattern-dark {
+            background-image: url("grid-pattern-white.svg");
+            opacity: 0.1;
+        }
+
+        &.background-pattern-light {
+            background-image: url("grid-pattern-black.svg");
+            opacity: 0.05;
+        }
+
+    }
+
+    // #background-svg {
+    //     position: absolute;
+    //     width: 100%;
+    //     z-index: -2;
+    //     background-color: transparent;
+
+    //     svg {
+    //         width: 100%;
+    //     }
+    // }
+
+}
