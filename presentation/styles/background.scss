@@ -1,6 +1,8 @@
 #background-container {
     position: absolute;
     width: 100%;
+    -ms-scroll-chaining: none;
+    overscroll-behavior: none;
     // heightは子要素に依存
     z-index: -4;
 

@@ -1,6 +1,7 @@
-@use "./header.scss";
 @use "./background.scss";
+@use "./header.scss";
 @use "./contents.scss";
+@use "./footer.scss";
 
 * {
     margin: 0;
@@ -10,13 +11,23 @@
 :root {
     // dark
     --dark-primary-color: #fffbeb;
-    --dark-primary-bg-color: black;
+    --dark-primary-color-rgb: 255, 251, 235;
+    --dark-primary-bg-color: #2d002c;
+    --dark-primary-bg-color-rgb: 45, 0, 44;
 
     // light
     --light-primary-color: #2d002c;
-    --light-primary-bg-color: orange;
+    --light-primary-color-rgb: 45, 0, 44;
+    --light-primary-bg-color: #fffbeb;
+    --light-primary-bg-color-rgb: 255, 251, 235;
 
     // var
     --primary-color: var(--light-primary-color);
+    --primary-color-rgb: var(--light-primary-color-rgb);
     --primary-bg-color: var(--light-primary-bg-color);
+    --primary-bg-color-rgb: var(--light-primary-bg-color-rgb);
+}
+
+body {
+    background-color: var(--primary-bg-color);
 }

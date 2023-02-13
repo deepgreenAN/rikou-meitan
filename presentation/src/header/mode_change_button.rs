@@ -25,8 +25,9 @@ pub fn ModeChangeButton(cx: Scope) -> Element {
                 });
 
             },
-            div { id: "mode-change-cover"}
-            div { id: "mode-change-svg", dangerous_inner_html: "{button_svg}" }
+            div { id: "mode-change-cover",
+                div { id: "mode-change-svg", dangerous_inner_html: "{button_svg}" }
+            }
         }
     })
 }

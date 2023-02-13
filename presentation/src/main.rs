@@ -2,10 +2,13 @@
 #![allow(non_snake_case)]
 
 mod background;
+mod footer;
 mod header;
+// mod toc;
 pub mod utils;
 
 use crate::background::Background;
+use crate::footer::Footer;
 use crate::header::Header;
 use dioxus::prelude::*;
 use fermi::*;
@@ -17,8 +20,9 @@ fn App(cx: Scope) -> Element {
     utils::use_dark_mode(cx);
     cx.render(rsx! {
         Background{
-            Header{},
+            Header{}
             div{id: "contents-container"}
+            Footer{}
         }
 
     })

@@ -13,7 +13,13 @@ pub fn set_dark_mode(is_dark_mode: bool) {
                 .set_property("--primary-color", "var(--dark-primary-color)")
                 .unwrap_throw();
             root_style
+                .set_property("--primary-color-rgb", "var(--dark-primary-color-rgb)")
+                .unwrap_throw();
+            root_style
                 .set_property("--primary-bg-color", "var(--dark-primary-bg-color)")
+                .unwrap_throw();
+            root_style
+                .set_property("--primary-bg-color-rgb", "var(--dark-primary-bg-color-rgb)")
                 .unwrap_throw();
         }
         false => {
@@ -22,7 +28,16 @@ pub fn set_dark_mode(is_dark_mode: bool) {
                 .set_property("--primary-color", "var(--light-primary-color)")
                 .unwrap_throw();
             root_style
+                .set_property("--primary-color-rgb", "var(--light-primary-color-rgb)")
+                .unwrap_throw();
+            root_style
                 .set_property("--primary-bg-color", "var(--light-primary-bg-color)")
+                .unwrap_throw();
+            root_style
+                .set_property(
+                    "--primary-bg-color-rgb",
+                    "var(--light-primary-bg-color-rgb)",
+                )
                 .unwrap_throw();
         }
     }

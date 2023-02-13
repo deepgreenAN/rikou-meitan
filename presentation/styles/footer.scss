@@ -1,0 +1,37 @@
+#footer-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 2rem;
+    color: var(--primary-bg-color);
+    background-color: var(--primary-color);
+    opacity: 0.8;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-content: center;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+
+    #footer-center {
+        min-height: 100%;
+
+        #copy-right {
+            margin-right: 2rem;
+        }
+
+        a {
+            color: #1CACF4;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
