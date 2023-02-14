@@ -10,7 +10,7 @@ pub use hidden_menu::{HiddenMenu, HiddenMenuItem};
 use logo::TitleLogo;
 pub use mode_change_button::ModeChangeButton;
 
-use dioxus::prelude::*;
+use dioxus::{prelude::*, router::Link};
 use gloo_events::{EventListener, EventListenerOptions};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -40,6 +40,7 @@ pub fn Header(cx: Scope) -> Element {
             ]));
         } else {
             scroll_rock_state.take(); // 破棄
+                                      // scroll_rock_state.set(None);
         }
     };
 
@@ -58,15 +59,34 @@ pub fn Header(cx: Scope) -> Element {
             // 以下はabsolute
             div { id: "top-bar"}
             HeaderMenu{
-                HeaderMenuItem{"メニュー1"}
-                HeaderMenuItem{"メニュー2"}
+                HeaderMenuItem{Link{ to:"/", "ホーム"}}
+                HeaderMenuItem{Link{ to:"/episode", "エピソード"}}
+                HeaderMenuItem{Link{ to:"/clip", "クリップ"}}
             }
             is_hidden_menu_open.get().then(||{
                 rsx! {
                     HiddenMenu{
-                        HiddenMenuItem{"メニュー1"}
-                        HiddenMenuItem{"メニュー2"}
-                        HiddenMenuItem{"メニュー3"}
+                        HiddenMenuItem{
+                            onclick: move |_| {
+                                is_hidden_menu_open.set(false);
+                                set_scroll_rock(false);
+                            },
+                            Link{ to:"/","ホーム"}
+                        }
+                        HiddenMenuItem{
+                            onclick: move |_| {
+                                is_hidden_menu_open.set(false);
+                                set_scroll_rock(false);
+                            },
+                            Link{ to:"/episode","エピソード"}
+                        }
+                        HiddenMenuItem{
+                            onclick: move |_| {
+                                is_hidden_menu_open.set(false);
+                                set_scroll_rock(false);
+                            },
+                            Link{ to:"/clip","クリップ"}
+                        }
                     }
                     div { id: "hidden-menu-overlay",
                         onclick: move |_|

@@ -1,0 +1,70 @@
+@use "../static_var.scss";
+
+#home-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    @media screen and (max-width: static_var.$smartphone_size) {
+        justify-content: center;
+    }
+
+    #toc-container {
+        width: 12rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 2rem;
+        padding-right: 3rem;
+
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        @media screen and (max-width: static_var.$smartphone_size) {
+            & {
+                display: none;
+            }
+
+        }
+    }
+
+    #toc-contents-container {
+        width: calc(100% - 20rem);
+        max-width: 2000px;
+        color: var(--primary-color);
+
+
+        @media screen and (max-width: static_var.$smartphone_size) {
+            & {
+                width: 90%;
+            }
+        }
+
+        .toc-content {
+            font-size: 1.4rem;
+            line-height: 3.4rem;
+
+            h2 {
+                font-size: 2.5rem;
+                margin-bottom: 2rem;
+            }
+
+            a {
+                color: var(--primary-color);
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+}

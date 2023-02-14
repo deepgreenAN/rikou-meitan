@@ -1,0 +1,21 @@
+@use "../static_var.scss";
+
+#not-found-container {
+    color: var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    #not-found-text {
+        font-size: 3rem;
+    }
+
+    a {
+        color: static_var.$link_color;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}

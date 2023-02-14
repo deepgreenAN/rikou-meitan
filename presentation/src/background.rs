@@ -25,9 +25,7 @@ pub fn Background<'a>(cx: Scope<'a, BackgroundProps<'a>>) -> Element {
                 // }
             },
             div { id: "background-pattern", class: "{background_pattern_class}"},
-            div { id: "contents-body-container",
-                &cx.props.children
-            }
+            &cx.props.children
         }
     })
 }

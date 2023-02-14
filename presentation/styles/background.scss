@@ -1,6 +1,7 @@
 #background-container {
     position: absolute;
     width: 100%;
+    min-height: 100vh;
     -ms-scroll-chaining: none;
     overscroll-behavior: none;
     // heightは子要素に依存
