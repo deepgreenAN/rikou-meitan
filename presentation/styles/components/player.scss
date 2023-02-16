@@ -1,0 +1,35 @@
+$aspect_ratio: calc(16/9);
+
+.player-container {
+    width: 100%;
+    min-width: 400px;
+    aspect-ratio: $aspect_ratio;
+    // 何故か指定が必要
+    font-size: 0;
+    line-height: 0;
+
+    .my-iframe-player {
+        width: 100%;
+        aspect-ratio: $aspect_ratio;
+    }
+
+    .my-player-thumbnail {
+        aspect-ratio: $aspect_ratio;
+        width: 100%;
+        img {
+            width: 100%;
+            -o-object-fit: cover;
+            object-fit: cover;
+            aspect-ratio: $aspect_ratio;
+        }
+    }
+
+    .player-cover {
+        width: 100%;
+        aspect-ratio: $aspect_ratio;
+        svg {
+            aspect-ratio: $aspect_ratio;
+            margin-bottom: 0;
+        }
+    }
+}

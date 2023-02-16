@@ -20,9 +20,18 @@ use dioxus::{
     router::{Route, Router},
 };
 use fermi::*;
+use std::collections::VecDeque;
 
-// Flag for Dark/Light mode.
+// ダークモード・ライトモードのフラッグ.
 pub static IS_DARK_MODE: Atom<bool> = |_| false;
+
+// 現在再生されているプレーヤーのID．
+pub static PLAYING_PLAYER_ID: Atom<Option<String>> = |_| None;
+
+// アクティブなプレーヤーのID
+pub const ACTIVE_PLAYER_NUMBER: usize = 3;
+pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
+    |_| VecDeque::with_capacity(ACTIVE_PLAYER_NUMBER);
 
 fn App(cx: Scope) -> Element {
     utils::use_dark_mode(cx);
@@ -42,5 +51,6 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
     dioxus::web::launch(App);
 }

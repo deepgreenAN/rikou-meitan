@@ -48,8 +48,16 @@
                 width: 10rem;
             }
 
+
             #logo-text-svg {
                 width: 20rem;
+                color: var(--primary-color);
+                text-decoration: none;
+                
+                -webkit-user-select: none;
+                   -moz-user-select: none;
+                    -ms-user-select: none;
+                        user-select: none;
 
                 svg {
                     -webkit-filter: drop-shadow(0.2rem 0.2rem 0.4rem var(--primary-color));

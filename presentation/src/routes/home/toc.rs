@@ -82,10 +82,12 @@ pub fn Toc(cx: Scope) -> Element {
         nav{
             id: "toc-container", aria_label:"Table of Contents",
             toc_content_elements.get().iter().enumerate().map(|(i, element)|{
-                let mut class = "not active".to_string();
+                let mut class = "toc-item".to_string();
                 if let Some(active_id) = active_id.get() {
                     if element.id() == *active_id {
-                        class = "active".to_string();
+                        class.push_str(" active");
+                    } else {
+                        class.push_str(" not-active");
                     }
                 }
 

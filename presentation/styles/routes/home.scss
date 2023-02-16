@@ -11,11 +11,14 @@
     }
 
     #toc-container {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 3rem;
         width: 12rem;
+        height: calc(100vh - static_var.$footer_height);  // stickyのため
         display: flex;
         flex-direction: column;
-        align-items: center;
-        font-size: 2rem;
+        align-items: left;
         padding-right: 3rem;
 
 
@@ -26,6 +29,16 @@
             &:hover {
                 text-decoration: underline;
             }
+        }
+
+        .active {
+            opacity: 1;
+            font-size: 2rem;
+        }
+
+        .not-active {
+            opacity: 0.7;
+            font-size: 1.8rem;
         }
 
         @media screen and (max-width: static_var.$smartphone_size) {
@@ -49,8 +62,14 @@
         }
 
         .toc-content {
-            font-size: 1.4rem;
-            line-height: 3.4rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+
+            //文書内
+            p {
+                font-size: 1.4rem;
+                line-height: 3.4rem;
+            }
 
             h2 {
                 font-size: 2.5rem;
@@ -63,6 +82,26 @@
 
                 &:hover {
                     text-decoration: underline;
+                }
+            }
+        }
+    }
+
+    #orikou-desc {
+        #orikou-desc-movie-container-outer {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            place-items: center;
+            #orikou-desc-movie-container-inner {
+                width: 70%;
+                max-width: 1200px;
+                min-width: 700px;
+
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    & {
+                        width: 95%;
+                    }
                 }
             }
         }

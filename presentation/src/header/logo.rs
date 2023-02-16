@@ -1,4 +1,4 @@
-use dioxus::prelude::*;
+use dioxus::{prelude::*, router::Link};
 
 pub fn TitleLogo(cx: Scope) -> Element {
     let bottle_svg = include_str!(concat!(
@@ -29,8 +29,8 @@ pub fn TitleLogo(cx: Scope) -> Element {
             div { id: "moon-svg",
                 dangerous_inner_html: "{moon_svg}"
             }
-            div { id: "logo-text-svg",
-                dangerous_inner_html: "{logo_text}"
+            Link { id: "logo-text-svg", to:"/",
+                div {dangerous_inner_html: "{logo_text}"}
             }
         }
     })
