@@ -3,6 +3,12 @@ use config::CONFIG;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 
+#[cfg(feature = "fake")]
+use fake::{Dummy, Fake, Faker, StringFaker};
+
+#[cfg(feature = "fake")]
+use rand::Rng;
+
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
 
 /// MovieClipで用いるURL
@@ -51,7 +57,7 @@ impl FromStr for MovieUrl {
                 .map(|video_id_query_str| video_id_query_str.strip_prefix("v=").unwrap()); // idの文字列
             match video_id {
                 Some(video_id) => Ok(MovieUrl {
-                    url_string: format!("{}watch?v={}", common_base_url, video_id),
+                    url_string: format!("{common_base_url}watch?v={video_id}"),
                     video_id: video_id.to_string(),
                 }),
                 None => Err(UrlParseError("Invalid query parameter".to_string())),
@@ -70,15 +76,14 @@ impl FromStr for MovieUrl {
             let video_id = query_str.split('?').next();
             match video_id {
                 Some(video_id) => Ok(MovieUrl {
-                    url_string: format!("{}watch?v={}", common_base_url, video_id),
+                    url_string: format!("{common_base_url}watch?v={video_id}"),
                     video_id: video_id.to_string(),
                 }),
                 None => Err(UrlParseError("Invalid query parameter".to_string())),
             }
         } else {
             Err(UrlParseError(format!(
-                "Invalid Url. url must have prefix: {:?}",
-                MOVIE_URL_ALLOW_PREFIX
+                "Invalid Url. url must have prefix: {MOVIE_URL_ALLOW_PREFIX:?}"
             )))
         }
     }
@@ -100,6 +105,21 @@ impl From<MovieUrl> for String {
 impl Display for MovieUrl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.url_string)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Dummy trait
+
+impl Dummy<Faker> for MovieUrl {
+    fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
+        let mut url = "https://www.youtube.com/watch?v=".to_string();
+        const ALPHANUMERIC: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let fake_video_id =
+            StringFaker::with(Vec::from(ALPHANUMERIC), 11).fake_with_rng::<String, R>(rng);
+        url.push_str(&fake_video_id);
+
+        url.try_into().expect("Generate fake error.")
     }
 }
 
@@ -173,5 +193,15 @@ mod test {
             "https://www.youtube.com/watch?v=LjU5OOHu_As".to_string(),
             TryInto::<String>::try_into(movie_url).unwrap()
         );
+    }
+
+    #[cfg(feature = "fake")]
+    #[test]
+    fn generate_fake() {
+        use fake::{Fake, Faker};
+
+        let _ = (0..10000)
+            .map(|_| Faker.fake::<MovieUrl>())
+            .collect::<Vec<_>>();
     }
 }

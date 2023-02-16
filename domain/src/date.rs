@@ -7,6 +7,12 @@ use std::{fmt::Display, str::FromStr};
 #[cfg(feature = "server")]
 use chrono::{Datelike, NaiveDate};
 
+#[cfg(feature = "fake")]
+use fake::{Dummy, Fake, Faker};
+
+#[cfg(feature = "fake")]
+use rand::Rng;
+
 /// Date型のYear
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Year(u32);
@@ -182,6 +188,22 @@ impl TryFrom<Date> for NaiveDate {
     }
 }
 
+// -------------------------------------------------------------------------------------------------
+// Dummy trait
+
+#[cfg(feature = "fake")]
+impl Dummy<Faker> for Date {
+    fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
+        let year_u32: u32 = (2018..2050).fake_with_rng(rng);
+        let month_u32: u32 = (1..=12).fake_with_rng(rng);
+        let day_u32: u32 = (1..=28).fake_with_rng(rng);
+
+        (year_u32, month_u32, day_u32)
+            .try_into()
+            .expect("Faker data generate error")
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Date;
@@ -241,5 +263,13 @@ mod test {
         let date = serde_json::from_str::<Date>(&json_str).unwrap();
 
         assert_eq!(date, Date::from_ymd(2022, 11, 24).unwrap())
+    }
+
+    #[cfg(feature = "fake")]
+    #[test]
+    fn generate_fake() {
+        use fake::{Fake, Faker};
+
+        let _ = (0..10000).map(|_| Faker.fake::<Date>()).collect::<Vec<_>>();
     }
 }

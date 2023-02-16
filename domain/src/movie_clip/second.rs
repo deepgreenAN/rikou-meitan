@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "fake")]
+use fake::{Dummy, Fake};
+
 /// MovieClipで用いる秒指定のための秒型
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Dummy)]
 #[serde(transparent)]
 pub struct Second(u32);
 
@@ -73,5 +76,15 @@ mod test {
         let json_str = r#"200"#.to_string();
         let second = serde_json::from_str::<Second>(&json_str).unwrap();
         assert_eq!(second, Second::from_u32(200));
+    }
+
+    #[cfg(feature = "fake")]
+    #[test]
+    fn generate_fake() {
+        use fake::Faker;
+
+        let _ = (0..10000)
+            .map(|_| Faker.fake::<Second>())
+            .collect::<Vec<_>>();
     }
 }

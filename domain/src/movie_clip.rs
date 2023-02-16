@@ -18,6 +18,9 @@ use uuid::Uuid;
 #[cfg(feature = "server")]
 use chrono::NaiveDate;
 
+#[cfg(feature = "fake")]
+use fake::{Dummy, Fake, Faker, StringFaker};
+
 // -------------------------------------------------------------------------------------------------
 // # ClipId
 
@@ -43,7 +46,7 @@ pub struct MovieClip {
 }
 
 impl MovieClip {
-    /// 新しくVideoClipを作成する．
+    /// プリミティブを用いたコンストラクタ．
     pub fn new(
         title: String,
         url: String,
@@ -63,6 +66,25 @@ impl MovieClip {
             like: 0_u32,
             create_date: create_date_ymd.try_into()?,
         })
+    }
+
+    /// ドメイン固有型を用いたコンストラクタ
+    pub fn new_with_domains(
+        title: String,
+        url: MovieUrl,
+        start: Second,
+        end: Second,
+        create_date: Date,
+    ) -> Self {
+        Self {
+            title,
+            url,
+            start,
+            end,
+            create_date,
+            like: 0_u32,
+            id: MovieClipId::generate(),
+        }
     }
 
     pub fn like_increment(&mut self) {
@@ -161,6 +183,25 @@ impl FromRow<'_, PgRow> for MovieClip {
     }
 }
 
+// -------------------------------------------------------------------------------------------------
+// Dummy trait
+
+#[cfg(feature = "fake")]
+impl Dummy<Faker> for MovieClip {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
+        const ALPHANUMERIC_JA: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわおん";
+        let title = StringFaker::with(Vec::from(ALPHANUMERIC_JA), 0..30).fake::<String>();
+
+        Self::new_with_domains(
+            title,
+            Faker.fake_with_rng(rng),
+            Faker.fake_with_rng(rng),
+            Faker.fake_with_rng(rng),
+            Faker.fake_with_rng(rng),
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::DomainError::{DomainLogicError, NotChangedError};
@@ -232,5 +273,14 @@ mod test {
 
         let res_ok = movie_clip.edit_start_and_end(400.into(), 500.into());
         assert_matches!(res_ok, Ok(_));
+    }
+
+    #[cfg(feature = "fake")]
+    #[test]
+    fn generate_fake() {
+        use fake::{Fake, Faker};
+        let _ = (0..10000)
+            .map(|_| Faker.fake::<MovieClip>())
+            .collect::<Vec<_>>();
     }
 }
