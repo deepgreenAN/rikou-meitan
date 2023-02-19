@@ -19,7 +19,7 @@ use uuid::Uuid;
 use chrono::NaiveDate;
 
 #[cfg(feature = "fake")]
-use fake::{Dummy, Fake, Faker, StringFaker};
+use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
 
 // -------------------------------------------------------------------------------------------------
 // # ClipId
@@ -189,8 +189,7 @@ impl FromRow<'_, PgRow> for MovieClip {
 #[cfg(feature = "fake")]
 impl Dummy<Faker> for MovieClip {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        const ALPHANUMERIC_JA: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわおん";
-        let title = StringFaker::with(Vec::from(ALPHANUMERIC_JA), 0..30).fake::<String>();
+        let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
 
         Self::new_with_domains(
             title,

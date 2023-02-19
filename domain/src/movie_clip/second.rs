@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use fake::{Dummy, Fake};
 
 /// MovieClipで用いる秒指定のための秒型
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Dummy)]
+#[cfg_attr(feature = "fake", derive(Dummy))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Second(u32);
 

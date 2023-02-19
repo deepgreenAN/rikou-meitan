@@ -5,8 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
-domain = { path = "../domain" }
+domain = { path = "../domain", features = ["fake"]}
 frontend = { path = "../application/frontend" }
 wasm-bindgen = "^0.2"
 web-sys = { version = "^0.3", features = [
@@ -14,6 +15,9 @@ web-sys = { version = "^0.3", features = [
     "CssStyleDeclaration",
     "Window",
     "MediaQueryList",
+    "Event",
+    "ScrollBehavior",
+    "ScrollIntoViewOptions"
 ] }
 dioxus = { version = "0.2.4", features = ["web", "router"] }
 fermi = "0.2.1"
@@ -22,10 +26,13 @@ gloo-utils = "^0.1"
 gloo-timers = "0.2.6"
 log = "^0.4"
 wasm-logger = "^0.2"
-# plyr = { version = "0.0.4", features = ["options"]}
-plyr = { git = "https://github.com/deepgreenAN/plyr-rs", features = ["options"]}
+plyr = { version = "0.0.4", features = ["options"]}
+# plyr = { git = "https://github.com/deepgreenAN/plyr-rs", features = ["options"]}
 gloo-intersection = { git = "https://github.com/deepgreenAN/intersection-wrapper" }
 indexmap = "^1.9"
+
+# optional
+fake = "^2.5"
 
 
 [dev-dependencies]

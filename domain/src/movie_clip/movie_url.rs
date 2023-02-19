@@ -111,6 +111,7 @@ impl Display for MovieUrl {
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
+#[cfg(feature = "fake")]
 impl Dummy<Faker> for MovieUrl {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let mut url = "https://www.youtube.com/watch?v=".to_string();

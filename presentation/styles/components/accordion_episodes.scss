@@ -1,0 +1,69 @@
+.accordion-episodes-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    color: var(--primary-color);
+
+    .accordion-spinner-container {
+        width: 100%;
+        display: grid;
+        place-items: center;
+        .accordion-spinner {
+            width: 2rem;
+        }
+    }
+    
+
+    .accordion-bar-container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+
+        .plus-svg {
+            width: 1.8rem;
+        }
+        .accordion-title {
+            width: 1fr;
+            padding-left: 1rem;
+            font-size: 2rem;
+        }
+    }
+
+    .accordion-episode-list {
+        font-size: 1.2rem;
+        line-height: 2.2rem;
+        .episode-item-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            .episode-date {
+                margin-left: 0.5rem;
+                margin-right: 0.5rem;
+            }
+            .episode-item-right {
+                display: grid;
+                place-items: center;
+                button {
+                    margin-left: 0.5rem;
+                    margin-right: 0.5rem;
+                    width: 3rem;
+                    font-size: 1.2rem;
+                    border-radius: 0.3rem;
+                    // color: var(--primary-bg-color);
+                    // background-color: var(--primary-color);
+                    color: var(--primary-color);
+                    background-color: transparent;
+                    border-width: 2px;
+                    border-style: solid;
+                    border-color: var(--primary-color);
+
+                    &:hover {
+                        opacity: 0.5;
+                    }
+                }
+            }
+        }
+    }
+}

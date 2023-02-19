@@ -1,0 +1,30 @@
+.add-button-container {
+    min-width: 15rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    border-radius: 0.5rem;
+    border-color: var(--primary-color);
+    border-style: solid;
+    border-width: 2px;
+    cursor: pointer;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+
+    .add-button-svg {
+        width: 2rem;
+        padding-top: 0.2rem;
+    }
+    .add-button-text {
+        margin-left: 1rem;
+        font-size: 2rem;
+    }
+
+    &:hover {
+        opacity: 0.5;
+    }
+}

@@ -22,7 +22,9 @@ use std::rc::Rc;
 
 #[derive(Props, PartialEq)]
 pub struct PlayerProps {
+    #[props(into)]
     id: String,
+    #[props(into)]
     video_id: String,
     start: Option<u32>,
     end: Option<u32>
@@ -193,6 +195,17 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                         allowfullscreen: "true",
                                         allow: "autoplay"
                                     }                           
+                                }
+                                div { class: "player-wrapper",
+                                    onclick: move |_|{
+                                        if let Some(player) = player_state.get() {
+                                            if player.playing() {
+                                                player.pause();
+                                            } else {
+                                                player.play();
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

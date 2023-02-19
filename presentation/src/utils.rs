@@ -1,3 +1,9 @@
+mod overlay;
+mod scroll_rock;
+
+pub use overlay::use_overlay;
+pub use scroll_rock::use_scroll_lock;
+
 use dioxus::{core::to_owned, prelude::*};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::HtmlElement;

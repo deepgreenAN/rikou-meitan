@@ -1,0 +1,12 @@
+#episodes-container {
+    width: 90%;
+    max-width: 2000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    #episodes-add-button {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+}

@@ -2,7 +2,7 @@
 
 #header-container {
     width: 100%;
-    height: 8rem;
+    height: static_var.$header_height;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -237,12 +237,13 @@
             flex-direction: column;
             align-items: center;
             padding-top: 100px;
+            z-index: 3;
 
             .hidden-menu-item {
                 width: 80%;
                 font-size: 2rem;
                 height: 5rem;
-                z-index: 3;
+                z-index: 4;
 
                 -webkit-user-select: none;
                 -moz-user-select: none;
@@ -273,17 +274,6 @@
         }
 
 
-    }
-
-    #hidden-menu-overlay {
-        position: absolute;
-        z-index: 2;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 100vh;
-        background-color: black;
-        opacity: 0.3;
     }
 
     #hidden-menu-hamburger-button {

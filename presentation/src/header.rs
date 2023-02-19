@@ -10,38 +10,36 @@ pub use hidden_menu::{HiddenMenu, HiddenMenuItem};
 use logo::TitleLogo;
 pub use mode_change_button::ModeChangeButton;
 
-use dioxus::{prelude::*, router::Link};
-use gloo_events::{EventListener, EventListenerOptions};
-use std::cell::Cell;
-use std::rc::Rc;
+use crate::utils::{use_overlay, use_scroll_lock};
+
+use dioxus::{core::to_owned, prelude::*, router::Link};
 
 pub fn Header(cx: Scope) -> Element {
     // 隠しメニューが開いているかどうか
     let is_hidden_menu_open = use_state(&cx, || false);
+    let scroll_state = use_scroll_lock(cx);
+    let overlay_state = use_overlay(cx, 2);
 
-    // スクロールを禁止するための状態
-    let scroll_rock_state = cx.use_hook(|_| Rc::new(Cell::new(Option::<Vec<EventListener>>::None)));
+    let open_hidden_menu = move |_| {
+        is_hidden_menu_open.set(true);
+        scroll_state.lock();
+        overlay_state.activate().expect("Cannot Overlay activate");
+        overlay_state
+            .add_event_listener("click", {
+                to_owned![overlay_state, is_hidden_menu_open, scroll_state];
+                move |_| {
+                    is_hidden_menu_open.set(false);
+                    scroll_state.unlock();
+                    overlay_state.deactivate();
+                }
+            })
+            .expect("Overlay Not active");
+    };
 
-    // use_effectは遅延があるためクロージャーとして毎回実行．
-    let set_scroll_rock = |is_rocked: bool| {
-        if is_rocked {
-            let document = gloo_utils::document();
-            let options = EventListenerOptions {
-                passive: false,
-                ..Default::default()
-            };
-            scroll_rock_state.set(Some(vec![
-                EventListener::new_with_options(&document, "wheel", options, move |e| {
-                    e.prevent_default();
-                }),
-                EventListener::new_with_options(&document, "touchmove", options, move |e| {
-                    e.prevent_default();
-                }),
-            ]));
-        } else {
-            scroll_rock_state.take(); // 破棄
-                                      // scroll_rock_state.set(None);
-        }
+    let close_hidden_menu = move |_| {
+        is_hidden_menu_open.set(false);
+        scroll_state.unlock();
+        overlay_state.deactivate();
     };
 
     cx.render(rsx! {
@@ -50,58 +48,36 @@ pub fn Header(cx: Scope) -> Element {
             div { id: "header-right",
                 ModeChangeButton{}
                 HamburgerButton{
-                    onclick: move |_| {
-                        is_hidden_menu_open.set(true);
-                        set_scroll_rock(true);
-                    }
+                    onclick: open_hidden_menu
                 }
             }
             // 以下はabsolute
             div { id: "top-bar"}
             HeaderMenu{
-                HeaderMenuItem{Link{ to:"/", "ホーム"}}
-                HeaderMenuItem{Link{ to:"/episode", "エピソード"}}
-                HeaderMenuItem{Link{ to:"/clip", "クリップ"}}
+                HeaderMenuItem{Link{ to:"/home", "ホーム"}}
+                HeaderMenuItem{Link{ to:"/episodes", "エピソード"}}
+                HeaderMenuItem{Link{ to:"/clips", "クリップ"}}
             }
             is_hidden_menu_open.get().then(||{
                 rsx! {
                     HiddenMenu{
                         HiddenMenuItem{
-                            onclick: move |_| {
-                                is_hidden_menu_open.set(false);
-                                set_scroll_rock(false);
-                            },
-                            Link{ to:"/","ホーム"}
+                            onclick: close_hidden_menu,
+                            Link{ to:"/home","ホーム"}
                         }
                         HiddenMenuItem{
-                            onclick: move |_| {
-                                is_hidden_menu_open.set(false);
-                                set_scroll_rock(false);
-                            },
-                            Link{ to:"/episode","エピソード"}
+                            onclick: close_hidden_menu,
+                            Link{ to:"/episodes","エピソード"}
                         }
                         HiddenMenuItem{
-                            onclick: move |_| {
-                                is_hidden_menu_open.set(false);
-                                set_scroll_rock(false);
-                            },
-                            Link{ to:"/clip","クリップ"}
-                        }
-                    }
-                    div { id: "hidden-menu-overlay",
-                        onclick: move |_|
-                        {
-                            is_hidden_menu_open.set(false);
-                            set_scroll_rock(false);
+                            onclick: close_hidden_menu,
+                            Link{ to:"/clips","クリップ"}
                         }
                     }
                     div {
                         id: "hidden-menu-hamburger-button",
                         HamburgerButton{
-                            onclick: move |_| {
-                                is_hidden_menu_open.set(false);
-                                set_scroll_rock(false);
-                            },
+                            onclick: close_hidden_menu,
                         }
                     }
                 }

@@ -1,3 +1,15 @@
 {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "rust-analyzer.cargo.features": [
+    ],
+    "cSpell.words": [
+        "gloo",
+        "dioxus",
+        "bindgen",
+        "onclick",
+        "deque",
+        "indexmap",
+        "touchmove",
+        "orikou"
+    ]
 }

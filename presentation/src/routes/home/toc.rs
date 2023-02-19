@@ -6,10 +6,13 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::Element as WebSysElement;
+use web_sys::{ScrollBehavior, ScrollIntoViewOptions};
 
 #[derive(Props)]
 pub struct TocContentProps<'a> {
+    #[props(into)]
     pub title: String,
+    #[props(into)]
     pub id: String,
     pub children: Element<'a>,
 }
@@ -91,12 +94,16 @@ pub fn Toc(cx: Scope) -> Element {
                     }
                 }
 
-                let link_str = format!("/#{}", element.id());
                 let title_str = element.query_selector("h2").unwrap_throw().unwrap_throw().inner_html();
+
+                let mut scroll_options = ScrollIntoViewOptions::new();
+                scroll_options.behavior(ScrollBehavior::Smooth);
 
                 rsx! {
                     div { key: "{i}", class:"{class}",
-                        a { href: "{link_str}", "{title_str}"}
+                        // a { href: "{link_str}", "{title_str}"}
+                        onclick: move |_|{element.scroll_into_view_with_scroll_into_view_options(&scroll_options)},
+                        "{title_str}"
                     }
                 }
             })

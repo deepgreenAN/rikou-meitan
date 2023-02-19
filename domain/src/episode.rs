@@ -13,7 +13,7 @@ use sqlx::{postgres::PgRow, FromRow, Row};
 use uuid::Uuid;
 
 #[cfg(feature = "fake")]
-use fake::{Dummy, Fake, Faker, StringFaker};
+use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
 
 #[cfg(feature = "fake")]
 use rand::Rng;
@@ -112,9 +112,8 @@ impl FromRow<'_, PgRow> for Episode {
 impl Dummy<Faker> for Episode {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let date = Faker.fake_with_rng::<Date, R>(rng);
-        const CHAR: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわおん";
 
-        let content = StringFaker::with(Vec::from(CHAR), 0..300).fake_with_rng::<String, R>(rng);
+        let content = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
         Episode::new_with_domains(date, content)
     }
 }
