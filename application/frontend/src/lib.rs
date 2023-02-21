@@ -1,7 +1,8 @@
 pub mod commands;
+mod error;
 pub mod usecases;
 
-pub use common::AppCommonError;
+pub use error::AppFrontError;
 
 use config::CONFIG;
 use gloo_net::http::RequestMode;

@@ -3,14 +3,15 @@ use crate::commands::episode_commands::{
     RemoveByIdEpisodeCommand, SaveEpisodeCommand,
 };
 
-use crate::AppCommonError;
+use crate::AppFrontError;
 use crate::{API_BASE_URL, CORS_MODE};
 
+use common::AppCommonError;
 use domain::episode::Episode;
 
 use gloo_net::http::Request;
 
-pub async fn save_episode(cmd: SaveEpisodeCommand) -> Result<(), AppCommonError> {
+pub async fn save_episode(cmd: SaveEpisodeCommand) -> Result<(), AppFrontError> {
     let response = Request::put(&format!("{}{}", API_BASE_URL, "/episode"))
         .mode(CORS_MODE)
         .json(&cmd.episode)?
@@ -21,11 +22,11 @@ pub async fn save_episode(cmd: SaveEpisodeCommand) -> Result<(), AppCommonError>
         Ok(())
     } else {
         let err = response.json::<AppCommonError>().await?;
-        Err(err)
+        Err(err.into())
     }
 }
 
-pub async fn edit_episode(cmd: EditEpisodeCommand) -> Result<(), AppCommonError> {
+pub async fn edit_episode(cmd: EditEpisodeCommand) -> Result<(), AppFrontError> {
     let response = Request::patch(&format!("{}{}", API_BASE_URL, "/episode"))
         .mode(CORS_MODE)
         .json(&cmd.episode)?
@@ -36,11 +37,11 @@ pub async fn edit_episode(cmd: EditEpisodeCommand) -> Result<(), AppCommonError>
         Ok(())
     } else {
         let err = response.json::<AppCommonError>().await?;
-        Err(err)
+        Err(err.into())
     }
 }
 
-pub async fn all_episodes(_cmd: AllEpisodeCommand) -> Result<Vec<Episode>, AppCommonError> {
+pub async fn all_episodes(_cmd: AllEpisodeCommand) -> Result<Vec<Episode>, AppFrontError> {
     let response = Request::get(&format!("{}{}", API_BASE_URL, "/episode"))
         .mode(CORS_MODE)
         .send()
@@ -51,13 +52,13 @@ pub async fn all_episodes(_cmd: AllEpisodeCommand) -> Result<Vec<Episode>, AppCo
         Ok(episodes)
     } else {
         let err = response.json::<AppCommonError>().await?;
-        Err(err)
+        Err(err.into())
     }
 }
 
 pub async fn order_by_date_range_episodes(
     cmd: OrderByDateRangeEpisodeCommand,
-) -> Result<Vec<Episode>, AppCommonError> {
+) -> Result<Vec<Episode>, AppFrontError> {
     let query_string = format!("?start={}&end={}", cmd.start, cmd.end);
     let response = Request::get(&format!(
         "{}{}{}",
@@ -72,11 +73,11 @@ pub async fn order_by_date_range_episodes(
         Ok(episodes)
     } else {
         let err = response.json::<AppCommonError>().await?;
-        Err(err)
+        Err(err.into())
     }
 }
 
-pub async fn remove_by_id_episode(cmd: RemoveByIdEpisodeCommand) -> Result<(), AppCommonError> {
+pub async fn remove_by_id_episode(cmd: RemoveByIdEpisodeCommand) -> Result<(), AppFrontError> {
     let response = Request::delete(&format!("{}{}{}", API_BASE_URL, "/episode/", cmd.id))
         .mode(CORS_MODE)
         .send()
@@ -86,15 +87,14 @@ pub async fn remove_by_id_episode(cmd: RemoveByIdEpisodeCommand) -> Result<(), A
         Ok(())
     } else {
         let err = response.json::<AppCommonError>().await?;
-        Err(err)
+        Err(err.into())
     }
 }
 
 #[cfg(test)]
 mod test {
     use crate::commands::episode_commands;
-    use crate::AppCommonError;
-    use assert_matches::assert_matches;
+    use crate::AppFrontError;
     use domain::episode::{Episode, EpisodeId};
     use domain::Date;
     use wasm_bindgen_test::*;
@@ -107,13 +107,14 @@ mod test {
         let cmd = episode_commands::SaveEpisodeCommand::new(episode_ok);
 
         let res_ok = super::save_episode(cmd).await;
-        assert_matches!(res_ok, Ok(_));
+        assert!(matches!(res_ok, Ok(_)));
 
+        // CommonError::ConflictError
         let episode_err = Episode::new((2022, 12, 6), "ConflictError".to_string()).unwrap();
         let cmd = episode_commands::SaveEpisodeCommand::new(episode_err);
 
         let res_err = super::save_episode(cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::ConflictError));
+        assert!(matches!(res_err, Err(AppFrontError::CommonError(_))));
     }
 
     #[wasm_bindgen_test]
@@ -122,13 +123,14 @@ mod test {
         let cmd = episode_commands::EditEpisodeCommand::new(episode_ok);
 
         let res_ok = super::edit_episode(cmd).await;
-        assert_matches!(res_ok, Ok(_));
+        assert!(matches!(res_ok, Ok(_)));
 
+        // CommonError::NoRecordError
         let episode_err = Episode::new((2022, 12, 6), "NoRecordError".to_string()).unwrap();
         let cmd = episode_commands::EditEpisodeCommand::new(episode_err);
 
         let res_err = super::edit_episode(cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
+        assert!(matches!(res_err, Err(AppFrontError::CommonError(_))));
     }
 
     #[wasm_bindgen_test]
@@ -153,11 +155,12 @@ mod test {
         let id_ok: EpisodeId = "67e55044-10b1-426f-9247-bb680e5fe0c8".parse().unwrap();
         let cmd = episode_commands::RemoveByIdEpisodeCommand::new(id_ok);
         let res_ok = super::remove_by_id_episode(cmd).await;
-        assert_matches!(res_ok, Ok(_));
+        assert!(matches!(res_ok, Ok(_)));
 
+        // CommonError::NoRecordError
         let id_err = EpisodeId::generate();
         let cmd = episode_commands::RemoveByIdEpisodeCommand::new(id_err);
         let res_err = super::remove_by_id_episode(cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
+        assert!(matches!(res_err, Err(AppFrontError::CommonError(_))));
     }
 }

@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+/// サーバーサイドのエラーをフロントエンドに伝えるためのエラー．
 #[derive(thiserror::Error, Debug, Serialize, Deserialize, Clone)]
 pub enum AppCommonError {
-    /// サーバーサイドのエラー
-
     #[error("{0}")]
     DomainError(String),
 
@@ -30,13 +29,6 @@ pub enum AppCommonError {
 
     #[error("PathRejectionError: {0}")]
     PathRejectionError(String),
-
-    /// フロントエンドのエラー
-    #[error("FetchError: {0}")]
-    FetchError(String),
-
-    #[error("JsonDeserializeError: {0}")]
-    JsonDeserializeError(String),
 }
 
 #[cfg(feature = "server")]
@@ -72,25 +64,25 @@ mod from_server_errors_into_response {
 
     impl From<DomainError> for AppCommonError {
         fn from(domain_error: DomainError) -> Self {
-            AppCommonError::DomainError(format!("{}", domain_error))
+            AppCommonError::DomainError(format!("{domain_error}"))
         }
     }
 
     impl From<axum::extract::rejection::JsonRejection> for AppCommonError {
         fn from(json_rejection_error: axum::extract::rejection::JsonRejection) -> Self {
-            AppCommonError::JsonRejectionError(format!("{}", json_rejection_error))
+            AppCommonError::JsonRejectionError(format!("{json_rejection_error}"))
         }
     }
 
     impl From<axum::extract::rejection::QueryRejection> for AppCommonError {
         fn from(query_rejection_error: axum::extract::rejection::QueryRejection) -> Self {
-            AppCommonError::QueryStringRejectionError(format!("{}", query_rejection_error))
+            AppCommonError::QueryStringRejectionError(format!("{query_rejection_error}"))
         }
     }
 
     impl From<axum::extract::rejection::PathRejection> for AppCommonError {
         fn from(path_rejection_error: axum::extract::rejection::PathRejection) -> Self {
-            AppCommonError::PathRejectionError(format!("{}", path_rejection_error))
+            AppCommonError::PathRejectionError(format!("{path_rejection_error}"))
         }
     }
 
@@ -108,30 +100,6 @@ mod from_server_errors_into_response {
                 }
                 Self::PathRejectionError(_) => (StatusCode::NOT_FOUND, Json(self)).into_response(),
                 _ => (StatusCode::INTERNAL_SERVER_ERROR, Json(self)).into_response(),
-            }
-        }
-    }
-}
-
-#[cfg(feature = "front")]
-mod from_front_errors {
-    use super::AppCommonError;
-
-    // -------------------------------------------------------------------------------------------------
-    // Fromトレイト
-
-    impl From<gloo_net::Error> for AppCommonError {
-        fn from(err: gloo_net::Error) -> Self {
-            match err {
-                gloo_net::Error::GlooError(err) => {
-                    Self::FetchError(format!("{}", gloo_net::Error::GlooError(err)))
-                }
-                gloo_net::Error::JsError(err) => {
-                    Self::FetchError(format!("{}", gloo_net::Error::JsError(err)))
-                }
-                gloo_net::Error::SerdeError(err) => {
-                    Self::JsonDeserializeError(format!("{}", gloo_net::Error::SerdeError(err)))
-                }
             }
         }
     }

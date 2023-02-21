@@ -14,8 +14,10 @@ test_api = []
 [dependencies]
 config = { path = "../../config"}
 domain = { path = "../../domain"}
-common = { path = "../common", features = ["front"]}
+common = { path = "../common"}
 gloo-net = {version = "0.2.*", default-features = false, features = ["json", "http"]}
+indexmap = "^1.9"
+thiserror = "^1.0"
 
 # optional dependencies
 

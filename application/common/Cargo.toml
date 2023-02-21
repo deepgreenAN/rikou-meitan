@@ -7,7 +7,6 @@ edition = "2021"
 
 [features]
 server = ["dep:infrastructure", "dep:domain", "dep:axum"]
-front = ["dep:gloo-net"]
 
 [dependencies]
 thiserror = "1.*"
@@ -15,4 +14,3 @@ serde = { version = "1.*", features = ["derive"]}
 domain = { path = "../../domain", optional = true}
 infrastructure = { path = "../../infrastructure", optional = true}
 axum = { version = "0.6.*", optional = true}
-gloo-net = {version = "0.2.*", default-features = false, features = ["json"], optional = true}
