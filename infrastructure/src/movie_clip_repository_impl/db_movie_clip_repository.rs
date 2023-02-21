@@ -24,8 +24,8 @@ VALUES ($1, $2, $3, $4,  $5, $6, $7)
         )
         .bind(movie_clip.title().to_string())
         .bind(movie_clip.url().to_string())
-        .bind(movie_clip.start().to_u32() as i32)
-        .bind(movie_clip.end().to_u32() as i32)
+        .bind(movie_clip.range().start().to_u32() as i32)
+        .bind(movie_clip.range().end().to_u32() as i32)
         .bind(movie_clip.id().to_uuid())
         .bind(movie_clip.like() as i32)
         .bind(movie_clip.create_date().to_chrono()?)
@@ -44,8 +44,8 @@ WHERE id = $5 RETURNING *
             "#,
         )
         .bind(movie_clip.title().to_string())
-        .bind(movie_clip.start().to_u32() as i32)
-        .bind(movie_clip.end().to_u32() as i32)
+        .bind(movie_clip.range().start().to_u32() as i32)
+        .bind(movie_clip.range().end().to_u32() as i32)
         .bind(movie_clip.like() as i32)
         .bind(movie_clip.id().to_uuid())
         .fetch_one(conn)
@@ -268,8 +268,8 @@ mod test {
 
         // 編集
         let mut edited_movie_clip = movie_clips[1].clone(); // 二番目を編集
-        edited_movie_clip.edit_title("Another Movie Clip".to_string())?;
-        edited_movie_clip.edit_start_and_end(1200.into(), 1300.into())?;
+        *edited_movie_clip.title_mut() = "Another Movie Clip".to_string();
+        *edited_movie_clip.range_mut() = (1200..1300).try_into()?;
         movie_clips[1] = edited_movie_clip.clone();
 
         movie_clip_sql_runner::edit(&mut transaction, edited_movie_clip).await?;

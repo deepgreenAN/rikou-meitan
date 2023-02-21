@@ -2,3 +2,5 @@
 /.vscode
 /env.nu
 /log
+/Cargo.lock
+/.vscode

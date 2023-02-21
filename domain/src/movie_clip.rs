@@ -2,11 +2,11 @@ mod movie_url;
 mod second;
 
 pub use movie_url::MovieUrl;
-pub use second::Second;
+pub use second::SecondRange;
 
 use crate::date::Date;
 use crate::ids::Id;
-use crate::DomainError::{self, DomainLogicError, NotChangedError};
+use crate::DomainError::{self, DomainLogicError};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
@@ -18,7 +18,7 @@ use uuid::Uuid;
 #[cfg(feature = "server")]
 use chrono::NaiveDate;
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
 
 // -------------------------------------------------------------------------------------------------
@@ -38,8 +38,7 @@ pub type MovieClipId = Id<MovieClipIdType>;
 pub struct MovieClip {
     title: String,
     url: MovieUrl,
-    start: Second,
-    end: Second,
+    range: SecondRange,
     id: MovieClipId,
     like: u32,
     create_date: Date,
@@ -60,8 +59,7 @@ impl MovieClip {
         Ok(Self {
             title,
             url: url.try_into()?,
-            start: start.into(),
-            end: end.into(),
+            range: (start..end).try_into()?,
             id: MovieClipId::generate(),
             like: 0_u32,
             create_date: create_date_ymd.try_into()?,
@@ -72,86 +70,51 @@ impl MovieClip {
     pub fn new_with_domains(
         title: String,
         url: MovieUrl,
-        start: Second,
-        end: Second,
+        range: SecondRange,
         create_date: Date,
     ) -> Self {
         Self {
             title,
             url,
-            start,
-            end,
+            range,
             create_date,
             like: 0_u32,
             id: MovieClipId::generate(),
         }
     }
-
-    pub fn like_increment(&mut self) {
-        self.like += 1;
-    }
-    pub fn edit_title(&mut self, new_title: String) -> Result<(), DomainError> {
-        if self.title == new_title {
-            return Err(NotChangedError("title not changed".to_string()));
-        }
-        self.title = new_title;
-        Ok(())
-    }
-    pub fn edit_start(&mut self, new_start: Second) -> Result<(), DomainError> {
-        if self.start == new_start {
-            return Err(NotChangedError("start not changed".to_string()));
-        }
-        if new_start >= self.end {
-            return Err(DomainLogicError("start must be less than end".to_string()));
-        }
-        self.start = new_start;
-        Ok(())
-    }
-    pub fn edit_end(&mut self, new_end: Second) -> Result<(), DomainError> {
-        if self.end == new_end {
-            return Err(NotChangedError("end not changed".to_string()));
-        }
-        if new_end <= self.start {
-            return Err(DomainLogicError(
-                "end must be larger than start".to_string(),
-            ));
-        }
-        self.end = new_end;
-        Ok(())
-    }
-    pub fn edit_start_and_end(
-        &mut self,
-        new_start: Second,
-        new_end: Second,
-    ) -> Result<(), DomainError> {
-        if self.start == new_start && self.end == new_end {
-            return Err(NotChangedError("start and end not changed".to_string()));
-        }
-        if new_start >= new_end {
-            return Err(DomainLogicError("It must be start < end".to_string()));
-        }
-        self.start = new_start;
-        self.end = new_end;
-        Ok(())
-    }
+    /// titleを取得
     pub fn title(&self) -> &str {
         &self.title
     }
+    /// titleの可変参照を取得
+    pub fn title_mut(&mut self) -> &mut String {
+        &mut self.title
+    }
+    /// urlを取得
     pub fn url(&self) -> &MovieUrl {
         &self.url
     }
-    pub fn start(&self) -> Second {
-        self.start
+    /// rangeを取得
+    pub fn range(&self) -> &SecondRange {
+        &self.range
     }
-    pub fn end(&self) -> Second {
-        self.end
+    /// rangeの可変参照を取得
+    pub fn range_mut(&mut self) -> &mut SecondRange {
+        &mut self.range
     }
+    /// idを取得
     pub fn id(&self) -> MovieClipId {
         self.id
     }
+    /// likeを取得
     pub fn like(&self) -> u32 {
         self.like
     }
+    /// likeを一つ増やす
+    pub fn like_increment(&mut self) {
+        self.like += 1;
+    }
+    /// create_dateを取得
     pub fn create_date(&self) -> Date {
         self.create_date
     }
@@ -174,8 +137,7 @@ impl FromRow<'_, PgRow> for MovieClip {
         Ok(Self {
             title,
             url: url.try_into()?,
-            start: start.into(),
-            end: end.into(),
+            range: (start as u32..end as u32).try_into()?,
             id: id.into(),
             like: like as u32,
             create_date: create_date.try_into()?,
@@ -186,7 +148,7 @@ impl FromRow<'_, PgRow> for MovieClip {
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
-#[cfg(feature = "fake")]
+#[cfg(any(feature = "fake", test))]
 impl Dummy<Faker> for MovieClip {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
@@ -196,88 +158,27 @@ impl Dummy<Faker> for MovieClip {
             Faker.fake_with_rng(rng),
             Faker.fake_with_rng(rng),
             Faker.fake_with_rng(rng),
-            Faker.fake_with_rng(rng),
         )
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::DomainError::{DomainLogicError, NotChangedError};
-    use assert_matches::assert_matches;
-
     use super::MovieClip;
-    use rstest::{fixture, rstest};
-    #[fixture]
-    fn movie_clip() -> MovieClip {
-        MovieClip::new(
-            "Some Movie Clip".to_string(),
-            "https://www.youtube.com/watch?v=SOMEvideoID".to_string(),
-            500,
-            600,
-            (2018, 6, 20),
-        )
-        .unwrap()
-    }
+    use fake::{Fake, Faker};
 
-    #[rstest]
     #[test]
-    fn movie_clip_like_increment(mut movie_clip: MovieClip) {
-        assert_eq!(movie_clip.like(), 0);
+    fn movie_clip_like_increment() {
+        let mut movie_clip = Faker.fake::<MovieClip>();
+        let like = movie_clip.like();
+
         movie_clip.like_increment();
-        assert_eq!(movie_clip.like(), 1);
-    }
-
-    #[rstest]
-    #[test]
-    fn movie_clip_edits(mut movie_clip: MovieClip) {
-        // edit_title
-        let same_title = movie_clip.title().to_string();
-        let res_err = movie_clip.edit_title(same_title);
-        assert_matches!(res_err, Err(NotChangedError(_)));
-
-        let res_ok = movie_clip.edit_title("Another Movie Clip".to_string());
-        assert_matches!(res_ok, Ok(_));
-
-        // edit_start
-        let same_start = movie_clip.start();
-        let res_err = movie_clip.edit_start(same_start);
-        assert_matches!(res_err, Err(NotChangedError(_)));
-
-        let res_err = movie_clip.edit_start(700.into());
-        assert_matches!(res_err, Err(DomainLogicError(_)));
-
-        let res_ok = movie_clip.edit_start(300.into());
-        assert_matches!(res_ok, Ok(_));
-
-        // edit_end
-        let same_end = movie_clip.end();
-        let res_err = movie_clip.edit_end(same_end);
-        assert_matches!(res_err, Err(NotChangedError(_)));
-
-        let res_err = movie_clip.edit_end(200.into());
-        assert_matches!(res_err, Err(DomainLogicError(_)));
-
-        let res_ok = movie_clip.edit_end(800.into());
-        assert_matches!(res_ok, Ok(_));
-
-        // edit_start_and_end
-        let same_start = movie_clip.start();
-        let same_end = movie_clip.end();
-        let res_err = movie_clip.edit_start_and_end(same_start, same_end);
-        assert_matches!(res_err, Err(NotChangedError(_)));
-
-        let res_err = movie_clip.edit_start_and_end(500.into(), 400.into());
-        assert_matches!(res_err, Err(DomainLogicError(_)));
-
-        let res_ok = movie_clip.edit_start_and_end(400.into(), 500.into());
-        assert_matches!(res_ok, Ok(_));
+        assert_eq!(like + 1, movie_clip.like());
     }
 
     #[cfg(feature = "fake")]
     #[test]
     fn generate_fake() {
-        use fake::{Fake, Faker};
         let _ = (0..10000)
             .map(|_| Faker.fake::<MovieClip>())
             .collect::<Vec<_>>();

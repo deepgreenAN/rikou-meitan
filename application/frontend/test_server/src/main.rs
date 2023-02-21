@@ -1,5 +1,3 @@
-#![cfg(feature = "server")]
-
 use config::CONFIG;
 
 mod movie_clip_handlers {

@@ -4,12 +4,13 @@
 ```
 cargo test
 ```
-ハンドラを含める
-```
-cargo test --features mock
-```
 
 ## テストサーバーを立てる
+データベース
 ```
-cargo run --bin test_server --features mock
+cargo run --bin test_server
+```
+インメモリ
+```
+cargo run --bin test_server --feature inmemory
 ```

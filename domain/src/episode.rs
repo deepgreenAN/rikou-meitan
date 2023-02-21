@@ -1,6 +1,9 @@
+mod episode_content;
+
 use crate::date::Date;
 use crate::ids::Id;
-use crate::DomainError::{self, NotChangedError};
+use crate::DomainError;
+pub use episode_content::EpisodeContent;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
@@ -12,10 +15,10 @@ use sqlx::{postgres::PgRow, FromRow, Row};
 #[cfg(feature = "server")]
 use uuid::Uuid;
 
-#[cfg(feature = "fake")]
-use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
+#[cfg(any(test, feature = "fake"))]
+use fake::{Dummy, Fake, Faker};
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use rand::Rng;
 
 // -------------------------------------------------------------------------------------------------
@@ -35,7 +38,7 @@ pub struct Episode {
     /// エピソードの日時
     date: Date,
     /// エピソードの内容
-    content: String,
+    content: EpisodeContent,
     /// UUID
     id: EpisodeId,
 }
@@ -45,45 +48,37 @@ impl Episode {
     pub fn new(date_ymd: (u32, u32, u32), content: String) -> Result<Self, DomainError> {
         Ok(Self {
             date: date_ymd.try_into()?,
-            content,
+            content: content.try_into()?,
             id: EpisodeId::generate(),
         })
     }
     /// ドメイン固有型からのコンストラクタ
-    pub fn new_with_domains(date: Date, content: String) -> Self {
+    pub fn new_with_domains(date: Date, content: EpisodeContent) -> Self {
         Self {
             date,
             content,
             id: EpisodeId::generate(),
         }
     }
-    /// 日時を編集
-    pub fn edit_date(&mut self, new_date: Date) -> Result<(), DomainError> {
-        if self.date == new_date {
-            return Err(NotChangedError("date not changed".to_string()));
-        }
-        self.date = new_date;
-        Ok(())
-    }
-    /// 内容を編集
-    pub fn edit_content(&mut self, new_content: String) -> Result<(), DomainError> {
-        if self.content == new_content {
-            return Err(NotChangedError("content not changed".to_string()));
-        }
-        self.content = new_content;
-        Ok(())
-    }
     /// 日時を取得
     pub fn date(&self) -> Date {
         self.date
     }
     /// 内容を取得
-    pub fn content(&self) -> &str {
+    pub fn content(&self) -> &EpisodeContent {
         &self.content
     }
     /// idを取得
     pub fn id(&self) -> EpisodeId {
         self.id
+    }
+    /// 日時の可変参照を取得
+    pub fn date_mut(&mut self) -> &mut Date {
+        &mut self.date
+    }
+    /// 内容を編集
+    pub fn content_mut(&mut self) -> &mut EpisodeContent {
+        &mut self.content
     }
 }
 
@@ -99,7 +94,7 @@ impl FromRow<'_, PgRow> for Episode {
 
         Ok(Self {
             date: date.try_into()?,
-            content,
+            content: content.try_into()?,
             id: id.into(),
         })
     }
@@ -108,47 +103,44 @@ impl FromRow<'_, PgRow> for Episode {
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 impl Dummy<Faker> for Episode {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        let date = Faker.fake_with_rng::<Date, R>(rng);
-
-        let content = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
-        Episode::new_with_domains(date, content)
+        Self::new_with_domains(Faker.fake_with_rng(rng), Faker.fake_with_rng(rng))
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::Episode;
-    use crate::DomainError::NotChangedError;
-    use crate::{Date, DomainError};
-    use assert_matches::assert_matches;
-    use rstest::{fixture, rstest};
+    use super::{Episode, EpisodeContent};
+    use crate::Date;
+    use fake::{Fake, Faker};
+    use pretty_assertions::assert_eq;
 
-    #[fixture]
-    fn episode() -> Episode {
-        Episode::new((2022, 11, 22), "Some content".to_string()).unwrap()
-    }
-
-    #[rstest]
     #[test]
-    fn episode_edits(mut episode: Episode) -> Result<(), DomainError> {
-        let same_date = episode.date();
-        let res_err = episode.edit_date(same_date);
-        assert_matches!(res_err, Err(NotChangedError(_)));
-
-        let res_ok = episode.edit_date(Date::from_ymd(2022, 11, 23)?);
-        assert_matches!(res_ok, Ok(_));
-
-        Ok(())
+    fn episode() {
+        Episode::new((2022, 11, 22), "Some content".to_string()).unwrap();
+        let date = Faker.fake::<Date>();
+        let content = Faker.fake::<EpisodeContent>();
+        Episode::new_with_domains(date, content);
     }
 
-    #[cfg(feature = "fake")]
+    #[test]
+    fn modify_episode() {
+        let mut episode = Faker.fake::<Episode>();
+        let new_date = Faker.fake::<Date>();
+
+        *episode.date_mut() = new_date;
+        assert_eq!(episode.date(), new_date);
+
+        let new_content = Faker.fake::<EpisodeContent>();
+
+        *episode.content_mut() = new_content.clone();
+        assert_eq!(episode.content().clone(), new_content);
+    }
+
     #[test]
     fn generate_fake() {
-        use fake::{Fake, Faker};
-
         let _ = (0..10000)
             .map(|_| Faker.fake::<Episode>())
             .collect::<Vec<_>>();

@@ -159,8 +159,8 @@ mod test {
 
         // 編集
         let mut edited_movie_clip = movie_clips[1].clone(); // 二番目を編集
-        edited_movie_clip.edit_title("Another Movie Clip".to_string())?;
-        edited_movie_clip.edit_start_and_end(1200.into(), 1300.into())?;
+        *edited_movie_clip.title_mut() = "Another Movie Clip".to_string();
+        *edited_movie_clip.range_mut() = (1200..1300).try_into()?;
         movie_clips[1] = edited_movie_clip.clone();
 
         repo.edit(edited_movie_clip).await?;

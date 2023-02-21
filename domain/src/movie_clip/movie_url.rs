@@ -1,12 +1,12 @@
-use crate::DomainError::{self, UrlParseError};
+use crate::DomainError;
 use config::CONFIG;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use fake::{Dummy, Fake, Faker, StringFaker};
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use rand::Rng;
 
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
@@ -20,9 +20,6 @@ pub struct MovieUrl {
 }
 
 impl MovieUrl {
-    pub fn url_str(&self) -> &str {
-        &self.url_string
-    }
     pub fn video_id(&self) -> &str {
         &self.video_id
     }
@@ -36,7 +33,7 @@ impl FromStr for MovieUrl {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // 規定以上の長さの場合はエラーとなる
         if s.len() > CONFIG.url_string_lim {
-            return Err(UrlParseError(format!(
+            return Err(DomainError::DomainParseError(format!(
                 "Url length must be less than {}",
                 CONFIG.url_string_lim
             )));
@@ -46,9 +43,9 @@ impl FromStr for MovieUrl {
 
         if s.starts_with(MOVIE_URL_ALLOW_PREFIX[0]) {
             let prefix_string = format!("{}watch?", MOVIE_URL_ALLOW_PREFIX[0]); // watch?までの部分
-            let query_str = s
-                .strip_prefix(&prefix_string)
-                .ok_or_else(|| UrlParseError("Invalid query parameter".to_string()))?; // watch?以降の残りの部分
+            let query_str = s.strip_prefix(&prefix_string).ok_or_else(|| {
+                DomainError::DomainParseError("Invalid query parameter".to_string())
+            })?; // watch?以降の残りの部分
 
             let video_id_query = query_str
                 .split('&')
@@ -60,13 +57,15 @@ impl FromStr for MovieUrl {
                     url_string: format!("{common_base_url}watch?v={video_id}"),
                     video_id: video_id.to_string(),
                 }),
-                None => Err(UrlParseError("Invalid query parameter".to_string())),
+                None => Err(DomainError::DomainParseError(
+                    "Invalid query parameter".to_string(),
+                )),
             }
         } else if s.starts_with(MOVIE_URL_ALLOW_PREFIX[1]) {
             let prefix_str = MOVIE_URL_ALLOW_PREFIX[1];
-            let mut query_str = s
-                .strip_prefix(prefix_str)
-                .ok_or_else(|| UrlParseError("Invalid query parameter".to_string()))?;
+            let mut query_str = s.strip_prefix(prefix_str).ok_or_else(|| {
+                DomainError::DomainParseError("Invalid query parameter".to_string())
+            })?;
 
             //watch?v=がある場合それを削除
             if query_str.starts_with("watch?v=") {
@@ -79,10 +78,12 @@ impl FromStr for MovieUrl {
                     url_string: format!("{common_base_url}watch?v={video_id}"),
                     video_id: video_id.to_string(),
                 }),
-                None => Err(UrlParseError("Invalid query parameter".to_string())),
+                None => Err(DomainError::DomainParseError(
+                    "Invalid query parameter".to_string(),
+                )),
             }
         } else {
-            Err(UrlParseError(format!(
+            Err(DomainError::DomainParseError(format!(
                 "Invalid Url. url must have prefix: {MOVIE_URL_ALLOW_PREFIX:?}"
             )))
         }
@@ -111,7 +112,7 @@ impl Display for MovieUrl {
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 impl Dummy<Faker> for MovieUrl {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let mut url = "https://www.youtube.com/watch?v=".to_string();
@@ -136,7 +137,7 @@ mod test {
             MovieUrl::from_url_str("https://www.youtube.com/watch?v=LjU5OOHu_As").unwrap();
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As",
-            movie_url.url_str()
+            movie_url.to_string()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
 
@@ -144,7 +145,7 @@ mod test {
         let movie_url = MovieUrl::from_url_str("https://youtu.be/LjU5OOHu_As").unwrap();
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As",
-            movie_url.url_str()
+            movie_url.to_string()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
 
@@ -153,14 +154,14 @@ mod test {
             MovieUrl::from_url_str("https://www.youtube.com/watch?v=LjU5OOHu_As&t=100s").unwrap();
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As",
-            movie_url.url_str()
+            movie_url.to_string()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
 
         let movie_url = MovieUrl::from_url_str("https://youtu.be/LjU5OOHu_As?t=100s").unwrap();
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As",
-            movie_url.url_str()
+            movie_url.to_string()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
     }
@@ -172,7 +173,7 @@ mod test {
             .unwrap();
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As",
-            movie_url.url_str()
+            movie_url.to_string()
         );
         assert_eq!("LjU5OOHu_As", movie_url.video_id());
     }
@@ -192,7 +193,7 @@ mod test {
 
         assert_eq!(
             "https://www.youtube.com/watch?v=LjU5OOHu_As".to_string(),
-            TryInto::<String>::try_into(movie_url).unwrap()
+            Into::<String>::into(movie_url)
         );
     }
 

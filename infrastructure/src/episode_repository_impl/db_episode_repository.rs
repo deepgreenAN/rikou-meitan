@@ -20,7 +20,7 @@ INSERT INTO episodes ("date", content, id) VALUES ($1, $2, $3)
         "#,
         )
         .bind(episode.date().to_chrono()?)
-        .bind(episode.content())
+        .bind(episode.content().to_string())
         .bind(episode.id().to_uuid())
         .execute(conn)
         .await
@@ -34,7 +34,7 @@ UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
         "#,
         )
         .bind(episode.date().to_chrono()?)
-        .bind(episode.content())
+        .bind(episode.content().to_string())
         .bind(episode.id().to_uuid())
         .fetch_one(conn)
         .await
@@ -200,8 +200,8 @@ mod test {
         }
 
         let mut edited_episode = episodes[1].clone();
-        edited_episode.edit_date(Date::from_ymd(2022, 11, 23)?)?;
-        edited_episode.edit_content("Another Episode Content".to_string())?;
+        *edited_episode.date_mut() = Date::from_ymd(2022, 11, 23)?;
+        *edited_episode.content_mut() = "Another Episode Content".to_string().try_into()?;
         episodes[1] = edited_episode.clone();
 
         episode_sql_runner::edit(&mut transaction, edited_episode).await?;

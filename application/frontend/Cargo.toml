@@ -9,7 +9,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-server = ["dep:axum", "dep:tokio", "dep:tower-http", "dep:serde", "common/server"]
 test_api = []
 
 [dependencies]
@@ -19,10 +18,7 @@ common = { path = "../common", features = ["front"]}
 gloo-net = {version = "0.2.*", default-features = false, features = ["json", "http"]}
 
 # optional dependencies
-axum = { version = "0.6.*", optional = true}
-tokio = { version = "1.*", features = ["full"], optional = true}
-tower-http = { version = "0.3.*", features = ["cors"], optional = true}
-serde = { version = "1.*", features = ["derive"], optional = true}
+
 
 
 [dev-dependencies]

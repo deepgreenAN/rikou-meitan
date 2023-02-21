@@ -130,8 +130,8 @@ mod test {
         }
 
         let mut edited_episode = episodes[1].clone();
-        edited_episode.edit_date(Date::from_ymd(2022, 11, 23)?)?;
-        edited_episode.edit_content("Another Episode Content".to_string())?;
+        *edited_episode.date_mut() = Date::from_ymd(2022, 11, 23)?;
+        *edited_episode.content_mut() = "Another Episode Content".to_string().try_into()?;
         episodes[1] = edited_episode.clone();
 
         repo.edit(edited_episode).await?;

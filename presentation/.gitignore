@@ -1,3 +1,5 @@
 /target
 /dist
 /example_dist
+/Cargo.lock
+/.vscode

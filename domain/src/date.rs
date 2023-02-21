@@ -1,118 +1,39 @@
-use crate::DomainError::{self, DomainLogicError, DomainParseError};
+use crate::DomainError::{self, DomainLogicError};
 use crate::GenericParseError;
 
+use chrono::{Datelike, NaiveDate};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 
-#[cfg(feature = "server")]
-use chrono::{Datelike, NaiveDate};
-
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use fake::{Dummy, Fake, Faker};
 
-#[cfg(feature = "fake")]
+#[cfg(any(test, feature = "fake"))]
 use rand::Rng;
 
-/// Date型のYear
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Year(u32);
-
-impl Year {
-    fn new(year: u32) -> Result<Self, DomainError> {
-        if (2018..=2050).contains(&year) {
-            Ok(Self(year))
-        } else {
-            Err(DomainLogicError("Year is too small".to_string()))
-        }
-    }
-    fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
-impl TryFrom<u32> for Year {
-    type Error = DomainError;
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Year::new(value)
-    }
-}
-
-/// Date型のMonth
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Month(u32);
-
-impl Month {
-    fn new(month: u32) -> Result<Self, DomainError> {
-        if (1..=12).contains(&month) {
-            Ok(Self(month))
-        } else {
-            Err(DomainLogicError("Month must be in [1, 12]".to_string()))
-        }
-    }
-    fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
-impl TryFrom<u32> for Month {
-    type Error = DomainError;
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Month::new(value)
-    }
-}
-
-/// Date型のDay
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Day(u32);
-
-impl Day {
-    fn new(day: u32) -> Result<Self, DomainError> {
-        if (1..=31).contains(&day) {
-            Ok(Self(day))
-        } else {
-            Err(DomainLogicError("Day must be in [1, 31]".to_string()))
-        }
-    }
-    fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
-impl TryFrom<u32> for Day {
-    type Error = DomainError;
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Day::new(value)
-    }
-}
-
-/// 軽量なDate
+/// Date
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
-pub struct Date {
-    year: Year,
-    month: Month,
-    day: Day,
-}
+pub struct Date(NaiveDate);
 
 impl Date {
+    /// year, month, dayを指定してDateを作成．
     pub fn from_ymd(year: u32, month: u32, day: u32) -> Result<Self, DomainError> {
-        Ok(Self {
-            year: Year::new(year)?,
-            month: Month::new(month)?,
-            day: Day::new(day)?,
-        })
+        let chrono_date = NaiveDate::from_ymd_opt(year as i32, month, day)
+            .ok_or(DomainLogicError("Invalid Date".to_string()))?;
+        Ok(Self(chrono_date))
     }
+    /// year, month, dayを取得
     pub fn to_ymd(&self) -> (u32, u32, u32) {
-        (self.year.to_u32(), self.month.to_u32(), self.day.to_u32())
+        (self.0.year() as u32, self.0.month(), self.0.day())
     }
-    #[cfg(feature = "server")]
+    /// chrono::NaiveDateへ変換．
     pub fn to_chrono(&self) -> Result<NaiveDate, DomainError> {
-        NaiveDate::from_ymd_opt(
-            self.year.to_u32() as i32,
-            self.month.to_u32(),
-            self.day.to_u32(),
-        )
-        .ok_or_else(|| DomainLogicError("Invalid Date".to_string()))
+        Ok(self.0)
+    }
+    /// chrono::NaiveDateからの変換．
+    pub fn from_chrono(chrono_date: NaiveDate) -> Result<Self, DomainError> {
+        Ok(Self(chrono_date))
     }
 }
 
@@ -123,27 +44,14 @@ impl TryFrom<(u32, u32, u32)> for Date {
     }
 }
 
+// String <-> Dae
+
 impl FromStr for Date {
     type Err = DomainError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 10 {
-            return Err(DomainParseError("invalid date string".to_string()));
-        }
-        let str_list: Vec<&str> = s.split('-').collect();
-        if str_list.len() != 3 {
-            return Err(DomainParseError("invalid date string".to_string()));
-        }
-        Self::from_ymd(
-            str_list[0]
-                .parse()
-                .map_err(Into::<GenericParseError>::into)?,
-            str_list[1]
-                .parse()
-                .map_err(Into::<GenericParseError>::into)?,
-            str_list[2]
-                .parse()
-                .map_err(Into::<GenericParseError>::into)?,
-        )
+        let chrono_date =
+            NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(Into::<GenericParseError>::into)?;
+        Date::from_chrono(chrono_date)
     }
 }
 
@@ -156,13 +64,7 @@ impl TryFrom<String> for Date {
 
 impl Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{:>04}-{:>02}-{:>02}",
-            self.year.to_u32(),
-            self.month.to_u32(),
-            self.day.to_u32()
-        )
+        write!(f, "{}", self.0.format("%Y-%m-%d"))
     }
 }
 
@@ -172,15 +74,15 @@ impl From<Date> for String {
     }
 }
 
-#[cfg(feature = "server")]
+// NaiveDate <-> Date
+
 impl TryFrom<NaiveDate> for Date {
     type Error = DomainError;
     fn try_from(value: NaiveDate) -> Result<Self, Self::Error> {
-        Self::from_ymd(value.year() as u32, value.month(), value.day())
+        Self::from_chrono(value)
     }
 }
 
-#[cfg(feature = "server")]
 impl TryFrom<Date> for NaiveDate {
     type Error = DomainError;
     fn try_from(value: Date) -> Result<Self, Self::Error> {
@@ -191,16 +93,23 @@ impl TryFrom<Date> for NaiveDate {
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
-#[cfg(feature = "fake")]
+#[cfg(any(feature = "fake", test))]
 impl Dummy<Faker> for Date {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        let year_u32: u32 = (2018..2050).fake_with_rng(rng);
-        let month_u32: u32 = (1..=12).fake_with_rng(rng);
-        let day_u32: u32 = (1..=28).fake_with_rng(rng);
+        let chrono_date = Faker.fake_with_rng::<NaiveDate, R>(rng);
+        chrono_date.try_into().expect("Generate fake Date Error")
+    }
+}
 
-        (year_u32, month_u32, day_u32)
-            .try_into()
-            .expect("Faker data generate error")
+#[cfg(any(feature = "fake", test))]
+impl Dummy<std::ops::Range<Date>> for Date {
+    fn dummy_with_rng<R: Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
+        let chrono_start = config.start.to_chrono().expect("Generate fake Date Error");
+        let chrono_end = config.end.to_chrono().expect("Generate fake Date Error");
+        let days = (0..(chrono_start - chrono_end).num_days()).fake_with_rng::<i64, R>(rng);
+
+        let chrono_date = chrono_start + chrono::Duration::days(days);
+        chrono_date.try_into().expect("Generate fake Date Error")
     }
 }
 
@@ -208,15 +117,14 @@ impl Dummy<Faker> for Date {
 mod test {
     use super::Date;
     use crate::DomainError;
-    use assert_matches::assert_matches;
     use pretty_assertions::assert_eq;
 
     #[test]
     fn test_constructor() {
         let date_ok = Date::from_ymd(2022, 12, 1);
-        assert_matches!(date_ok, Ok(_));
+        assert!(matches!(date_ok, Ok(_)));
         let date_err = Date::from_ymd(2020, 13, 1);
-        assert_matches!(date_err, Err(DomainError::DomainLogicError(_)));
+        assert!(matches!(date_err, Err(DomainError::DomainLogicError(_))));
     }
 
     #[test]
@@ -227,17 +135,8 @@ mod test {
             Date::from_ymd(2022, 12, 1).unwrap()
         );
 
-        let parsed_date_err = "2022-12-1".parse::<Date>();
-        assert_matches!(parsed_date_err, Err(DomainError::DomainParseError(_)));
-
-        let parsed_date_err = "2022 12 1".parse::<Date>();
-        assert_matches!(parsed_date_err, Err(DomainError::DomainParseError(_)));
-
-        let parsed_date_err = "12-01-2022".parse::<Date>();
-        assert_matches!(parsed_date_err, Err(DomainError::DomainLogicError(_)));
-
-        let parsed_date_err = "2022-12-aa".parse::<Date>();
-        assert_matches!(parsed_date_err, Err(DomainError::GenericParseError(_)));
+        let parsed_date_err: Result<Date, DomainError> = "2022-12-aa".parse::<Date>();
+        assert!(matches!(parsed_date_err, Err(_)));
     }
 
     #[test]
@@ -271,5 +170,14 @@ mod test {
         use fake::{Fake, Faker};
 
         let _ = (0..10000).map(|_| Faker.fake::<Date>()).collect::<Vec<_>>();
+
+        let start = Date::from_ymd(2018, 12, 27).unwrap();
+        let end = Date::from_ymd(2023, 1, 3).unwrap();
+        let range_dates = (0..1000)
+            .map(|_| (start..end).fake::<Date>())
+            .collect::<Vec<_>>();
+        range_dates.into_iter().for_each(|date| {
+            assert!(start <= date && date < end);
+        });
     }
 }

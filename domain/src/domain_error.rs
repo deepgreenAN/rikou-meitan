@@ -1,31 +1,33 @@
 /// ドメインに関するエラー
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum DomainError {
-    #[error("DomainError: Invalid Domain Value:{0}")]
+    /// コンストラクト時などでドメインロジックと入力が矛盾する場合のエラー．
+    #[error("DomainLogicError: Inconsistent with domain logic. {0}")]
     DomainLogicError(String),
-
-    #[error("DomainError: ParseError:{0}")]
+    /// プリミティブな型などからドメイン固有型へのパースの際のロジックのエラー．serdeのデシリアライズなどで起こる
+    #[error("DomainParseError: Could not parse as domain specific type.{0}")]
     DomainParseError(String),
-
-    #[error("DomainError: UrlParseError:{0}")]
-    UrlParseError(String),
-
-    #[error("DomainError: NotChangedError:{0}")]
-    NotChangedError(String),
-
-    #[error(transparent)]
-    GenericParseError(#[from] GenericParseError),
+    /// 外部クレートの対応する型との変換のエラー．
+    #[error("DomainConvertExternalError: Conversion between domain-specific and external types failed. {0}")]
+    DomainConvertExternalError(String),
 }
 
 /// ジェネリックなパースに関するエラー
 #[derive(thiserror::Error, Debug, Clone)]
 
 pub enum GenericParseError {
-    #[error(transparent)]
-    ParseIntError(#[from] std::num::ParseIntError),
-
+    /// UUIDのパースに関するエラー
     #[error(transparent)]
     ParseUuidError(#[from] uuid::Error),
+    /// NaiveDateのパースに関するエラー
+    #[error(transparent)]
+    ParseDateError(#[from] chrono::ParseError),
+}
+
+impl From<GenericParseError> for DomainError {
+    fn from(value: GenericParseError) -> Self {
+        DomainError::DomainParseError(value.to_string())
+    }
 }
 
 #[cfg(feature = "server")]
