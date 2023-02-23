@@ -1,7 +1,7 @@
 use crate::components::AccordionEpisodes;
 use domain::{episode::Episode, Date};
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use fake::{Fake, Faker};
 use gloo_timers::future::TimeoutFuture;
 use std::rc::Rc;
@@ -20,9 +20,9 @@ pub struct RangeEpisodesProps {
 }
 
 pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
-    let episodes_ref = use_ref(&cx, || Option::<Vec<Episode>>::None);
+    let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
 
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         to_owned![episodes_ref];
         let initial_is_open = Rc::new(cx.props.initial_is_open);
 

@@ -5,7 +5,7 @@ use crate::PLAYING_PLAYER_ID;
 // const ORIGIN: &str = "https://plyr.io";
 const ORIGIN: &str = "http://localhost:8080";
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use fermi::{use_read, use_set};
 // use fermi::use_atom_state;
 use gloo_timers::callback::Timeout;
@@ -36,14 +36,14 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
         "/images/release/movie_cover.svg"
     ));
 
-    let thumbnail_url = use_state(&cx, || Option::<String>::None);
-    let is_active = use_state(&cx, || false);
-    let player_state = use_state(&cx, || Option::<Plyr>::None);
-    let intersecting_handler = cx.use_hook(|_|{Rc::new(Cell::new(Option::<IntersectionObserverHandler>::None))});
+    let thumbnail_url = use_state(cx, || Option::<String>::None);
+    let is_active = use_state(cx, || false);
+    let player_state = use_state(cx, || Option::<Plyr>::None);
+    let intersecting_handler = cx.use_hook(||{Rc::new(Cell::new(Option::<IntersectionObserverHandler>::None))});
 
     let (playing_player_id , setter_playing_player_id)= (
-        use_read(&cx, PLAYING_PLAYER_ID), 
-        use_set(&cx, PLAYING_PLAYER_ID)
+        use_read(cx, PLAYING_PLAYER_ID), 
+        use_set(cx, PLAYING_PLAYER_ID)
     );
 
     // let (active_player_ids, active_player_ids_state) = (
@@ -51,14 +51,14 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
     //     use_atom_state(&cx, ACTIVE_PLAYER_IDS)
     // );
 
-    let onplay_event_listener = cx.use_hook(|_|{Rc::new(Cell::new(Option::<PlyrStandardEventListener>::None))});
+    let onplay_event_listener = cx.use_hook(||{Rc::new(Cell::new(Option::<PlyrStandardEventListener>::None))});
 
     let player_container_id = format!("{}-player-container", &cx.props.id);
     let src_url = format!("https://www.youtube.com/embed/{}?origin={ORIGIN}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1", &cx.props.video_id);
 
 
     // 初期化
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         to_owned![thumbnail_url, intersecting_handler, player_state];
         let video_id = cx.props.video_id.clone();
         let mut player_container_selector = "#".to_string();
@@ -94,7 +94,7 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
     });
 
     // is_activeに依存させたplayerの初期化
-    use_effect(&cx, is_active, {
+    use_effect(cx, is_active, {
         // let playing_player_id = cx.props.playing_player_id.clone();
         to_owned![
             player_state, 
@@ -140,7 +140,7 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
 
                 //         if ids.len() > ACTIVE_PLAYER_NUMBER {
                 //             let popped = ids.pop_front();
-                //             log::debug!("poped player: {:?}", popped);
+                //             log::debug!("popped player: {:?}", popped);
                 //         }
                 //     }
                 // });
@@ -164,7 +164,7 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
 
 
     // // 現在再生中のプレーヤーと異なる場合
-    use_effect(&cx, playing_player_id, {
+    use_effect(cx, playing_player_id, {
         let id = cx.props.id.clone();
         to_owned![player_state];
 

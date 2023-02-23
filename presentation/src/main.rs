@@ -14,12 +14,10 @@ use crate::header::Header;
 // 以下はroutes
 use crate::routes::{EpisodesPage, Home, NotFound};
 
-use dioxus::{
-    prelude::*,
-    router::{Route, Router},
-};
+use dioxus::prelude::*;
+use dioxus_router::{Route, Router};
 use fermi::*;
-use std::collections::VecDeque;
+// use std::collections::VecDeque;
 
 // ダークモード・ライトモードのフラッグ.
 pub static IS_DARK_MODE: Atom<bool> = |_| false;
@@ -28,20 +26,21 @@ pub static IS_DARK_MODE: Atom<bool> = |_| false;
 pub static PLAYING_PLAYER_ID: Atom<Option<String>> = |_| None;
 
 // アクティブなプレーヤーのID
-pub const ACTIVE_PLAYER_NUMBER: usize = 3;
-pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
-    |_| VecDeque::with_capacity(ACTIVE_PLAYER_NUMBER);
+// pub const ACTIVE_PLAYER_NUMBER: usize = 3;
+// pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
+//     |_| VecDeque::with_capacity(ACTIVE_PLAYER_NUMBER);
 
 fn App(cx: Scope) -> Element {
+    use_init_atom_root(cx);
     utils::use_dark_mode(cx);
     cx.render(rsx! {
         Background{
             Router {
                 Header{}
                 div { id: "contents-container",
-                    Route { to: "/home", Home{}}
-                    Route { to: "/episodes", EpisodesPage{}}
                     Route { to: "", NotFound{}}
+                    Route { to: "/", Home{}}
+                    Route { to: "/episodes", EpisodesPage{}}
                 }
                 Footer{}
             }
@@ -52,5 +51,5 @@ fn App(cx: Scope) -> Element {
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

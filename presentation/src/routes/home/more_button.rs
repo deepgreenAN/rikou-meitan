@@ -1,4 +1,5 @@
-use dioxus::{prelude::*, router::Link};
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
 #[derive(Props, PartialEq)]
 pub struct MoreButtonProps {

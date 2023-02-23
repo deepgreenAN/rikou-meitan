@@ -1,0 +1,11 @@
+@use "../static_var.scss";
+
+.validation-input-label-container {
+    display: flex;
+    align-items: center;
+    .error-message {
+        margin-left: 1rem;
+        color: static_var.$caution_color;
+        font-size: 0.8rem;
+    }
+}

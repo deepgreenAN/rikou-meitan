@@ -19,15 +19,16 @@ web-sys = { version = "^0.3", features = [
     "ScrollBehavior",
     "ScrollIntoViewOptions"
 ] }
-dioxus = { version = "0.2.4", features = ["web", "router"] }
-fermi = "0.2.1"
+dioxus = "^0.3.2"
+dioxus-web = "^0.3.1"
+dioxus-router = "0.3.0"
+fermi = "0.3.0"
 gloo-events = "^0.1"
 gloo-utils = "^0.1"
 gloo-timers = "0.2.6"
 log = "^0.4"
 wasm-logger = "^0.2"
 plyr = { version = "0.0.4", features = ["options"]}
-# plyr = { git = "https://github.com/deepgreenAN/plyr-rs", features = ["options"]}
 gloo-intersection = { git = "https://github.com/deepgreenAN/intersection-wrapper" }
 indexmap = "^1.9"
 

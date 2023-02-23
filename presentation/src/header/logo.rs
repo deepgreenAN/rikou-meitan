@@ -1,4 +1,5 @@
-use dioxus::{prelude::*, router::Link};
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
 pub fn TitleLogo(cx: Scope) -> Element {
     let bottle_svg = include_str!(concat!(

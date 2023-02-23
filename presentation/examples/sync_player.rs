@@ -1,7 +1,6 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(non_snake_case)]
 
-use dioxus::core::to_owned;
 use dioxus::prelude::*;
 use plyr::events::{PlyrStandardEventType, PlyrYoutubeEventListener};
 use plyr::Plyr;
@@ -13,11 +12,11 @@ struct SyncPlayerProps<'a> {
 }
 
 fn SyncPlayer<'a>(cx: Scope<'a, SyncPlayerProps<'a>>) -> Element {
-    let player_state: &UseState<Option<Plyr>> = use_state(&cx, || None);
+    let player_state: &UseState<Option<Plyr>> = use_state(cx, || None);
     let onplay_event_listener_state: &UseState<Option<PlyrYoutubeEventListener>> =
-        use_state(&cx, || None);
+        use_state(cx, || None);
 
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         let mut selector = "#".to_string();
         selector.push_str(&cx.props.id);
 
@@ -59,7 +58,7 @@ fn SyncPlayer<'a>(cx: Scope<'a, SyncPlayerProps<'a>>) -> Element {
 }
 
 fn App(cx: Scope) -> Element {
-    let playing_id = use_state(&cx, || "".to_string());
+    let playing_id = use_state(cx, || "".to_string());
 
     cx.render(rsx! {
         link { rel: "stylesheet", href: "https://cdn.plyr.io/3.7.3/plyr.css"},
@@ -70,5 +69,5 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

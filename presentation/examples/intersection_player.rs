@@ -1,7 +1,7 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(non_snake_case)]
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use gloo_intersection::{IntersectionObserverHandler, IntersectionObserverOptions};
 use gloo_utils::document;
 use plyr::Plyr;
@@ -10,10 +10,10 @@ use web_sys::HtmlElement;
 
 #[inline_props]
 fn IntersectionPlayer(cx: Scope, id: String) -> Element {
-    let player_state: &UseState<Option<Plyr>> = use_state(&cx, || None);
+    let player_state: &UseState<Option<Plyr>> = use_state(cx, || None);
     let intersection_handler_state: &UseState<Option<IntersectionObserverHandler>> =
-        use_state(&cx, || None);
-    use_effect(&cx, (), {
+        use_state(cx, || None);
+    use_effect(cx, (), {
         let mut selector = "#".to_string();
         selector.push_str(id);
         to_owned![player_state, intersection_handler_state];
@@ -68,5 +68,5 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

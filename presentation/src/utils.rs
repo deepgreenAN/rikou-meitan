@@ -4,7 +4,7 @@ mod scroll_rock;
 pub use overlay::use_overlay;
 pub use scroll_rock::use_scroll_lock;
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::HtmlElement;
 
@@ -50,8 +50,9 @@ pub fn set_dark_mode(is_dark_mode: bool) {
 }
 
 pub fn use_dark_mode(cx: Scope) {
-    let setter_dark_mode = fermi::use_set(&cx, crate::IS_DARK_MODE);
-    use_effect(&cx, (), {
+    let setter_dark_mode = fermi::use_set(cx, crate::IS_DARK_MODE);
+
+    use_effect(cx, (), {
         to_owned![setter_dark_mode];
         |_| async move {
             let media_query_list = gloo_utils::window()

@@ -79,5 +79,5 @@ impl OverlayElement {
 }
 
 pub fn use_overlay(cx: Scope<'_>, z_index: i32) -> &'_ OverlayElement {
-    cx.use_hook(|_| OverlayElement::new(z_index))
+    cx.use_hook(|| OverlayElement::new(z_index))
 }

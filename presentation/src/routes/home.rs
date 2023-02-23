@@ -6,7 +6,7 @@ use domain::episode::Episode;
 use more_button::MoreButton;
 use toc::{Toc, TocContent};
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use fake::{Fake, Faker};
 use gloo_timers::future::TimeoutFuture;
 
@@ -16,9 +16,9 @@ pub fn Home(cx: Scope) -> Element {
         "/contents/orikou_desc.html"
     ));
 
-    let episodes_ref = use_ref(&cx, || Option::<Vec<Episode>>::None);
+    let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
 
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         to_owned![episodes_ref];
 
         |_| async move {

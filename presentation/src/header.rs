@@ -12,11 +12,12 @@ pub use mode_change_button::ModeChangeButton;
 
 use crate::utils::{use_overlay, use_scroll_lock};
 
-use dioxus::{core::to_owned, prelude::*, router::Link};
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
 pub fn Header(cx: Scope) -> Element {
     // 隠しメニューが開いているかどうか
-    let is_hidden_menu_open = use_state(&cx, || false);
+    let is_hidden_menu_open = use_state(cx, || false);
     let scroll_state = use_scroll_lock(cx);
     let overlay_state = use_overlay(cx, 2);
 
@@ -33,7 +34,7 @@ pub fn Header(cx: Scope) -> Element {
                     overlay_state.deactivate();
                 }
             })
-            .expect("Overlay Not active");
+            .expect("Overlay cannot added event listener");
     };
 
     let close_hidden_menu = move |_| {
@@ -54,7 +55,7 @@ pub fn Header(cx: Scope) -> Element {
             // 以下はabsolute
             div { id: "top-bar"}
             HeaderMenu{
-                HeaderMenuItem{Link{ to:"/home", "ホーム"}}
+                HeaderMenuItem{Link{ to:"/", "ホーム"}}
                 HeaderMenuItem{Link{ to:"/episodes", "エピソード"}}
                 HeaderMenuItem{Link{ to:"/clips", "クリップ"}}
             }
@@ -63,7 +64,7 @@ pub fn Header(cx: Scope) -> Element {
                     HiddenMenu{
                         HiddenMenuItem{
                             onclick: close_hidden_menu,
-                            Link{ to:"/home","ホーム"}
+                            Link{ to:"/","ホーム"}
                         }
                         HiddenMenuItem{
                             onclick: close_hidden_menu,

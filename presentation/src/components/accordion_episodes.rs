@@ -23,7 +23,7 @@ pub struct AccordionEpisodesProps<'a> {
 }
 
 pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Element {
-    let is_accordion_open = use_state(&cx, || cx.props.initial_is_open);
+    let is_accordion_open = use_state(cx, || cx.props.initial_is_open);
 
     let accordion_button_str = match is_accordion_open.get() {
         true => include_str!(concat!(
@@ -77,7 +77,7 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                             li {key: "{i}",
                                                 div { class: "episode-item-container",
                                                     div {
-                                                        span { class: "episode-date", [format!("{year}/{month}/{day}")]}
+                                                        span { class: "episode-date", format!("{year}/{month}/{day}")}
                                                         span { class: "episode-content", "{content}"}
                                                     }
                                                     cx.props.editable.then(||

@@ -1,6 +1,5 @@
 use crate::domain_form::{DomainForm, DomainFormOpt};
 use crate::validation_input_component::ValidationInputText;
-use dioxus::core::to_owned;
 use dioxus::prelude::*;
 use log::info;
 use std::cell::RefCell;
@@ -8,7 +7,7 @@ use std::rc::Rc;
 
 pub fn ValidationForm(cx: Scope) -> Element {
     let domain_form_opt = Rc::new(RefCell::new(DomainFormOpt::default()));
-    let first_submitted = use_state(&cx, || false);
+    let first_submitted = use_state(cx, || false);
 
     let onclick = {
         to_owned![domain_form_opt];

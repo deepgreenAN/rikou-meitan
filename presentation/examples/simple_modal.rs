@@ -5,10 +5,10 @@ use dioxus::prelude::*;
 use gloo_events::{EventListener, EventListenerOptions};
 
 fn App(cx: Scope) -> Element {
-    let is_show_modal = use_state(&cx, || false);
+    let is_show_modal = use_state(cx, || false);
     let show_modal = move |_| is_show_modal.set(true);
     let close_modal = move |_| is_show_modal.set(false);
-    let _scroll_lock = use_future(&cx, is_show_modal, |is_show_modal| async move {
+    let _scroll_lock = use_future(cx, is_show_modal, |is_show_modal| async move {
         if *is_show_modal {
             let document = gloo_utils::document();
             let options = EventListenerOptions {
@@ -38,7 +38,7 @@ fn App(cx: Scope) -> Element {
                 div {
                     id: "modal-overlay", onclick: close_modal,
                     div {
-                        id: "modal-content", onclick: move |e| {e.cancel_bubble()},
+                        id: "modal-content", onclick: move |e| {e.stop_propagation();},
                         p {"これがモーダルウィンドウです。"}
                         p {button {onclick: close_modal, "キャンセル"}}
                     }
@@ -50,5 +50,5 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

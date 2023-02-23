@@ -1,4 +1,3 @@
-use crate::IS_DARK_MODE;
 use dioxus::prelude::*;
 use fermi::use_read;
 
@@ -29,7 +28,8 @@ pub struct HiddenMenuProps<'a> {
 }
 
 pub fn HiddenMenu<'a>(cx: Scope<'a, HiddenMenuProps<'a>>) -> Element {
-    let is_dark_mode = use_read(&cx, IS_DARK_MODE);
+    let is_dark_mode = use_read(cx, crate::IS_DARK_MODE);
+
     let background_class = match *is_dark_mode {
         true => "hidden-menu-background-dark",
         false => "hidden-menu-background-light",

@@ -7,7 +7,7 @@ pub struct BackgroundProps<'a> {
 }
 
 pub fn Background<'a>(cx: Scope<'a, BackgroundProps<'a>>) -> Element {
-    let is_dark_mode = use_read(&cx, crate::IS_DARK_MODE);
+    let is_dark_mode = use_read(cx, crate::IS_DARK_MODE);
 
     let (background_grad_class, background_pattern_class) = match *is_dark_mode {
         true => ("background-grad-dark", "background-pattern-dark"),

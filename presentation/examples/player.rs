@@ -1,7 +1,6 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(non_snake_case)]
 
-use dioxus::core::to_owned;
 use dioxus::prelude::*;
 use plyr::{
     events::{PlyrStandardEventType, PlyrYoutubeEventListener},
@@ -10,11 +9,11 @@ use plyr::{
 
 #[inline_props]
 fn PlyrFrame(cx: Scope, id: String) -> Element {
-    let player_state: &UseState<Option<Plyr>> = use_state(&cx, || None);
+    let player_state: &UseState<Option<Plyr>> = use_state(cx, || None);
     let event_listeners_state: &UseState<Option<Vec<PlyrYoutubeEventListener>>> =
-        use_state(&cx, || None);
+        use_state(cx, || None);
 
-    use_effect(&cx, (), |_| {
+    use_effect(cx, (), |_| {
         to_owned![player_state, event_listeners_state];
         let mut selector = "#".to_string();
         selector.push_str(id);
@@ -66,5 +65,5 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

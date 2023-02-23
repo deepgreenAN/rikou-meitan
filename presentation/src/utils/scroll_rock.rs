@@ -41,5 +41,5 @@ impl ScrollLockState {
 }
 
 pub fn use_scroll_lock(cx: Scope<'_>) -> &'_ ScrollLockState {
-    cx.use_hook(|_| ScrollLockState::new())
+    cx.use_hook(ScrollLockState::new)
 }

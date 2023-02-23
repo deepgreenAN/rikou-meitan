@@ -1,18 +1,18 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(non_snake_case)]
 
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use gloo_timers::future::TimeoutFuture;
 use plyr::Plyr;
 
 #[inline_props]
 fn SwitchImageFrame(cx: Scope, id: String) -> Element {
     let movie_cover_svg = include_str!("./assets/movie_cover.svg");
-    let thumbnail_url: &UseState<Option<String>> = use_state(&cx, || None);
-    let is_clicked = use_state(&cx, || false);
-    let player_state: &UseState<Option<Plyr>> = use_state(&cx, || None);
+    let thumbnail_url: &UseState<Option<String>> = use_state(cx, || None);
+    let is_clicked = use_state(cx, || false);
+    let player_state: &UseState<Option<Plyr>> = use_state(cx, || None);
 
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         to_owned![thumbnail_url];
         |_| async move {
             TimeoutFuture::new(1000).await;
@@ -22,7 +22,7 @@ fn SwitchImageFrame(cx: Scope, id: String) -> Element {
         }
     });
 
-    use_effect(&cx, is_clicked, {
+    use_effect(cx, is_clicked, {
         to_owned![player_state];
         let mut selector = "#".to_string();
         selector.push_str(id);
@@ -81,5 +81,5 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

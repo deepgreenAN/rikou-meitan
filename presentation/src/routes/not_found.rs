@@ -1,4 +1,5 @@
-use dioxus::{prelude::*, router::Link};
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
 pub fn NotFound(cx: Scope) -> Element {
     cx.render(rsx! {

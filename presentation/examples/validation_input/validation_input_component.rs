@@ -36,7 +36,7 @@ pub fn ValidationInputText<'a, T: TryFrom<String>>(
     cx: Scope<'a, ValidationInputTextProps<'a, T>>,
 ) -> Element {
     let required_error_message = "必須のフィールドです";
-    let error_message_state = use_state(&cx, || Some(required_error_message.to_string()));
+    let error_message_state = use_state(cx, || Some(required_error_message.to_string()));
 
     // String -> Result<T, String>に変換する関数
     let try_into_func = move |s: String| -> Result<T, String> {

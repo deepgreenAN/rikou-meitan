@@ -1,4 +1,4 @@
-use dioxus::{core::to_owned, prelude::*};
+use dioxus::prelude::*;
 use gloo_intersection::IntersectionObserverHandler;
 use gloo_utils::document;
 use indexmap::IndexMap;
@@ -27,13 +27,13 @@ pub fn TocContent<'a>(cx: Scope<'a, TocContentProps<'a>>) -> Element {
 }
 
 pub fn Toc(cx: Scope) -> Element {
-    let toc_content_elements = use_state(&cx, Vec::<WebSysElement>::new);
-    let visible_map = cx.use_hook(|_| Rc::new(RefCell::new(IndexMap::<String, bool>::new())));
-    let active_id = use_state(&cx, || Option::<String>::None);
+    let toc_content_elements = use_state(cx, Vec::<WebSysElement>::new);
+    let visible_map = cx.use_hook(|| Rc::new(RefCell::new(IndexMap::<String, bool>::new())));
+    let active_id = use_state(cx, || Option::<String>::None);
     let intersection_observer_handler =
-        cx.use_hook(|_| Rc::new(Cell::new(Option::<IntersectionObserverHandler>::None)));
+        cx.use_hook(|| Rc::new(Cell::new(Option::<IntersectionObserverHandler>::None)));
 
-    use_effect(&cx, (), {
+    use_effect(cx, (), {
         to_owned![
             toc_content_elements,
             visible_map,
