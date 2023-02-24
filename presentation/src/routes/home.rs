@@ -2,12 +2,12 @@ mod more_button;
 mod toc;
 
 use crate::components::{AccordionEpisodes, Player};
-use domain::episode::Episode;
+use domain::{episode::Episode, Date};
 use more_button::MoreButton;
 use toc::{Toc, TocContent};
 
 use dioxus::prelude::*;
-use fake::{Fake, Faker};
+use fake::Fake;
 use gloo_timers::future::TimeoutFuture;
 
 pub fn Home(cx: Scope) -> Element {
@@ -18,13 +18,18 @@ pub fn Home(cx: Scope) -> Element {
 
     let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
 
+    let episode_start: Date = (2023, 1, 1).try_into().expect("Date sanity check");
+    let episode_end: Date = (2024, 1, 1).try_into().expect("Date sanity check");
+
     use_effect(cx, (), {
         to_owned![episodes_ref];
 
         |_| async move {
             TimeoutFuture::new(3000).await;
             episodes_ref.set(Some(
-                (0..10).map(|_| Faker.fake::<Episode>()).collect::<Vec<_>>(),
+                (0..10)
+                    .map(|_| (episode_start..episode_end).fake::<Episode>())
+                    .collect::<Vec<_>>(),
             ));
         }
     });
@@ -51,7 +56,6 @@ pub fn Home(cx: Scope) -> Element {
                         episodes: episodes_ref.clone(),
                         initial_is_open: true,
                         fixed: true,
-                        editable: false
                     }
                     MoreButton{to:"/episodes"}
                 }

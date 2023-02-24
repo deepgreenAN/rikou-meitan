@@ -106,7 +106,7 @@ impl Dummy<std::ops::Range<Date>> for Date {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
         let chrono_start = config.start.to_chrono().expect("Generate fake Date Error");
         let chrono_end = config.end.to_chrono().expect("Generate fake Date Error");
-        let days = (0..(chrono_start - chrono_end).num_days()).fake_with_rng::<i64, R>(rng);
+        let days = (0..(chrono_end - chrono_start).num_days()).fake_with_rng::<i64, R>(rng);
 
         let chrono_date = chrono_start + chrono::Duration::days(days);
         chrono_date.try_into().expect("Generate fake Date Error")

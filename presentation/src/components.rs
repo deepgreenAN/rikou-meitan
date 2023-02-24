@@ -1,6 +1,7 @@
 mod accordion_episodes;
 mod add_button;
 mod player;
+mod quiz;
 mod spinner;
 mod validation_input;
 

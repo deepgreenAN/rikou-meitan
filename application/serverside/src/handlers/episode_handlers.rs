@@ -127,6 +127,7 @@ mod test {
             .with_state(app_state)
     }
 
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_save_episode(mut router: Router) {
@@ -179,6 +180,7 @@ mod test {
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_edit_episode(mut router: Router) {
@@ -231,6 +233,7 @@ mod test {
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_all_episodes(mut router: Router) {
@@ -258,6 +261,7 @@ mod test {
         assert_eq!(res_vec, episodes);
     }
 
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_order_by_date_episodes(mut router: Router) {
@@ -276,7 +280,7 @@ mod test {
 
         let request = Request::builder()
             .method(http::Method::GET)
-            .uri(&format!("/episode/order_date?start={}&end={}", start, end))
+            .uri(&format!("/episode/order_date?start={start}&end={end}"))
             .body(Body::empty())
             .unwrap();
 
@@ -289,6 +293,7 @@ mod test {
         assert_eq!(res_vec, episodes);
     }
 
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_remove_by_id_episode(mut router: Router) {
@@ -305,7 +310,7 @@ mod test {
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
-                .uri(&format!("/episode/{}", episode_id))
+                .uri(&format!("/episode/{episode_id}"))
                 .body(Body::empty())
                 .unwrap();
 
@@ -323,7 +328,7 @@ mod test {
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
-                .uri(&format!("/episode/{}", episode_id))
+                .uri(&format!("/episode/{episode_id}"))
                 .body(Body::empty())
                 .unwrap();
 

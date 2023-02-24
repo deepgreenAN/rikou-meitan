@@ -28,22 +28,34 @@ impl TryFrom<EpisodeForm> for Episode {
 // AddEpisode コンポーネント
 
 #[derive(Props)]
-pub struct AddEpisodeProps<'a> {
+pub struct EditEpisodeProps<'a> {
+    base_episode: Option<Episode>,
     onsubmit: EventHandler<'a, Episode>,
     oncancel: EventHandler<'a, ()>,
 }
 
-pub fn AddEpisode<'a>(cx: Scope<'a, AddEpisodeProps<'a>>) -> Element {
+pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
     let is_previewed = use_state(cx, || false);
-    let episode_form = use_ref(cx, EpisodeForm::default);
+    let episode_form = use_ref(cx, || {
+        if let Some(base_episode) = cx.props.base_episode.as_ref() {
+            EpisodeForm {
+                date: Some(base_episode.date()),
+                content: Some(base_episode.content().clone()),
+            }
+        } else {
+            EpisodeForm::default()
+        }
+    });
 
     cx.render(rsx! {
-        div { class: "add-episode-container", onmousedown: move |_|{cx.props.oncancel.call(())},
-            div { class: "add-episode-ui-container", onmousedown: move |e| {e.stop_propagation();},
-                div { class: "add-episode-input-container",
-                    div { class: "add-episode-input-caption", "新しいエピソードを追加"}
+        div { class: "edit-episode-container", 
+            onclick: move |_|{cx.props.oncancel.call(())}, //なぜかmousedownのstop_propagationが効かない
+            div { class: "edit-episode-ui-container", 
+                onclick: move |e| {e.stop_propagation();},
+                div { class: "edit-episode-input-container",
+                    div { class: "edit-episode-input-caption", "新しいエピソードを追加"}
                     ValidationInput{
-                        class:"add-episode-input-date",
+                        class:"edit-episode-input-date",
                         onchange: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
                         error_message: "※有効なDateではありません",
                         label_component: cx.render(rsx!{
@@ -54,10 +66,11 @@ pub fn AddEpisode<'a>(cx: Scope<'a, AddEpisodeProps<'a>>) -> Element {
                         }),
                         required: true,
                         show_error_message: true,
-                        input_type:InputType::InputDate
+                        input_type:InputType::InputDate,
+                        initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.date()}),
                     }
                     ValidationInput{
-                        class:"add-episode-input-content",
+                        class:"edit-episode-input-content",
                         onchange: move |value: Option<EpisodeContent>|{episode_form.with_mut(|form|{form.content = value})},
                         error_message: "※無効なhtmlが含まれています",
                         label_component: cx.render(rsx!{
@@ -68,9 +81,10 @@ pub fn AddEpisode<'a>(cx: Scope<'a, AddEpisodeProps<'a>>) -> Element {
                         }),
                         required: true,
                         show_error_message: true,
-                        input_type:InputType::TextArea
+                        input_type:InputType::TextArea,
+                        initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.content().clone()}),
                     }
-                    div { class: "add-episode-input-bottom",
+                    div { class: "edit-episode-input-bottom",
                         button { onclick:move |_|{is_previewed.set(true)}, "プレビューを表示"}
                         button { onclick: move |_|{cx.props.oncancel.call(())}, "キャンセル"}
                     }
@@ -78,25 +92,32 @@ pub fn AddEpisode<'a>(cx: Scope<'a, AddEpisodeProps<'a>>) -> Element {
                 }
                 is_previewed.get().then(||{
                     rsx!{
-                        div { class: "add-episode-preview-container",
-                            div { class: "add-episode-preview-caption", "プレビュー"}
+                        div { class: "edit-episode-preview-container",
+                            div { class: "edit-episode-preview-caption", "プレビュー"}
                             match TryInto::<Episode>::try_into(episode_form.with(|form|{form.clone()})) {
                                 Ok(episode) => {
                                     let content = episode.content().to_string();
+                                    let (year, month, day) = episode.date().to_ymd();
                                     rsx! {
                                         ul {
                                             li{
-                                                div { class: "preview-content", dangerous_inner_html: "{content}"}
+                                                div { class:"preview-item-container",
+                                                    span { class: "preview-date", format!("{year}/{month}/{day}")}
+                                                    span { class: "preview-content", dangerous_inner_html: "{content}"}
+                                                }
                                             }
                                         }
-                                        div { class: "add-episode-preview-bottom", 
+                                        div { class: "edit-episode-preview-bottom", 
                                             button { onclick: move |_|{
-                                                let episode: Episode = episode_form
-                                                    .with(|form|{form.clone()})
-                                                    .try_into()
-                                                    .expect("Sanity Check for EpisodeForm to Episode");
-                                                log::info!("Add Episode: {episode:?}");
-                                                cx.props.onsubmit.call(episode);
+                                                if let Some(base_episode) = cx.props.base_episode.as_ref() {
+                                                    let mut base_episode = base_episode.clone();
+                                                    *base_episode.date_mut() = episode.date();
+                                                    *base_episode.content_mut() = episode.content().clone();
+                                                    cx.props.onsubmit.call(base_episode);
+                                                    
+                                                } else {
+                                                    cx.props.onsubmit.call(episode.clone());
+                                                }
                                             }
                                             ,"送信"}
                                         }
@@ -106,7 +127,7 @@ pub fn AddEpisode<'a>(cx: Scope<'a, AddEpisodeProps<'a>>) -> Element {
                                     let message = format!("プレビューを表示できません: {error_message}");
                                     rsx! {
                                         div { class: "failed-preview-content", "{message}"}
-                                        div { class: "add-episode-preview-bottom", button { disabled: "true", "送信"}}
+                                        div { class: "edit-episode-preview-bottom", button { disabled: "true", "送信"}}
                                     }
                                 }
                             }

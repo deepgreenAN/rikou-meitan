@@ -13,7 +13,7 @@
     }
 
     
-    .add-episode-container {
+    .edit-episode-container {
         position: fixed;
         top: 0;
         left: 0;
@@ -23,14 +23,14 @@
         display: grid;
         place-items: center;
 
-            .add-episode-ui-container {
+            .edit-episode-ui-container {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 gap: 1rem;
     
-                .add-episode-input-container {
+                .edit-episode-input-container {
                     min-width: 50rem;
                     width: calc(0.6 * 100vw);
                     min-height: 20rem;
@@ -52,7 +52,7 @@
 
                     padding: 1rem 1rem 1rem 1rem;
 
-                    .add-episode-input-caption {
+                    .edit-episode-input-caption {
                         font-size: 1.5rem;
                         text-align: center;
                     }
@@ -72,14 +72,14 @@
                     }
 
 
-                    .add-episode-input-content {
+                    .edit-episode-input-content {
                         width: 100%;
                         min-height: 8rem;
                         font-size: 1rem; 
                         resize: none;
                     }
         
-                    .add-episode-input-bottom {
+                    .edit-episode-input-bottom {
                         display: flex;
                         gap: 1rem;
                         justify-content: center;
@@ -91,7 +91,7 @@
                     }
                 }
 
-                .add-episode-preview-container {
+                .edit-episode-preview-container {
                     min-width: 50rem;
                     width: calc(0.6 * 100vw);
                     min-height: 15rem;
@@ -113,30 +113,36 @@
 
                     padding: 1rem 1rem 1rem 1rem;
                     
-                    .add-episode-preview-caption {
+                    .edit-episode-preview-caption {
                         font-size: 1.5rem;
                         text-align: center;
                     }
 
                     ul {
                         margin-left: 1rem;
-                    }
+                        .preview-date {
+                            margin-left: 0.5rem;
+                            margin-right: 0.5rem;
+                        }
 
-                    a {
-                        color: static_var.$link_color;
-                        text-decoration: none;
-            
-                        &:hover {
-                            text-decoration: underline;
+                        a {
+                            color: static_var.$link_color;
+                            text-decoration: none;
+                
+                            &:hover {
+                                text-decoration: underline;
+                            }
                         }
                     }
+
+
 
                     .failed-preview-content {
                         color: static_var.$caution_color;
                         font-size: 1.2rem;
                     }
 
-                    .add-episode-preview-bottom {
+                    .edit-episode-preview-bottom {
                         display: flex;
                         justify-content: center;
                         align-items: center;

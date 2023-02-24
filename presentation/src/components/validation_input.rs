@@ -1,4 +1,6 @@
 use dioxus::{events::FormEvent, prelude::*};
+use wasm_bindgen::{JsCast, UnwrapThrowExt};
+use web_sys::HtmlInputElement;
 
 // -------------------------------------------------------------------------------------------------
 /// 何か入力が必要なString
@@ -31,7 +33,7 @@ pub enum InputType {
 // ValidationInput
 
 #[derive(Props)]
-pub struct ValidationInputProps<'a, T: TryFrom<String>> {
+pub struct ValidationInputProps<'a, T: TryFrom<String> + ToString + Clone + 'static> {
     // 値の更新時に実行するコールバック
     pub onchange: EventHandler<'a, Option<T>>,
     // バリデーションのエラーメッセージ
@@ -49,13 +51,37 @@ pub struct ValidationInputProps<'a, T: TryFrom<String>> {
     pub show_error_message: bool,
     // インプットのタイプ
     pub input_type: InputType,
+    /// 最初に与える初期値
+    #[props(!optional)]
+    pub initial_value: Option<T>,
 }
 
-pub fn ValidationInput<'a, T: TryFrom<String>>(
+pub fn ValidationInput<'a, T: TryFrom<String> + ToString + Clone + 'static>(
     cx: Scope<'a, ValidationInputProps<'a, T>>,
 ) -> Element {
     let error_message = use_state(cx, || Some("※必須の項目です".to_string()));
     let input_type = cx.use_hook(|| cx.props.input_type.clone());
+
+    // valueの初期化
+    use_effect(cx, (), {
+        let mut selector = ".".to_string();
+        selector.push_str(&cx.props.class);
+        let initial_value = cx.props.initial_value.clone();
+        to_owned![error_message];
+
+        |_| async move {
+            if let Some(initial_value) = initial_value {
+                let input_element = gloo_utils::document()
+                    .query_selector(&selector)
+                    .unwrap_throw()
+                    .unwrap_throw()
+                    .unchecked_into::<HtmlInputElement>();
+                input_element.set_value(&initial_value.to_string());
+
+                error_message.set(None);
+            }
+        }
+    });
 
     // String -> Result<T, String>に変換する関数
     let try_into_func = move |s: String| -> Result<T, String> {
@@ -86,15 +112,17 @@ pub fn ValidationInput<'a, T: TryFrom<String>>(
 
     let input_component = match input_type {
         InputType::InputText => {
-            rsx! {input { class: "{cx.props.class}", r#type: "text", onchange:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "text", oninput:onchange}}
         }
         InputType::InputDate => {
-            rsx! {input { class: "{cx.props.class}", r#type: "date", onchange:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "date", oninput:onchange}}
         }
         InputType::Url => {
-            rsx! {input { class: "{cx.props.class}", r#type: "url", onchange:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "url", oninput:onchange}}
         }
-        InputType::TextArea => rsx! {textarea { class: "{cx.props.class}", oninput:onchange}},
+        InputType::TextArea => {
+            rsx! {textarea { class: "{cx.props.class}", oninput:onchange}}
+        }
     };
 
     cx.render(rsx! {

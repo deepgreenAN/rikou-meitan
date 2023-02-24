@@ -15,11 +15,12 @@ pub struct AccordionEpisodesProps<'a> {
     /// アコーディオン機能を無効にするかどうか
     #[props(default = false)]
     fixed: bool,
-    /// 編集を可能にするかどうか
-    #[props(default = true)]
-    editable: bool,
     /// アコーディオンを開いたときの処理
-    onopen: Option<EventHandler<'a>>
+    onopen: Option<EventHandler<'a>>,
+    /// アコーディオンを閉じたときの処理
+    onclose: Option<EventHandler<'a>>,
+    /// 編集ボタンが押されたときの処理
+    on_modify_click: Option<EventHandler<'a, Episode>>,
 }
 
 pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Element {
@@ -54,6 +55,8 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                     if let Some(onopen) = cx.props.onopen.as_ref() {
                                         onopen.call(());
                                     }
+                                } else if let Some(onclose) = cx.props.onclose.as_ref() {
+                                    onclose.call(());
                                 }
                                 !flag
                             })
@@ -73,20 +76,26 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                     episodes.iter().enumerate().map(|(i,episode)|{
                                         let (year, month, day) = episode.date().to_ymd();
                                         let content = episode.content();
+                                        let episode = episode.clone();
                                         rsx! {
                                             li {key: "{i}",
                                                 div { class: "episode-item-container",
                                                     div {
                                                         span { class: "episode-date", format!("{year}/{month}/{day}")}
-                                                        span { class: "episode-content", "{content}"}
+                                                        span { class: "episode-content", dangerous_inner_html: "{content}"}
                                                     }
-                                                    cx.props.editable.then(||
+                                                    if let Some(on_modify_click) = cx.props.on_modify_click.as_ref() {
                                                         rsx!{
                                                             div { class: "episode-item-right",
-                                                                button {class: "episode-modify-button", "編集"}
+                                                                button {class: "episode-modify-button",
+                                                                    onclick: move |_|{
+                                                                        on_modify_click.call(episode.clone());
+                                                                    }, 
+                                                                    "編集"
+                                                                }
                                                             }
                                                         }
-                                                    ) 
+                                                    } 
                                                 }
                                             }
                                         }

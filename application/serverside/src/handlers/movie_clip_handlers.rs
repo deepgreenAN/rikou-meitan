@@ -152,6 +152,7 @@ mod test {
             .route("/movie_clip/:id", delete(super::remove_by_id_movie_clip))
             .with_state(app_state)
     }
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_save_movie_clip(mut router: Router) {
@@ -212,7 +213,7 @@ mod test {
             assert_matches!(err, AppCommonError::ConflictError);
         }
     }
-
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_edit_movie_clip(mut router: Router) {
@@ -273,7 +274,7 @@ mod test {
             assert_matches!(err, AppCommonError::NoRecordError);
         }
     }
-
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_all_movie_clips(mut router: Router) {
@@ -307,7 +308,7 @@ mod test {
 
         assert_eq!(res_vec, movie_clips);
     }
-
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_order_by_like_limit_movie_clips(mut router: Router) {
@@ -332,7 +333,7 @@ mod test {
 
         let request = Request::builder()
             .method(http::Method::GET)
-            .uri(&format!("/movie_clip/order_like?length={}", length))
+            .uri(&format!("/movie_clip/order_like?length={length}"))
             .body(Body::empty())
             .unwrap();
 
@@ -344,7 +345,7 @@ mod test {
 
         assert_eq!(res_vec, movie_clips);
     }
-
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_order_by_crate_date_range_movie_clips(mut router: Router) {
@@ -371,8 +372,7 @@ mod test {
         let request = Request::builder()
             .method(http::Method::GET)
             .uri(&format!(
-                "/movie_clip/order_create_date?start={}&end={}",
-                start, end
+                "/movie_clip/order_create_date?start={start}&end={end}"
             ))
             .body(Body::empty())
             .unwrap();
@@ -385,7 +385,7 @@ mod test {
 
         assert_eq!(res_vec, movie_clips);
     }
-
+    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
     async fn test_remove_by_id_movie_clip(mut router: Router) {
@@ -403,7 +403,7 @@ mod test {
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
-                .uri(&format!("/movie_clip/{}", movie_clip_id))
+                .uri(&format!("/movie_clip/{movie_clip_id}"))
                 .body(Body::empty())
                 .unwrap();
 
@@ -422,7 +422,7 @@ mod test {
 
             let request = Request::builder()
                 .method(http::Method::DELETE)
-                .uri(&format!("/movie_clip/{}", movie_clip_id))
+                .uri(&format!("/movie_clip/{movie_clip_id}"))
                 .body(Body::empty())
                 .unwrap();
 

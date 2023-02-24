@@ -110,6 +110,13 @@ impl Dummy<Faker> for Episode {
     }
 }
 
+#[cfg(any(test, feature = "fake"))]
+impl Dummy<std::ops::Range<Date>> for Episode {
+    fn dummy_with_rng<R: Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
+        Self::new_with_domains(config.fake_with_rng(rng), Faker.fake_with_rng(rng))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{Episode, EpisodeContent};
