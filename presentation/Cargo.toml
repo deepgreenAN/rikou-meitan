@@ -32,6 +32,9 @@ wasm-logger = "^0.2"
 plyr = { version = "0.0.4", features = ["options"]}
 gloo-intersection = { git = "https://github.com/deepgreenAN/intersection-wrapper" }
 indexmap = "^1.9"
+serde = { version = "^1.0", features = ["derive"]}
+serde_json = "^1.0"
+rand = "^0.8"
 
 # optional
 fake = "^2.5"

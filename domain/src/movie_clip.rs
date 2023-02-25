@@ -2,6 +2,7 @@ mod movie_url;
 mod second;
 
 pub use movie_url::MovieUrl;
+pub use second::Second;
 pub use second::SecondRange;
 
 use crate::date::Date;

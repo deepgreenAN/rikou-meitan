@@ -1,7 +1,6 @@
 mod edit_episode;
 
-use crate::components::AccordionEpisodes;
-use crate::components::AddButton;
+use crate::components::{AccordionEpisodes, AddButton, Quiz};
 use crate::utils::use_overlay;
 use domain::{episode::Episode, Date};
 use edit_episode::EditEpisode;
@@ -152,21 +151,24 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
             },
             EditEpisodeOpen::Modify(episode) => {
                 rsx!{
-                    EditEpisode{
-                        onsubmit: move |modified_episode: Episode|{
-                            close_add_episode(());
-                            episodes_ref.with_mut(|episodes|{
-                                if let Some(episodes) = episodes.as_mut() {
-                                    episodes.iter_mut().for_each(|episode|{
-                                        if episode.id() == modified_episode.id() {
-                                            *episode = modified_episode.clone();
-                                        }
-                                    })
-                                }
-                            })
-                        },
-                        base_episode: episode.clone(),
-                        oncancel: close_add_episode
+                    Quiz{
+                        on_cancel: close_add_episode,
+                        EditEpisode{
+                            onsubmit: move |modified_episode: Episode|{
+                                close_add_episode(());
+                                episodes_ref.with_mut(|episodes|{
+                                    if let Some(episodes) = episodes.as_mut() {
+                                        episodes.iter_mut().for_each(|episode|{
+                                            if episode.id() == modified_episode.id() {
+                                                *episode = modified_episode.clone();
+                                            }
+                                        })
+                                    }
+                                })
+                            },
+                            base_episode: episode.clone(),
+                            oncancel: close_add_episode
+                        }
                     }
                 }
             },
