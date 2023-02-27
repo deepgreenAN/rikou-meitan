@@ -1,3 +1,5 @@
+mod edit_clip;
+
 use crate::components::{AddButton, MovieCard, MovieContainer};
 use domain::movie_clip::MovieClip;
 

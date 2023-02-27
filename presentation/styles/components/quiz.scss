@@ -15,6 +15,7 @@
         flex-direction: column;
         width: calc(0.6 * 100vw);
         height: calc(0.5 * 100vh);
+        max-height: 600px;
         background-color: var(--primary-bg-color);
         color: var(--primary-color);
         padding: 1rem 1rem 1rem 1rem;

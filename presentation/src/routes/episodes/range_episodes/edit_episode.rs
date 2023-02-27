@@ -65,7 +65,6 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                             }
                         }),
                         required: true,
-                        show_error_message: true,
                         input_type:InputType::InputDate,
                         initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.date()}),
                     }
@@ -80,7 +79,6 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                             }
                         }),
                         required: true,
-                        show_error_message: true,
                         input_type:InputType::TextArea,
                         initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.content().clone()}),
                     }

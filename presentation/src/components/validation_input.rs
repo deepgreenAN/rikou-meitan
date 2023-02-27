@@ -1,9 +1,12 @@
+use std::fmt::Display;
+
 use dioxus::{events::FormEvent, prelude::*};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::HtmlInputElement;
 
 // -------------------------------------------------------------------------------------------------
 /// 何か入力が必要なString
+#[derive(Clone)]
 pub struct RequiredString(String);
 
 pub struct RequiredError;
@@ -19,6 +22,12 @@ impl TryFrom<String> for RequiredString {
     }
 }
 
+impl Display for RequiredString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 // -------------------------------------------------------------------------------------------------
 // InputType
 #[derive(Clone)]
@@ -27,6 +36,7 @@ pub enum InputType {
     InputDate,
     TextArea,
     Url,
+    InputNum,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -47,8 +57,8 @@ pub struct ValidationInputProps<'a, T: TryFrom<String> + ToString + Clone + 'sta
     // 必須のフィールドであるかどうか
     #[props(default = false)]
     pub required: bool,
-    // エラーメッセージを表示するかどうか
-    pub show_error_message: bool,
+    // // エラーメッセージを表示するかどうか
+    // pub show_error_message: bool,
     // インプットのタイプ
     pub input_type: InputType,
     /// 最初に与える初期値
@@ -123,16 +133,16 @@ pub fn ValidationInput<'a, T: TryFrom<String> + ToString + Clone + 'static>(
         InputType::TextArea => {
             rsx! {textarea { class: "{cx.props.class}", oninput:onchange}}
         }
+        InputType::InputNum => {
+            rsx! {input { class: "{cx.props.class}", r#type: "number", oninput:onchange}}
+        }
     };
 
     cx.render(rsx! {
         label {
             div{ class:"validation-input-label-container",
                 &cx.props.label_component,
-                cx.props.show_error_message.then_some(())
-                    .and(
-                        error_message.get().as_ref()
-                    )
+                error_message.get().as_ref()
                     .map(|message| {
                         rsx! {div { class:"error-message","{message}"}}
                     })

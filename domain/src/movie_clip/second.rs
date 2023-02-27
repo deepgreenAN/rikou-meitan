@@ -1,6 +1,6 @@
 use crate::DomainError;
 use serde::{Deserialize, Serialize};
-use std::ops::Range;
+use std::{fmt::Display, ops::Range};
 
 #[cfg(any(test, feature = "fake"))]
 use fake::{Dummy, Fake, Faker};
@@ -55,6 +55,22 @@ impl From<Second> for i32 {
     }
 }
 
+impl TryFrom<String> for Second {
+    type Error = DomainError;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let value_u32 = value
+            .parse::<u32>()
+            .map_err(|_| DomainError::DomainParseError("Second parse error.".to_string()))?;
+        Ok(value_u32.into())
+    }
+}
+
+impl Display for Second {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 // -------------------------------------------------------------------------------------------------
 // SecondRange
 
@@ -101,9 +117,9 @@ impl TryFrom<Range<u32>> for SecondRange {
 #[cfg(any(test, feature = "fake"))]
 impl Dummy<Faker> for SecondRange {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        let start = Faker.fake_with_rng::<u32, R>(rng);
+        let start = (0..3600).fake_with_rng::<u32, R>(rng);
         let end = start
-            .checked_add(Faker.fake_with_rng(rng))
+            .checked_add((0..3600).fake_with_rng(rng))
             .unwrap_or(u32::MAX);
         (start..end)
             .try_into()
@@ -125,6 +141,13 @@ mod test {
     #[test]
     fn second_from_to_hms() {
         assert_eq!((1, 40, 30), Second::from_hms(1, 40, 30).to_hms());
+    }
+
+    #[test]
+    fn second_from_string_and_to_string() {
+        let second = TryInto::<Second>::try_into("300".to_string()).unwrap();
+        assert_eq!(second, Second::from_u32(300));
+        assert_eq!(Second::from_u32(356).to_string(), "356".to_string());
     }
 
     #[test]

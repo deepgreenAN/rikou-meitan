@@ -41,8 +41,8 @@
                 gap: 1rem;
     
                 .edit-episode-input-container {
-                    min-width: 50rem;
                     width: calc(0.6 * 100vw);
+                    min-width: 50rem;
                     min-height: 20rem;
                     height: calc(0.3 * 100vh);
                     @media  screen and (max-width: static_var.$smartphone_size) {

@@ -14,4 +14,4 @@ pub use player::Player;
 pub use quiz::Quiz;
 pub use spinner::Spinner;
 pub use tooltip_menu_button::{TooltipMenuButton, TooltipMenuItem};
-pub use validation_input::{InputType, ValidationInput};
+pub use validation_input::{InputType, RequiredString, ValidationInput};
