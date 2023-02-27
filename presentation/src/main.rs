@@ -12,7 +12,7 @@ use crate::background::Background;
 use crate::footer::Footer;
 use crate::header::Header;
 // 以下はroutes
-use crate::routes::{EpisodesPage, Home, NotFound};
+use crate::routes::{Clips, EpisodesPage, Home, NotFound};
 
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
@@ -41,6 +41,7 @@ fn App(cx: Scope) -> Element {
                     Route { to: "", NotFound{}}
                     Route { to: "/", Home{}}
                     Route { to: "/episodes", EpisodesPage{}}
+                    Route { to: "/clips", Clips{}}
                 }
                 Footer{}
             }

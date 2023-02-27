@@ -42,6 +42,9 @@ pub fn EpisodesPage(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {id: "episodes-container",
+            div { id: "episode-title-container",
+                h2 {id: "episode-title", "エピソード"}
+            } 
             titles.iter().zip(ranges.iter()).zip(initial_is_opens.iter()).map(|((title, range), initial_is_open)|{
                 rsx! {
                     RangeEpisodes{

@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 
 #[cfg(any(test, feature = "fake"))]
-use fake::{Dummy, Fake, Faker, StringFaker};
+use fake::{Dummy, Faker};
 
 #[cfg(any(test, feature = "fake"))]
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 
 pub const MOVIE_URL_ALLOW_PREFIX: [&str; 2] = ["https://www.youtube.com/", "https://youtu.be/"];
 
@@ -115,13 +115,19 @@ impl Display for MovieUrl {
 #[cfg(any(test, feature = "fake"))]
 impl Dummy<Faker> for MovieUrl {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        let mut url = "https://www.youtube.com/watch?v=".to_string();
-        const ALPHANUMERIC: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let fake_video_id =
-            StringFaker::with(Vec::from(ALPHANUMERIC), 11).fake_with_rng::<String, R>(rng);
-        url.push_str(&fake_video_id);
+        let urls = [
+            "https://www.youtube.com/watch?v=lwSEI1ATLWQ",
+            "https://www.youtube.com/watch?v=qCNYOBdS8Vg",
+            "https://www.youtube.com/watch?v=gPkvkFiG8vE",
+            "https://www.youtube.com/watch?v=6LAn0lbMpZ8",
+            "https://www.youtube.com/watch?v=dB0L8X50zv4",
+            "https://www.youtube.com/watch?v=XPQO000tBGA",
+            "https://www.youtube.com/watch?v=J0Qhk3Rb1wg",
+            "https://www.youtube.com/watch?v=EAStomYmWps",
+        ];
 
-        url.try_into().expect("Generate fake error.")
+        let url = urls.choose(rng).expect("Generate fake error");
+        url.to_string().try_into().expect("Generate fake error.")
     }
 }
 

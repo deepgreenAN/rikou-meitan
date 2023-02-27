@@ -25,6 +25,10 @@ $aspect_ratio: calc(16/9);
     .my-player-thumbnail {
         aspect-ratio: $aspect_ratio;
         width: 100%;
+        -webkit-user-select: none;
+           -moz-user-select: none;
+            -ms-user-select: none;
+                user-select: none;
         img {
             width: 100%;
             -o-object-fit: cover;

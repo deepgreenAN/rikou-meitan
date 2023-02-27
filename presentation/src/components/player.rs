@@ -1,6 +1,7 @@
 use crate::PLAYING_PLAYER_ID;
 // use crate::ACTIVE_PLAYER_IDS;
 // use crate::ACTIVE_PLAYER_NUMBER;
+use domain::movie_clip::SecondRange;
 
 // const ORIGIN: &str = "https://plyr.io";
 const ORIGIN: &str = "http://localhost:8080";
@@ -26,8 +27,8 @@ pub struct PlayerProps {
     id: String,
     #[props(into)]
     video_id: String,
-    start: Option<u32>,
-    end: Option<u32>
+    #[props(!optional)]
+    range: Option<SecondRange>,
 }
 
 pub fn Player(cx: Scope<PlayerProps>) -> Element {
@@ -107,8 +108,8 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
         selector.push_str(&id);
 
         let youtube_options = YoutubeOptions {
-            start: cx.props.start,
-            end: cx.props.end,
+            start: cx.props.range.as_ref().map(|range|{range.start().to_u32()}),
+            end: cx.props.range.as_ref().map(|range|{range.end().to_u32()}),
             ..Default::default()
         };
 

@@ -35,6 +35,8 @@ indexmap = "^1.9"
 serde = { version = "^1.0", features = ["derive"]}
 serde_json = "^1.0"
 rand = "^0.8"
+strum = "0.24"
+strum_macros = "0.24"
 
 # optional
 fake = "^2.5"

@@ -1,0 +1,66 @@
+.movies-container {
+    width: 100%;
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr))
+}
+
+.movie-card-container {
+    aspect-ratio: calc(30 / 22);
+    display: flex;
+    flex-direction: column;
+    color: var(--primary-color);
+
+    .movie-card-caption {
+        display: flex;
+        .movie-card-left {
+            width: 92%;
+            display: flex;
+            flex-direction: column;
+            .movie-card-title {
+                font-size: 1.5rem;
+                line-height: 1.8rem;
+                height: 3.6rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                @media screen and (max-width: 1500px) {
+                    font-size: 1.8rem;
+                    line-height: 2.2rem;
+                    height: 4.4rem;
+                }
+                @media screen and (max-width: 1000px) {
+                    font-size: 3rem;
+                    line-height: 4rem;
+                    height: 8rem;
+                }
+            }
+            .movie-card-date {
+                margin-left: 1rem;
+                font-size: 1.5rem;
+
+                @media screen and (max-width: 1500px) {
+                    font-size: 1.8rem;
+                }
+                @media screen and (max-width: 1000px) {
+                    font-size: 2rem;
+                }
+            }
+        }
+        .movie-card-right {
+            width: 8%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            .movie-card-dot-menu {
+                width: 90%;
+                margin-right: 10%;
+                margin-top: 10%;
+            }
+            .movie-card-like-heart {
+                width: 70%;
+                margin-right: 10%;
+                margin-bottom: 20%;
+            }
+        }
+    }
+}

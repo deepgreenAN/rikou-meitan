@@ -1,7 +1,9 @@
 @use "./not_found.scss";
 @use "./home.scss";
 @use "./episodes.scss";
+@use "./clips.scss";
 @use "../static_var.scss";
+
 
 #contents-container {
     width: 100%;
