@@ -49,7 +49,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
 
     cx.render(rsx! {
         div { class: "edit-episode-container", 
-            onclick: move |_|{cx.props.oncancel.call(())}, //なぜかmousedownのstop_propagationが効かない
+            onclick: move |_|{cx.props.oncancel.call(())}, //なぜかonmousedownのstop_propagationが効かない
             div { class: "edit-episode-ui-container", 
                 onclick: move |e| {e.stop_propagation();},
                 div { class: "edit-episode-input-container",

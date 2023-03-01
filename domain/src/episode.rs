@@ -80,6 +80,14 @@ impl Episode {
     pub fn content_mut(&mut self) -> &mut EpisodeContent {
         &mut self.content
     }
+    /// idはそのままにotherのフィールドを自身にコピー
+    pub fn assign(&mut self, other: Self) {
+        let new_self = Self {
+            id: self.id(),
+            ..other
+        };
+        *self = new_self;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -151,5 +159,18 @@ mod test {
         let _ = (0..10000)
             .map(|_| Faker.fake::<Episode>())
             .collect::<Vec<_>>();
+    }
+
+    #[test]
+    fn test_assign() {
+        let mut episode = Faker.fake::<Episode>();
+        let previous_id = episode.id();
+
+        let other_episode = Faker.fake::<Episode>();
+        episode.assign(other_episode.clone());
+
+        assert_eq!(episode.id(), previous_id);
+        assert_eq!(episode.date(), other_episode.date());
+        assert_eq!(episode.content(), other_episode.content());
     }
 }
