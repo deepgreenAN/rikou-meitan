@@ -123,6 +123,7 @@ impl MovieClip {
     pub fn assign(&mut self, other: Self) {
         let new_self = Self {
             id: self.id(),
+            like: self.like(),
             ..other
         };
         *self = new_self;
@@ -197,16 +198,17 @@ mod test {
     fn test_assign() {
         let mut movie_clip = Faker.fake::<MovieClip>();
         let previous_id = movie_clip.id();
+        let previous_like = movie_clip.like();
 
         let other_clip = Faker.fake::<MovieClip>();
 
         movie_clip.assign(other_clip.clone());
 
         assert_eq!(previous_id, movie_clip.id());
+        assert_eq!(previous_like, movie_clip.like());
         assert_eq!(movie_clip.title(), other_clip.title());
         assert_eq!(movie_clip.url(), other_clip.url());
         assert_eq!(movie_clip.create_date(), other_clip.create_date());
         assert_eq!(movie_clip.range(), other_clip.range());
-        assert_eq!(movie_clip.like(), other_clip.like());
     }
 }
