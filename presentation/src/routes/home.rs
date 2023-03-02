@@ -77,7 +77,7 @@ pub fn Home(cx: Scope) -> Element {
                                         MovieCard{
                                             key:"{i}",
                                             date: movie_clip.create_date(),
-                                            range: Some(movie_clip.range().clone()),
+                                            range: movie_clip.range().clone(),
                                             title: movie_clip.title(),
                                             movie_url: movie_clip.url().clone(),
                                             id: format!("movie-clip-{i}"),

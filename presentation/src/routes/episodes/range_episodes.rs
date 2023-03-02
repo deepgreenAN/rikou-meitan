@@ -49,7 +49,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         overlay_state.deactivate();
     };
 
-    // 修正ボタンが押されたとき
+    // 修正ボタンが押されたときの処理
     let on_modify_click = move |episode| {
         edit_episode_open.set(EditEpisodeOpen::Modify(episode));
         overlay_state.activate().expect("Cannot Overlay activate");
@@ -110,8 +110,8 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                     title: cx.props.title.clone(),
                     episodes: episodes_ref.clone(),
                     initial_is_open: true,
-                    onopen: on_accordion_open,
-                    onclose: on_accordion_close,
+                    on_open: on_accordion_open,
+                    on_close: on_accordion_close,
                     on_modify_click: on_modify_click,
                 }
             }
@@ -121,8 +121,8 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                     title: cx.props.title.clone(),
                     episodes: episodes_ref.clone(),
                     initial_is_open: false,
-                    onopen: on_accordion_open,
-                    onclose: on_accordion_close,
+                    on_open: on_accordion_open,
+                    on_close: on_accordion_close,
                     on_modify_click: on_modify_click
                 }
             }

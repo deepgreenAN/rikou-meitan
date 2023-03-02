@@ -16,9 +16,9 @@ pub struct AccordionEpisodesProps<'a> {
     #[props(default = false)]
     fixed: bool,
     /// アコーディオンを開いたときの処理
-    onopen: Option<EventHandler<'a>>,
+    on_open: Option<EventHandler<'a>>,
     /// アコーディオンを閉じたときの処理
-    onclose: Option<EventHandler<'a>>,
+    on_close: Option<EventHandler<'a>>,
     /// 編集ボタンが押されたときの処理
     on_modify_click: Option<EventHandler<'a, Episode>>,
 }
@@ -52,11 +52,11 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                         onclick: move |_|{
                             is_accordion_open.modify(|flag|{
                                 if !flag {
-                                    if let Some(onopen) = cx.props.onopen.as_ref() {
-                                        onopen.call(());
+                                    if let Some(on_open) = cx.props.on_open.as_ref() {
+                                        on_open.call(());
                                     }
-                                } else if let Some(onclose) = cx.props.onclose.as_ref() {
-                                    onclose.call(());
+                                } else if let Some(on_close) = cx.props.on_close.as_ref() {
+                                    on_close.call(());
                                 }
                                 !flag
                             })

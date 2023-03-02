@@ -1,3 +1,5 @@
+@use "../static_var.scss";
+
 #clips-container {
     width: 90%;
     max-width: 2000px;
@@ -46,5 +48,139 @@
             margin-left: 1.5rem;
         }
         
+    }
+
+    .edit-clip-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        overflow: auto;
+
+        .edit-clip-ui-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            color: var(--primary-color);
+
+            .edit-clip-input-container {
+                width: calc(0.6 * 100vw);
+                min-width: 50rem;
+                min-height: 30rem;
+                height: calc(0.4 * 100vh);
+                padding: 1rem 1rem 1rem 1rem;
+
+                background-color: var(--primary-bg-color);
+                
+                border-radius: 1rem;
+                box-shadow: 10px 10px 5px rgba(var(--primary-color-rgb), 0.3);
+                box-sizing: border-box;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: left;
+
+                .edit-clip-input-caption {
+                    font-size: 1.5rem;
+                    text-align: center;
+                }
+
+                .label-container {
+                    display: flex;
+                    height: 2rem;
+                    align-items: center;
+                    .label-main {
+                        font-size: 1rem;
+                        text-align: center;
+                    }
+                    .label-detail {
+                        margin-left: 1rem;
+                        font-size: 0.8rem;
+                    }
+                }
+
+                .edit-clip-input-title {
+                    font-size: 1.1rem;
+                    line-height: 1.25rem;
+                    width: 100%;
+                    resize: none;
+                    min-height: 2.5rem;
+                }
+
+                .edit-clip-input-url {
+                    font-size: 1.1rem;
+                    line-height: 2rem;
+                    width: 100%;
+                }
+
+                input[type=number] {
+                    width: 5rem;
+                    font-size: 1.2rem;
+                    line-height: 2rem;
+                }
+
+                .edit-clip-input-bottom {
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: center;
+
+                    button {
+                        font-size: 1rem;
+                        padding: 0 1rem 0 1rem;
+                    }
+                }
+            }
+
+            .edit-clip-preview-container {
+                min-width: 50rem;
+                width: calc(0.6 * 100vw);
+
+                border-radius: 1rem;
+                box-shadow: 10px 10px 5px rgba(var(--primary-color-rgb), 0.3);
+                box-sizing: border-box;
+                background-color: var(--primary-bg-color);
+
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: left;
+                color: var(--primary-color);
+
+                padding: 1rem 1rem 1rem 1rem;
+
+                .edit-clip-preview-caption {
+                    font-size: 1.5rem;
+                    text-align: center;
+                    margin-bottom: 1rem;
+                }
+                .edit-clip-preview-player-container {
+                    height: 60%;
+                }
+
+
+                .failed-preview {
+                    font-size: 1.2rem;
+                    color: static_var.$caution_color;
+                }
+
+                .edit-clip-preview-bottom {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+
+                    button {
+                        font-size: 1rem;
+                        padding: 0 1rem 0 1rem;
+                    }
+                }
+            }
+        }
     }
 }

@@ -12,7 +12,7 @@ use dioxus::prelude::*;
 #[derive(Props)]
 pub struct MovieCardProps<'a> {
     /// プレーヤーの再生範囲
-    #[props(!optional)]
+    // #[props(!optional)]
     range: Option<SecondRange>,
     /// 動画のタイトル
     #[props(into)]
@@ -50,11 +50,13 @@ pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
                     }
                 }
                 div { class: "movie-card-right",
-                    if let Some(_on_modify) = cx.props.on_modify.as_ref() {
+                    if let Some(on_modify) = cx.props.on_modify.as_ref() {
                         rsx!{
                             div { class: "movie-card-dot-menu",
                                 TooltipMenuButton{
-                                    TooltipMenuItem{"編集"}
+                                    TooltipMenuItem{    
+                                        div { onclick:move|_|{on_modify.call(())},"編集"}
+                                    }
                                 }
                             }
                         }

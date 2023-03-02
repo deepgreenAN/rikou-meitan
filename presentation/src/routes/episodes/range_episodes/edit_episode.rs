@@ -56,7 +56,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                     div { class: "edit-episode-input-caption", "新しいエピソードを追加"}
                     ValidationInput{
                         class:"edit-episode-input-date",
-                        onchange: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
+                        on_input: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
                         error_message: "※有効なDateではありません",
                         label_component: cx.render(rsx!{
                             div { class: "label-container",
@@ -70,7 +70,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                     }
                     ValidationInput{
                         class:"edit-episode-input-content",
-                        onchange: move |value: Option<EpisodeContent>|{episode_form.with_mut(|form|{form.content = value})},
+                        on_input: move |value: Option<EpisodeContent>|{episode_form.with_mut(|form|{form.content = value})},
                         error_message: "※無効なhtmlが含まれています",
                         label_component: cx.render(rsx!{
                             div { class: "label-container",
@@ -109,10 +109,8 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                                             button { onclick: move |_|{
                                                 if let Some(base_episode) = cx.props.base_episode.as_ref() {
                                                     let mut base_episode = base_episode.clone();
-                                                    *base_episode.date_mut() = episode.date();
-                                                    *base_episode.content_mut() = episode.content().clone();
+                                                    base_episode.assign(episode.clone());
                                                     cx.props.onsubmit.call(base_episode);
-                                                    
                                                 } else {
                                                     cx.props.onsubmit.call(episode.clone());
                                                 }

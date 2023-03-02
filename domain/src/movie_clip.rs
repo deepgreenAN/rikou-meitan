@@ -172,6 +172,20 @@ impl Dummy<Faker> for MovieClip {
     }
 }
 
+#[cfg(any(feature = "fake", test))]
+impl Dummy<std::ops::Range<Date>> for MovieClip {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
+        let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
+        let create_date = config.fake_with_rng::<Date, R>(rng);
+        Self::new_with_domains(
+            title,
+            Faker.fake_with_rng(rng),
+            Faker.fake_with_rng(rng),
+            create_date,
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::MovieClip;

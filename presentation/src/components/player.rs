@@ -1,14 +1,13 @@
 use crate::PLAYING_PLAYER_ID;
-// use crate::ACTIVE_PLAYER_IDS;
-// use crate::ACTIVE_PLAYER_NUMBER;
+use crate::ACTIVE_PLAYER_IDS;
+use crate::ACTIVE_PLAYER_NUMBER;
 use domain::movie_clip::SecondRange;
 
 // const ORIGIN: &str = "https://plyr.io";
 const ORIGIN: &str = "http://localhost:8080";
 
 use dioxus::prelude::*;
-use fermi::{use_read, use_set};
-// use fermi::use_atom_state;
+use fermi::{use_read, use_set, use_atom_state};
 use gloo_timers::callback::Timeout;
 use gloo_intersection::IntersectionObserverHandler;
 use plyr::{
@@ -47,10 +46,10 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
         use_set(cx, PLAYING_PLAYER_ID)
     );
 
-    // let (active_player_ids, active_player_ids_state) = (
-    //     use_read(&cx, ACTIVE_PLAYER_IDS),
-    //     use_atom_state(&cx, ACTIVE_PLAYER_IDS)
-    // );
+    let (active_player_ids, active_player_ids_state) = (
+        use_read(cx, ACTIVE_PLAYER_IDS),
+        use_atom_state(cx, ACTIVE_PLAYER_IDS)
+    );
 
     let onplay_event_listener = cx.use_hook(||{Rc::new(Cell::new(Option::<PlyrStandardEventListener>::None))});
 
@@ -96,12 +95,11 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
 
     // is_activeに依存させたplayerの初期化
     use_effect(cx, is_active, {
-        // let playing_player_id = cx.props.playing_player_id.clone();
         to_owned![
             player_state, 
             onplay_event_listener, 
-            setter_playing_player_id
-//            active_player_ids_state
+            setter_playing_player_id,
+            active_player_ids_state
         ];
         let mut selector = "#".to_string();
         let id = cx.props.id.clone();
@@ -126,42 +124,41 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                         move |_|{
                             log::debug!("player:{} is playing", &id);
                             setter_playing_player_id(Some(id.clone()));
-                            // playing_player_id.set(Some(id.clone()));
                         }
                     });
 
                 player_state.set(Some(player));
                 onplay_event_listener.set(Some(onplay_handler));
 
-                // active_player_ids_state.with_mut({
-                //     to_owned![id];
-                //     move |ids|{
-                //         ids.push_back(id);
-                //         log::debug!("active player list pushed: {:?}", ids);
+                active_player_ids_state.with_mut({
+                    to_owned![id];
+                    move |ids|{
+                        ids.push_back(id);
+                        log::debug!("active player list pushed: {:?}", ids);
 
-                //         if ids.len() > ACTIVE_PLAYER_NUMBER {
-                //             let popped = ids.pop_front();
-                //             log::debug!("popped player: {:?}", popped);
-                //         }
-                //     }
-                // });
+                        if ids.len() > ACTIVE_PLAYER_NUMBER {
+                            let popped = ids.pop_front();
+                            log::debug!("popped player: {:?}", popped);
+                        }
+                    }
+                });
             }
         }
     });
 
     // アクティプリストに入っていない場合の処理
-    // use_effect(&cx, active_player_ids,{
-    //     to_owned![is_active, player_state, onplay_event_listener];
-    //     let player_id = cx.props.id.clone(); 
-    //     |active_player_ids| 
-    //         async move{
-    //             if *is_active.current() && !active_player_ids.iter().any(|id|{id==&player_id}) && player_state.current().is_some(){
-    //                 is_active.set(false);
-    //                 player_state.set(None);
-    //                 onplay_event_listener.set(None);
-    //             }
-    //     }
-    // });
+    use_effect(cx, active_player_ids,{
+        to_owned![is_active, player_state, onplay_event_listener];
+        let player_id = cx.props.id.clone(); 
+        |active_player_ids| 
+            async move{
+                if *is_active.current() && !active_player_ids.iter().any(|id|{id==&player_id}) && player_state.current().is_some(){
+                    is_active.set(false);
+                    player_state.set(None);
+                    onplay_event_listener.set(None);
+                }
+        }
+    });
 
 
     // // 現在再生中のプレーヤーと異なる場合

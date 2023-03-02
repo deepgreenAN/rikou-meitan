@@ -2,19 +2,19 @@ mod edit_clip;
 
 use crate::components::{AddButton, MovieCard, MovieContainer};
 use crate::utils::use_overlay;
-use domain::movie_clip::MovieClip;
+use domain::{movie_clip::MovieClip, Date};
+use edit_clip::EditMovieClip;
 
 use dioxus::prelude::*;
-use fake::{Fake, Faker};
+use fake::Fake;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter as EnumIterMacro, EnumString};
 
 enum EditMovieClipOpen {
     Modify(MovieClip),
     Add,
-    Close
+    Close,
 }
-
 
 #[derive(Display, EnumIterMacro, EnumString, Debug, PartialEq, Eq, Clone, Default)]
 enum SortType {
@@ -29,7 +29,7 @@ pub fn Clips(cx: Scope) -> Element {
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
 
     // AddMovieClip関連
-    let edit_movie_clip_open = use_state(cx, ||EditMovieClipOpen::Close);
+    let edit_movie_clip_open = use_state(cx, || EditMovieClipOpen::Close);
     let overlay_state = use_overlay(cx, 2);
 
     // 新規追加モーダルを開いたときの処理
@@ -42,16 +42,19 @@ pub fn Clips(cx: Scope) -> Element {
     let close_edit_movie_clip = move |_| {
         edit_movie_clip_open.set(EditMovieClipOpen::Close);
         overlay_state.deactivate();
-    }; 
+    };
 
     use_effect(cx, (), {
         to_owned![movie_clips_ref];
         |_| async move {
-            movie_clips_ref.set(Some(
-                (0..20)
-                    .map(|_| Faker.fake::<MovieClip>())
-                    .collect::<Vec<_>>(),
-            ))
+            let start = Date::from_ymd(2018, 12, 7).expect("Date sanity check");
+            let end = Date::from_ymd(2023, 3, 3).expect("Date sanity check");
+            let mut movie_clips = (0..20)
+                .map(|_| (start..end).fake::<MovieClip>())
+                .collect::<Vec<_>>();
+
+            movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
+            movie_clips_ref.set(Some(movie_clips));
         }
     });
 
@@ -75,21 +78,60 @@ pub fn Clips(cx: Scope) -> Element {
                 div { id: "clips-add-button",
                     AddButton {onclick: open_edit_movie_clip}
                 }
-                
+
+                match edit_movie_clip_open.get() {
+                    EditMovieClipOpen::Add => rsx!{
+                        EditMovieClip{
+                            on_submit: move |new_movie_clip|{
+                                close_edit_movie_clip(());
+                                movie_clips_ref.with_mut(|movie_clips|{
+                                    if let Some(movie_clips) = movie_clips.as_mut() {
+                                        movie_clips.push(new_movie_clip);
+                                        movie_clips.sort_by_key(|movie_clip|{movie_clip.create_date()});
+                                    }
+                                });
+                            },
+                            on_cancel: close_edit_movie_clip
+                        }
+                    },
+                    EditMovieClipOpen::Modify(movie_clip) => rsx!{
+                        EditMovieClip{
+                            base_movie_clip: movie_clip.clone(),
+                            on_submit: move |modified_movie_clip: MovieClip|{
+                                close_edit_movie_clip(());
+                                movie_clips_ref.with_mut(|movie_clips|{
+                                    if let Some(movie_clips) = movie_clips.as_mut() {
+                                        movie_clips.iter_mut().for_each(|movie_clip|{
+                                            if movie_clip.id() == modified_movie_clip.id() {
+                                                *movie_clip = modified_movie_clip.clone();
+                                            }
+                                        })
+                                    }
+                                });
+                            },
+                            on_cancel: close_edit_movie_clip
+                        }
+                    },
+                    EditMovieClipOpen::Close => rsx!{Option::<VNode>::None}
+                }
             }
             MovieContainer{
                 movie_clips_ref.read().as_ref().map(|movie_clips|{
                     rsx!{
                         movie_clips.iter().enumerate().map(|(i, movie_clip)|{
+                            let movie_clip = movie_clip.clone();
                             rsx!{
                                 MovieCard{
                                     key:"{i}",
                                     date: movie_clip.create_date(),
-                                    range: Some(movie_clip.range().clone()),
+                                    range: movie_clip.range().clone(),
                                     title: movie_clip.title(),
                                     movie_url: movie_clip.url().clone(),
                                     id: format!("movie-clip-{i}"),
-                                    on_modify: move |_|{}
+                                    on_modify: move |_|{
+                                        edit_movie_clip_open.set(EditMovieClipOpen::Modify(movie_clip.clone()));
+                                        overlay_state.activate().expect("Cannot Overlay activate.");
+                                    }
                                 }
                             }
                         })

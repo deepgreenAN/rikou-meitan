@@ -9,6 +9,7 @@ use web_sys::HtmlInputElement;
 #[derive(Clone)]
 pub struct RequiredString(String);
 
+#[derive(Debug)]
 pub struct RequiredError;
 
 impl TryFrom<String> for RequiredString {
@@ -35,7 +36,7 @@ pub enum InputType {
     InputText,
     InputDate,
     TextArea,
-    Url,
+    InputUrl,
     InputNum,
 }
 
@@ -45,7 +46,7 @@ pub enum InputType {
 #[derive(Props)]
 pub struct ValidationInputProps<'a, T: TryFrom<String> + ToString + Clone + 'static> {
     // 値の更新時に実行するコールバック
-    pub onchange: EventHandler<'a, Option<T>>,
+    pub on_input: EventHandler<'a, Option<T>>,
     // バリデーションのエラーメッセージ
     #[props(into)]
     pub error_message: String,
@@ -106,35 +107,35 @@ pub fn ValidationInput<'a, T: TryFrom<String> + ToString + Clone + 'static>(
         Ok(domain_value)
     };
 
-    let onchange = move |e: FormEvent| {
+    let on_input = move |e: FormEvent| {
         let try_into_res = try_into_func(e.value.clone());
         match try_into_res {
             Ok(domain_value) => {
                 error_message.set(None);
-                cx.props.onchange.call(Some(domain_value));
+                cx.props.on_input.call(Some(domain_value));
             }
             Err(error_s) => {
                 error_message.set(Some(error_s));
-                cx.props.onchange.call(None);
+                cx.props.on_input.call(None);
             }
         }
     };
 
     let input_component = match input_type {
         InputType::InputText => {
-            rsx! {input { class: "{cx.props.class}", r#type: "text", oninput:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "text", oninput:on_input}}
         }
         InputType::InputDate => {
-            rsx! {input { class: "{cx.props.class}", r#type: "date", oninput:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "date", oninput:on_input}}
         }
-        InputType::Url => {
-            rsx! {input { class: "{cx.props.class}", r#type: "url", oninput:onchange}}
+        InputType::InputUrl => {
+            rsx! {input { class: "{cx.props.class}", r#type: "url", oninput:on_input}}
         }
         InputType::TextArea => {
-            rsx! {textarea { class: "{cx.props.class}", oninput:onchange}}
+            rsx! {textarea { class: "{cx.props.class}", oninput:on_input}}
         }
         InputType::InputNum => {
-            rsx! {input { class: "{cx.props.class}", r#type: "number", oninput:onchange}}
+            rsx! {input { class: "{cx.props.class}", r#type: "number", oninput:on_input}}
         }
     };
 
