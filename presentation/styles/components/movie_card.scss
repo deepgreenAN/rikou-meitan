@@ -18,32 +18,16 @@
             display: flex;
             flex-direction: column;
             .movie-card-title {
+                overflow: hidden;
+                text-overflow: ellipsis;
+
                 font-size: 1.5rem;
                 line-height: 1.8rem;
                 height: 3.6rem;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                @media screen and (max-width: 1500px) {
-                    font-size: 1.8rem;
-                    line-height: 2.2rem;
-                    height: 4.4rem;
-                }
-                @media screen and (max-width: 1000px) {
-                    font-size: 3rem;
-                    line-height: 4rem;
-                    height: 8rem;
-                }
             }
             .movie-card-date {
                 margin-left: 1rem;
                 font-size: 1.5rem;
-
-                @media screen and (max-width: 1500px) {
-                    font-size: 1.8rem;
-                }
-                @media screen and (max-width: 1000px) {
-                    font-size: 2rem;
-                }
             }
         }
         .movie-card-right {
