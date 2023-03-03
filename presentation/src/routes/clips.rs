@@ -1,14 +1,16 @@
 mod edit_clip;
 
-use crate::components::{AddButton, MovieCard, MovieContainer};
+use crate::components::{AddButton, MovieCard, MovieContainer, IntersectionBottom};
 use crate::utils::use_overlay;
 use domain::{movie_clip::MovieClip, Date};
 use edit_clip::EditMovieClip;
 
 use dioxus::prelude::*;
 use fake::Fake;
+use gloo_intersection::IntersectionObserverHandler;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter as EnumIterMacro, EnumString};
+use std::rc::Rc;
 
 enum EditMovieClipOpen {
     Modify(MovieClip),
@@ -44,6 +46,7 @@ pub fn Clips(cx: Scope) -> Element {
         overlay_state.deactivate();
     };
 
+    // 状態の初期化
     use_effect(cx, (), {
         to_owned![movie_clips_ref];
         |_| async move {
@@ -57,6 +60,33 @@ pub fn Clips(cx: Scope) -> Element {
             movie_clips_ref.set(Some(movie_clips));
         }
     });
+
+    // 底が交差するときのオブザーバー
+    let intersection_handler = cx.use_hook(||{
+        let handler = IntersectionObserverHandler::new({
+            to_owned![movie_clips_ref];
+            move |entries, _| {
+                let target_entry = entries.into_iter().next().expect("Observe sanity check");
+                if target_entry.is_intersecting() {
+                    let start = Date::from_ymd(2023, 3, 3).expect("Date sanity check");
+                    let end = Date::from_ymd(2024, 1, 1).expect("Date sanity check");
+                    let mut new_movie_clips = (0..20)
+                        .map(|_| (start..end).fake::<MovieClip>())
+                        .collect::<Vec<_>>();
+
+                    new_movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
+                    movie_clips_ref.with_mut(|movie_clips| {
+                        if let Some(movie_clips) = movie_clips.as_mut() {
+                            movie_clips.append(&mut new_movie_clips);
+                        }
+                    });
+                }
+            }
+        })
+        .expect("Intersection Handler Error");
+        Rc::new(handler)
+    });
+
 
     cx.render(rsx! {
         div { id: "clips-container",
@@ -138,6 +168,8 @@ pub fn Clips(cx: Scope) -> Element {
                     }
                 })
             }
+            
+            IntersectionBottom{intersection_handler: intersection_handler.clone()}
         }
     })
 }

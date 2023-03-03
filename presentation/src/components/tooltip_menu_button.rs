@@ -105,7 +105,8 @@ pub fn TooltipMenuButton<'a>(cx: Scope<'a, TooltipMenuButtonProps<'a>>) -> Eleme
             }
             if *is_menu_active.get() {
                 rsx!{
-                    div { class: format_args!("tooltip-menu-items-container {}", tooltip_menu_pos.get()), 
+                    div { class: format_args!("tooltip-menu-items-container {}", tooltip_menu_pos.get()),
+                        onclick: move |_| {is_menu_active.set(false)}, 
                         &cx.props.children
                     }
                     div { class: format_args!("tooltip-menu-cover {}", tooltip_menu_pos.get()),
