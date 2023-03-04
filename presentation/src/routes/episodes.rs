@@ -6,7 +6,14 @@ use domain::Date;
 
 use dioxus::prelude::*;
 
-pub fn EpisodesPage(cx: Scope) -> Element {
+#[derive(Props, PartialEq)]
+pub struct EpisodesPageProps {
+    #[props(default = false)]
+    admin: bool
+}
+
+
+pub fn EpisodesPage(cx: Scope<EpisodesPageProps>) -> Element {
     let titles = cx.use_hook(|| vec!["2018", "2019", "2020", "2021", "2022", "2023"]);
 
     let ranges = cx.use_hook(|| {
@@ -43,7 +50,12 @@ pub fn EpisodesPage(cx: Scope) -> Element {
     cx.render(rsx! {
         div {id: "episodes-container",
             div { id: "episode-title-container",
-                h2 {id: "episode-title", "エピソード"}
+                h2 {id: "episode-title", 
+                    match cx.props.admin {
+                        true => "エピソード(管理者用モード)",
+                        false => "エピソード"
+                    }
+                }
             } 
             titles.iter().zip(ranges.iter()).zip(initial_is_opens.iter()).map(|((title, range), initial_is_open)|{
                 rsx! {
@@ -53,6 +65,7 @@ pub fn EpisodesPage(cx: Scope) -> Element {
                         start: range.0,
                         end: range.1,
                         initial_is_open: *initial_is_open,
+                        admin: cx.props.admin
                     }
                 }
             })

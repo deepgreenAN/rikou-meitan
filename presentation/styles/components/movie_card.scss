@@ -44,6 +44,14 @@
                 width: 70%;
                 margin-right: 10%;
                 margin-bottom: 20%;
+                -webkit-user-select: none;
+                   -moz-user-select: none;
+                    -ms-user-select: none;
+                        user-select: none;
+
+                &.liked {
+                    color: #EF6F94
+                }
             }
         }
     }

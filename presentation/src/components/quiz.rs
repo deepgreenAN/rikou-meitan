@@ -14,6 +14,8 @@ pub struct QuizJson {
 #[derive(Props)]
 pub struct QuizProps<'a> {
     on_cancel: EventHandler<'a>,
+    #[props(default = false)]
+    admin: bool,
     children: Element<'a>,
 }
 
@@ -45,7 +47,7 @@ pub fn Quiz<'a>(cx: Scope<'a, QuizProps<'a>>) -> Element {
     };
 
     cx.render(rsx! {
-        if *is_correct.get() {
+        if *is_correct.get() || cx.props.admin {
             rsx! {&cx.props.children}
         } else {
             rsx! {

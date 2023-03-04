@@ -26,6 +26,9 @@ pub struct RangeEpisodesProps {
     end: Date,
     /// 初期値としてアコーディオンパネルを開いておくかどうか
     initial_is_open: bool,
+    /// 管理者
+    #[props(default = false)]
+    admin: bool,
 }
 
 pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
@@ -103,6 +106,41 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         is_add_button_show.set(false);
     };
 
+    // 新しく追加するときの処理
+    let add_submitted_episode = move |new_episode| {
+        close_add_episode(());
+        episodes_ref.with_mut(|episodes| {
+            if let Some(episodes) = episodes.as_mut() {
+                episodes.push(new_episode);
+                episodes.sort_by_key(|episode| episode.date());
+            }
+        });
+    };
+
+    // 編集するときの処理
+    let modify_submitted_episode = move |modified_episode: Episode| {
+        close_add_episode(());
+        episodes_ref.with_mut(|episodes| {
+            if let Some(episodes) = episodes.as_mut() {
+                episodes.iter_mut().for_each(|episode| {
+                    if episode.id() == modified_episode.id() {
+                        *episode = modified_episode.clone();
+                    }
+                });
+            }
+        });
+    };
+
+    // 削除するときの処理
+    let remove_episode = move |episode_for_remove: Episode| {
+        close_add_episode(());
+        episodes_ref.with_mut(|episodes| {
+            if let Some(episodes) = episodes.as_mut() {
+                episodes.retain(|episode| episode.id() != episode_for_remove.id());
+            }
+        })
+    };
+
     cx.render(rsx! {
         if cx.props.initial_is_open {
             rsx! {
@@ -136,16 +174,8 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
             EditEpisodeOpen::Add => {
                 rsx! {
                     EditEpisode{
-                        onsubmit: move |new_episode|{
-                            close_add_episode(());
-                            episodes_ref.with_mut(|episodes|{
-                                if let Some(episodes) = episodes.as_mut() {
-                                    episodes.push(new_episode);
-                                    episodes.sort_by_key(|episode|{episode.date()});
-                                }
-                            })
-                        },
-                        oncancel: close_add_episode
+                        on_submit: add_submitted_episode,
+                        on_cancel: close_add_episode
                     }
                 }
             },
@@ -153,22 +183,27 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                 rsx!{
                     Quiz{
                         on_cancel: close_add_episode,
-                        EditEpisode{
-                            onsubmit: move |modified_episode: Episode|{
-                                close_add_episode(());
-                                episodes_ref.with_mut(|episodes|{
-                                    if let Some(episodes) = episodes.as_mut() {
-                                        episodes.iter_mut().for_each(|episode|{
-                                            if episode.id() == modified_episode.id() {
-                                                *episode = modified_episode.clone();
-                                            }
-                                        })
-                                    }
-                                })
+                        admin: cx.props.admin,
+                        match cx.props.admin {
+                            true => rsx!{ // 管理者の時
+                                EditEpisode{
+                                    on_submit: modify_submitted_episode,
+                                    base_episode: episode.clone(),
+                                    on_cancel: close_add_episode,
+                                    on_remove: remove_episode
+                                }
                             },
-                            base_episode: episode.clone(),
-                            oncancel: close_add_episode
+                            false => rsx!{ // 管理者でない時
+                                EditEpisode{
+                                    on_submit: modify_submitted_episode,
+                                    base_episode: episode.clone(),
+                                    on_cancel: close_add_episode,
+                                }
+                            }
                         }
+
+
+
                     }
                 }
             },

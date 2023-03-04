@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_router::Link;
 
 pub fn Footer(cx: Scope) -> Element {
     cx.render(rsx! {
@@ -10,6 +11,7 @@ pub fn Footer(cx: Scope) -> Element {
                     a {href: "https://github.com/deepgreenAN/rikou-meitan", "こちら"}
                     "でメンテナンスされています．"
                 }
+                Link{ to:"/admin", "管理者用ページ"}
             }
         }
     })

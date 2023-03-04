@@ -29,9 +29,14 @@ impl TryFrom<EpisodeForm> for Episode {
 
 #[derive(Props)]
 pub struct EditEpisodeProps<'a> {
+    /// 編集のベースとなるエピソード
     base_episode: Option<Episode>,
-    onsubmit: EventHandler<'a, Episode>,
-    oncancel: EventHandler<'a, ()>,
+    /// 送信時の処理
+    on_submit: EventHandler<'a, Episode>,
+    /// キャンセル時の処理
+    on_cancel: EventHandler<'a, ()>,
+    // 削除時の処理
+    on_remove: Option<EventHandler<'a, Episode>>,
 }
 
 pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
@@ -47,13 +52,18 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
         }
     });
 
+    let input_caption = match cx.props.base_episode.is_some() {
+        true => "エピソードを編集",
+        false => "新しいエピソードを追加",
+    };
+
     cx.render(rsx! {
         div { class: "edit-episode-container", 
-            onclick: move |_|{cx.props.oncancel.call(())}, //なぜかonmousedownのstop_propagationが効かない
+            onclick: move |_|{cx.props.on_cancel.call(())}, //なぜかonmousedownのstop_propagationが効かない
             div { class: "edit-episode-ui-container", 
                 onclick: move |e| {e.stop_propagation();},
                 div { class: "edit-episode-input-container",
-                    div { class: "edit-episode-input-caption", "新しいエピソードを追加"}
+                    div { class: "edit-episode-input-caption", "{input_caption}"}
                     ValidationInput{
                         class:"edit-episode-input-date",
                         on_input: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
@@ -84,7 +94,17 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                     }
                     div { class: "edit-episode-input-bottom",
                         button { onclick:move |_|{is_previewed.set(true)}, "プレビューを表示"}
-                        button { onclick: move |_|{cx.props.oncancel.call(())}, "キャンセル"}
+                        button { onclick: move |_|{cx.props.on_cancel.call(())}, "キャンセル"}
+                        // 削除ボタン
+                        cx.props.base_episode.as_ref().map(|episode|{
+                            rsx!{
+                                cx.props.on_remove.as_ref().map(|on_remove|{
+                                    rsx!{
+                                        button {onclick: move |_|{on_remove.call(episode.clone())}, "削除"}
+                                    }
+                                })
+                            }
+                        })
                     }
 
                 }
@@ -110,9 +130,9 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                                                 if let Some(base_episode) = cx.props.base_episode.as_ref() {
                                                     let mut base_episode = base_episode.clone();
                                                     base_episode.assign(episode.clone());
-                                                    cx.props.onsubmit.call(base_episode);
+                                                    cx.props.on_submit.call(base_episode);
                                                 } else {
-                                                    cx.props.onsubmit.call(episode.clone());
+                                                    cx.props.on_submit.call(episode.clone());
                                                 }
                                             }
                                             ,"送信"}

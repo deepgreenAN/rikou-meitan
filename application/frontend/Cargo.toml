@@ -15,15 +15,14 @@ test_api = []
 config = { path = "../../config"}
 domain = { path = "../../domain"}
 common = { path = "../common"}
-gloo-net = {version = "0.2.*", default-features = false, features = ["json", "http"]}
+gloo-net = "^0.2"
 indexmap = "^1.9"
 thiserror = "^1.0"
 
 # optional dependencies
 
 
-
 [dev-dependencies]
-wasm-bindgen-test = "0.3.*"
-rstest = { version = "0.15.*"}
-assert_matches = "1.*"
+wasm-bindgen-test = "^0.3.34"
+rstest = "^0.16"
+assert_matches = "^1.5.0"

@@ -73,12 +73,12 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                         ul {
                             cx.props.episodes.read().as_ref().map(|episodes|{
                                 rsx!{
-                                    episodes.iter().enumerate().map(|(i,episode)|{
+                                    episodes.iter().map(|episode|{
                                         let (year, month, day) = episode.date().to_ymd();
                                         let content = episode.content();
                                         let episode = episode.clone();
                                         rsx! {
-                                            li {key: "{i}",
+                                            li {key: "{episode.id()}",
                                                 div { class: "episode-item-container",
                                                     div {
                                                         span { class: "episode-date", format!("{year}/{month}/{day}")}

@@ -10,7 +10,7 @@ use dioxus::prelude::*;
 use fake::{Fake, Faker};
 // use gloo_timers::future::TimeoutFuture;
 
-pub fn Home(cx: Scope) -> Element {
+pub fn HomePage(cx: Scope) -> Element {
     let orikou_desc_str = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/contents/orikou_desc.html"
@@ -72,15 +72,16 @@ pub fn Home(cx: Scope) -> Element {
                     MovieContainer{
                         movie_clips_ref.read().as_ref().map(|movie_clips|{
                             rsx!{
-                                movie_clips.iter().enumerate().map(|(i, movie_clip)|{
+                                movie_clips.iter().map(|movie_clip|{
+                                    let id = movie_clip.id();
                                     rsx!{
                                         MovieCard{
-                                            key:"{i}",
+                                            key:"{id}",
                                             date: movie_clip.create_date(),
                                             range: movie_clip.range().clone(),
                                             title: movie_clip.title(),
                                             movie_url: movie_clip.url().clone(),
-                                            id: format!("movie-clip-{i}"),
+                                            id: format!("movie-clip-{id}"),
                                         }
                                     }
                                 })

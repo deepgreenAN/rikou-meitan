@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
 
-pub fn NotFound(cx: Scope) -> Element {
+pub fn NotFoundPage(cx: Scope) -> Element {
     cx.render(rsx! {
         div { id: "not-found-container",
             div { id: "not-found-text",

@@ -84,7 +84,7 @@ pub fn Toc(cx: Scope) -> Element {
     cx.render(rsx! {
         nav{
             id: "toc-container", aria_label:"Table of Contents",
-            toc_content_elements.get().iter().enumerate().map(|(i, element)|{
+            toc_content_elements.get().iter().map(|element|{
                 let mut class = "toc-item".to_string();
                 if let Some(active_id) = active_id.get() {
                     if element.id() == *active_id {
@@ -100,8 +100,7 @@ pub fn Toc(cx: Scope) -> Element {
                 scroll_options.behavior(ScrollBehavior::Smooth);
 
                 rsx! {
-                    div { key: "{i}", class:"{class}",
-                        // a { href: "{link_str}", "{title_str}"}
+                    div { key: "{element.id()}", class:"{class}",
                         onclick: move |_|{element.scroll_into_view_with_scroll_into_view_options(&scroll_options)},
                         "{title_str}"
                     }

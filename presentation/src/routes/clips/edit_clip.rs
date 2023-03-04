@@ -40,9 +40,14 @@ impl TryFrom<MovieClipForm> for MovieClip {
 
 #[derive(Props)]
 pub struct EditMovieClipProps<'a> {
+    // 編集のベースとなるクリッブ．Someである場合に編集モードとなる
     base_movie_clip: Option<MovieClip>,
+    // 送信時の処理
     on_submit: EventHandler<'a, MovieClip>,
+    // キャンセル時の処理
     on_cancel: EventHandler<'a, ()>,
+    // 削除時の処理
+    on_remove: Option<EventHandler<'a, MovieClip>>
 }
 
 pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
@@ -60,13 +65,18 @@ pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
         }
     });
 
+    let input_caption = match cx.props.base_movie_clip.is_some() {
+        false => "新しいクリップを追加",
+        true => "クリップを編集"
+    };
+
     cx.render(rsx! {
         div { class:"edit-clip-container",
             onclick: move |_|{cx.props.on_cancel.call(())},
             div { class: "edit-clip-ui-container",
                 onclick: move |e| {e.stop_propagation();},
                 div { class: "edit-clip-input-container",
-                    div { class: "edit-clip-input-caption", "新しいクリップを追加"}
+                    div { class: "edit-clip-input-caption", "{input_caption}"}
                     ValidationInput{
                         class: "edit-clip-input-title",
                         on_input: move |title: Option<RequiredString>|{
@@ -133,6 +143,16 @@ pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
                     div { class: "edit-clip-input-bottom",
                         button { onclick:move |_|{is_previewed.set(true)}, "プレビューを表示"}
                         button { onclick: move |_|{cx.props.on_cancel.call(())}, "キャンセル"}
+                        // 削除ボタン
+                        cx.props.base_movie_clip.as_ref().map(|base_movie_clip|{
+                            rsx!{
+                                cx.props.on_remove.as_ref().map(|on_remove|{
+                                    rsx!{
+                                        button { onclick: move |_|{on_remove.call(base_movie_clip.clone())}, "削除"}
+                                    }
+                                })
+                            }
+                        })
                     }
                 }
 

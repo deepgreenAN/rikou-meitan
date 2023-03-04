@@ -29,10 +29,23 @@ pub struct MovieCardProps<'a> {
 }
 
 pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
+    let is_liked = use_state(cx, ||{false});
+
     let like_heart_svg_str = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/images/release/like-heart.svg"
     ));
+
+    // ライクされたときのクラス名
+    let liked_class = match *is_liked.get() {
+        true => " liked",
+        false => ""
+    };
+
+    // ライクが押されたときの処理
+    let on_like = move |_| {
+        is_liked.modify(|flag|{!flag});
+    };
 
     cx.render(rsx! {
         div {class: "movie-card-container",
@@ -63,7 +76,10 @@ pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
                     } else {
                         rsx!{div { class: "movie-card-dot-menu"}}
                     }
-                    div { class: "movie-card-like-heart", dangerous_inner_html: "{like_heart_svg_str}"}
+                    div { class: format_args!("movie-card-like-heart{liked_class}"), 
+                        onclick: on_like,
+                        dangerous_inner_html: "{like_heart_svg_str}"
+                    }
                 }
             }
         }
