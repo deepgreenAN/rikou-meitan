@@ -1,23 +1,16 @@
-mod movie_url;
 mod second;
 
-pub use movie_url::MovieUrl;
+pub use crate::MovieUrl;
 pub use second::Second;
 pub use second::SecondRange;
 
 use crate::date::Date;
 use crate::ids::Id;
-use crate::DomainError::{self, DomainLogicError};
+use crate::DomainError;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
 use sqlx::{postgres::PgRow, FromRow, Row};
-
-#[cfg(feature = "server")]
-use uuid::Uuid;
-
-#[cfg(feature = "server")]
-use chrono::NaiveDate;
 
 #[cfg(any(test, feature = "fake"))]
 use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
@@ -37,11 +30,17 @@ pub type MovieClipId = Id<MovieClipIdType>;
 /// VideoClipのエンティティ
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MovieClip {
+    /// クリップのタイトル
     title: String,
+    /// クリップの元動画のurl
     url: MovieUrl,
+    /// クリップの再生範囲
     range: SecondRange,
+    /// id
     id: MovieClipId,
+    /// ライク(高評価の数)
     like: u32,
+    /// クリップの作成日時
     create_date: Date,
 }
 
@@ -54,9 +53,6 @@ impl MovieClip {
         end: u32,
         create_date_ymd: (u32, u32, u32),
     ) -> Result<Self, DomainError> {
-        if start >= end {
-            return Err(DomainLogicError("It is needed start < end".to_string()));
-        }
         Ok(Self {
             title,
             url: url.try_into()?,
@@ -95,6 +91,10 @@ impl MovieClip {
     pub fn url(&self) -> &MovieUrl {
         &self.url
     }
+    /// urlの可変参照を取得
+    pub fn url_mut(&mut self) -> &mut MovieUrl {
+        &mut self.url
+    }
     /// rangeを取得
     pub fn range(&self) -> &SecondRange {
         &self.range
@@ -119,7 +119,7 @@ impl MovieClip {
     pub fn create_date(&self) -> Date {
         self.create_date
     }
-    /// idはそのままにotherのフィールドを自身にコピー．
+    /// id, likeはそのままにotherのフィールドを自身にコピー．
     pub fn assign(&mut self, other: Self) {
         let new_self = Self {
             id: self.id(),
@@ -136,6 +136,9 @@ impl MovieClip {
 #[cfg(feature = "server")]
 impl FromRow<'_, PgRow> for MovieClip {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        use chrono::NaiveDate;
+        use uuid::Uuid;
+
         let title: String = row.try_get("title")?;
         let url: String = row.try_get("url")?;
         let start: i32 = row.try_get("start")?;
@@ -163,12 +166,20 @@ impl Dummy<Faker> for MovieClip {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
 
-        Self::new_with_domains(
+        let mut movie_clip = Self::new_with_domains(
             title,
             Faker.fake_with_rng(rng),
             Faker.fake_with_rng(rng),
             Faker.fake_with_rng(rng),
-        )
+        );
+
+        // like
+        let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
+        for _ in 0..like_num {
+            movie_clip.like_increment();
+        }
+
+        movie_clip
     }
 }
 
@@ -177,12 +188,20 @@ impl Dummy<std::ops::Range<Date>> for MovieClip {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
         let create_date = config.fake_with_rng::<Date, R>(rng);
-        Self::new_with_domains(
+        let mut movie_clip = Self::new_with_domains(
             title,
             Faker.fake_with_rng(rng),
             Faker.fake_with_rng(rng),
             create_date,
-        )
+        );
+
+        // like
+        let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
+        for _ in 0..like_num {
+            movie_clip.like_increment();
+        }
+
+        movie_clip
     }
 }
 

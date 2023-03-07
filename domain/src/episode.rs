@@ -7,13 +7,7 @@ pub use episode_content::EpisodeContent;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "server")]
-use chrono::NaiveDate;
-
-#[cfg(feature = "server")]
 use sqlx::{postgres::PgRow, FromRow, Row};
-
-#[cfg(feature = "server")]
-use uuid::Uuid;
 
 #[cfg(any(test, feature = "fake"))]
 use fake::{Dummy, Fake, Faker};
@@ -96,6 +90,9 @@ impl Episode {
 #[cfg(feature = "server")]
 impl FromRow<'_, PgRow> for Episode {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        use chrono::NaiveDate;
+        use uuid::Uuid;
+
         let date: NaiveDate = row.try_get("date")?;
         let content: String = row.try_get("content")?;
         let id: Uuid = row.try_get("id")?;

@@ -96,8 +96,10 @@ impl TryFrom<Date> for NaiveDate {
 #[cfg(any(feature = "fake", test))]
 impl Dummy<Faker> for Date {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
-        let chrono_date = Faker.fake_with_rng::<NaiveDate, R>(rng);
-        chrono_date.try_into().expect("Generate fake Date Error")
+        let start = Date::from_ymd(2018, 12, 27).unwrap();
+        let end = Date::from_ymd(2023, 12, 31).unwrap();
+
+        (start..end).fake_with_rng(rng)
     }
 }
 

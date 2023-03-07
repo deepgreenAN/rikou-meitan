@@ -22,7 +22,7 @@ impl FromStr for EpisodeContent {
         let mut builder = Builder::new();
         builder
             .tags(hashset![
-                "a", "br", "em", "li", "ol", "p", "strong", "table", "td", "tr", "th"
+                "a", "br", "em", "ul", "li", "ol", "p", "strong", "table", "td", "tr", "th"
             ])
             .url_schemes(hashset!["https"])
             .link_rel(None);
