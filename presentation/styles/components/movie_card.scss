@@ -1,3 +1,5 @@
+@use "../static_var.scss";
+
 .movies-container {
     width: 100%;
     display: grid;
@@ -10,6 +12,12 @@
     display: flex;
     flex-direction: column;
     color: var(--primary-color);
+    // z-indexのバグがあるためスマホサイズのみコンテナクエリを利用
+    @media screen and (max-width: static_var.$smartphone_size) {
+        container-type: inline-size;
+    }
+
+    // container-type: inline-size;
 
     .movie-card-caption {
         display: flex;
@@ -22,12 +30,29 @@
                 text-overflow: ellipsis;
 
                 font-size: 1.5rem;
-                line-height: 1.8rem;
-                height: 3.6rem;
+                line-height: 1.7rem;
+                height: 3.4rem;
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    font-size: 4cqw;
+                    line-height: 5cqw;
+                    height: 10cqw;
+                }
+                // font-size: 4cqw;
+                // line-height: 5cqw;
+                // height: 10cqw;
             }
             .movie-card-date {
                 margin-left: 1rem;
-                font-size: 1.5rem;
+                margin-top: 0.5rem;
+                font-size: 1.2rem;
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    margin-left: 2cqw;
+                    margin-top: 1cqw;
+                    font-size: 3cqw;
+                }
+                // margin-left: 2cqw;
+                // margin-top: 1cqw;
+                // font-size: 3cqw;
             }
         }
         .movie-card-right {

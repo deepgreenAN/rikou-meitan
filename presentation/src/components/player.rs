@@ -122,7 +122,7 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                     {
                         to_owned![id];
                         move |_|{
-                            log::debug!("player:{} is playing", &id);
+                            // log::debug!("player:{} is playing", &id);
                             setter_playing_player_id(Some(id.clone()));
                         }
                     });
@@ -134,11 +134,11 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                     to_owned![id];
                     move |ids|{
                         ids.push_back(id);
-                        log::debug!("active player list pushed: {:?}", ids);
+                        // log::debug!("active player list pushed: {:?}", ids);
 
                         if ids.len() > ACTIVE_PLAYER_NUMBER {
-                            let popped = ids.pop_front();
-                            log::debug!("popped player: {:?}", popped);
+                            let _popped = ids.pop_front();
+                            // log::debug!("popped player: {:?}", popped);
                         }
                     }
                 });
@@ -167,12 +167,12 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
         to_owned![player_state];
 
         |playing_player_id| async move {
-            log::debug!("playing_player_id changed!");
+            // log::debug!("playing_player_id changed!");
             if let Some(playing_player_id) = playing_player_id {
                 if playing_player_id != id {
                     if let Some(player) = &*player_state.current() {
                         player.pause();
-                        log::debug!("player: {} is paused.", id);
+                        // log::debug!("player: {} is paused.", id);
                     }
                 }
             }

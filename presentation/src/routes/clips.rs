@@ -1,14 +1,13 @@
 mod edit_clip;
 
-use crate::components::{AddButton, MovieCard, MovieContainer, IntersectionBottom, Quiz};
+use crate::components::{MovieCard, MovieContainer, IntersectionBottom, Quiz, VideoPageMenu};
 use crate::utils::use_overlay;
-use domain::{movie_clip::MovieClip, Date};
+use domain::movie_clip::MovieClip;
 use edit_clip::EditMovieClip;
 
 use dioxus::prelude::*;
-use fake::Fake;
+use fake::{Fake, Faker};
 use gloo_intersection::IntersectionObserverHandler;
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter as EnumIterMacro, EnumString};
 use std::rc::Rc;
 
@@ -21,7 +20,7 @@ enum EditMovieClipOpen {
 #[derive(Display, EnumIterMacro, EnumString, Debug, PartialEq, Eq, Clone, Default)]
 enum SortType {
     #[default]
-    #[strum(serialize = "作成日時")]
+    #[strum(serialize = "作成日")]
     CreateDate,
     #[strum(serialize = "Like")]
     Like,
@@ -56,10 +55,8 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
     use_effect(cx, (), {
         to_owned![movie_clips_ref];
         |_| async move {
-            let start = Date::from_ymd(2018, 12, 7).expect("Date sanity check");
-            let end = Date::from_ymd(2023, 3, 3).expect("Date sanity check");
             let mut movie_clips = (0..20)
-                .map(|_| (start..end).fake::<MovieClip>())
+                .map(|_| Faker.fake::<MovieClip>())
                 .collect::<Vec<_>>();
 
             movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
@@ -74,10 +71,8 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
             move |entries, _| {
                 let target_entry = entries.into_iter().next().expect("Observe sanity check");
                 if target_entry.is_intersecting() {
-                    let start = Date::from_ymd(2023, 3, 3).expect("Date sanity check");
-                    let end = Date::from_ymd(2024, 1, 1).expect("Date sanity check");
                     let mut new_movie_clips = (0..20)
-                        .map(|_| (start..end).fake::<MovieClip>())
+                        .map(|_| Faker.fake::<MovieClip>())
                         .collect::<Vec<_>>();
 
                     new_movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
@@ -141,56 +136,45 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                     }
                 }
             }
-            div { id: "clips-menu",
-                div { id: "clips-sort-select-container",
-                    select {
-                        SortType::iter().map(|sort_type|{
-                            rsx!{
-                                option { class: "clips-sort-option", value: "{sort_type.to_string()}", selected: sort_type == SortType::default(),
-                                    sort_type.to_string()
-                                }
-                            }
-                        })
-                    }
-                }
-                div { id: "clips-add-button",
-                    AddButton {onclick: open_edit_movie_clip}
-                }
-
-                match edit_movie_clip_open.get() {
-                    EditMovieClipOpen::Add => rsx!{
-                        EditMovieClip{
-                            on_submit: add_submitted_clip,
-                            on_cancel: close_edit_movie_clip,
-                        }
-                    },
-                    EditMovieClipOpen::Modify(movie_clip) => rsx!{
-                        Quiz{
-                            on_cancel: close_edit_movie_clip,
-                            admin: cx.props.admin,
-                            match cx.props.admin {
-                                true => rsx!{ // 管理者の時
-                                    EditMovieClip{
-                                        base_movie_clip: movie_clip.clone(),
-                                        on_submit: modify_submitted_clip,
-                                        on_cancel: close_edit_movie_clip,
-                                        on_remove: remove_clip
-                                    }
-                                },
-                                false => rsx!{ // 管理者でない時
-                                    EditMovieClip{
-                                        base_movie_clip: movie_clip.clone(),
-                                        on_submit: modify_submitted_clip,
-                                        on_cancel: close_edit_movie_clip,
-                                    }
-                                }
-                            }
-                        }
-
-                    },
-                    EditMovieClipOpen::Close => rsx!{Option::<VNode>::None}
-                }
+            VideoPageMenu{
+                _enum_type: SortType::default()
+                on_click_add_button: open_edit_movie_clip,
+                on_change_sort_select: move |e: FormEvent|{log::info!("{}", e.value)},
             }
+            match edit_movie_clip_open.get() {
+                EditMovieClipOpen::Add => rsx!{
+                    EditMovieClip{
+                        on_submit: add_submitted_clip,
+                        on_cancel: close_edit_movie_clip,
+                    }
+                },
+                EditMovieClipOpen::Modify(movie_clip) => rsx!{
+                    Quiz{
+                        on_cancel: close_edit_movie_clip,
+                        admin: cx.props.admin,
+                        match cx.props.admin {
+                            true => rsx!{ // 管理者の時
+                                EditMovieClip{
+                                    base_movie_clip: movie_clip.clone(),
+                                    on_submit: modify_submitted_clip,
+                                    on_cancel: close_edit_movie_clip,
+                                    on_remove: remove_clip
+                                }
+                            },
+                            false => rsx!{ // 管理者でない時
+                                EditMovieClip{
+                                    base_movie_clip: movie_clip.clone(),
+                                    on_submit: modify_submitted_clip,
+                                    on_cancel: close_edit_movie_clip,
+                                }
+                            }
+                        }
+                    }
+
+                },
+                EditMovieClipOpen::Close => rsx!{Option::<VNode>::None}
+            }
+            
             MovieContainer{
                 movie_clips_ref.read().as_ref().map(|movie_clips|{
                     rsx!{

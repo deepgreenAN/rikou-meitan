@@ -119,7 +119,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
             Err(error_message) => {
                 let message = format!("プレビューを表示できません: {error_message}");
                 rsx! {
-                    div { class: "failed-preview-content", "{message}"}
+                    div { class: "failed-preview", "{message}"}
                     div { class: "edit-preview-bottom", button { disabled: "true", "送信"}}
                 }
             }

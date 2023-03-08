@@ -8,6 +8,7 @@ mod quiz;
 mod spinner;
 mod tooltip_menu_button;
 mod validation_input;
+mod video_page_menu;
 
 pub use accordion_episodes::AccordionEpisodes;
 pub use add_button::AddButton;
@@ -19,3 +20,4 @@ pub use quiz::Quiz;
 pub use spinner::Spinner;
 pub use tooltip_menu_button::{TooltipMenuButton, TooltipMenuItem};
 pub use validation_input::{InputType, RequiredString, ValidationInput};
+pub use video_page_menu::VideoPageMenu;

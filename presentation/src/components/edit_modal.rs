@@ -32,7 +32,7 @@ pub fn EditModal<'a>(cx: Scope<'a, EditModalProps<'a>>) -> Element {
                         // 削除ボタン
                         cx.props.on_remove.as_ref().map(|on_remove|{
                             rsx!{
-                                div{ onclick: move |_|{on_remove.call(())}, "削除"}
+                                button { onclick: move |_|{on_remove.call(())}, "削除"}
                             }
                         })
                     }

@@ -58,6 +58,8 @@ pub fn Header(cx: Scope) -> Element {
                 HeaderMenuItem{Link{ to:"/", "ホーム"}}
                 HeaderMenuItem{Link{ to:"/episodes", "エピソード"}}
                 HeaderMenuItem{Link{ to:"/clips", "クリップ"}}
+                HeaderMenuItem{Link{ to:"/originals", "コラボ配信"}}
+                HeaderMenuItem{Link{ to:"/kirinukis", "切り抜き"}}
             }
             is_hidden_menu_open.get().then(||{
                 rsx! {
@@ -73,6 +75,14 @@ pub fn Header(cx: Scope) -> Element {
                         HiddenMenuItem{
                             onclick: close_hidden_menu,
                             Link{ to:"/clips","クリップ"}
+                        }
+                        HiddenMenuItem{
+                            onclick: close_hidden_menu,
+                            Link{ to:"/originals", "コラボ配信"}
+                        }
+                        HiddenMenuItem{
+                            onclick: close_hidden_menu,
+                            Link{ to:"/kirinukis", "切り抜き"}
                         }
                     }
                     div {

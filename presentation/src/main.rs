@@ -12,7 +12,7 @@ use crate::background::Background;
 use crate::footer::Footer;
 use crate::header::Header;
 // 以下はroutes
-use crate::routes::{AdminPage, ClipsPage, EpisodesPage, HomePage, NotFoundPage};
+use crate::routes::{AdminPage, ClipsPage, EpisodesPage, HomePage, NotFoundPage, VideosPage};
 
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
@@ -33,6 +33,9 @@ pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
 fn App(cx: Scope) -> Element {
     use_init_atom_root(cx);
     utils::use_dark_mode(cx);
+
+    let admin = cfg!(feature = "develop");
+
     cx.render(rsx! {
         Background{
             Router {
@@ -40,12 +43,14 @@ fn App(cx: Scope) -> Element {
                 div { id: "contents-container",
                     Route { to: "", NotFoundPage{}}
                     Route { to: "/", HomePage{}}
-                    Route { to: "/episodes", EpisodesPage{}}
-                    Route { to: "/clips", ClipsPage{}}
+                    Route { to: "/episodes", EpisodesPage{admin: admin}}
+                    Route { to: "/clips", ClipsPage{admin: admin}}
+                    Route { to: "/originals", VideosPage{admin: admin}}
                     // 以下はadmin関連
                     Route { to: "/admin", AdminPage{}}
                     Route { to: "/admin/episodes", EpisodesPage{admin:true}}
                     Route { to: "/admin/clips", ClipsPage{admin:true}}
+                    Route { to: "/admin/originals", VideosPage{admin: true}}
                 }
                 Footer{}
             }

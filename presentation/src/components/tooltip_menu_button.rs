@@ -66,13 +66,13 @@ pub fn TooltipMenuButton<'a>(cx: Scope<'a, TooltipMenuButtonProps<'a>>) -> Eleme
                     document_element.client_width(),
                     document_element.client_height(),
                 );
-                log::info!("window_width: {window_width}, window_height: {window_height}");
+                // log::info!("window_width: {window_width}, window_height: {window_height}");
 
                 let (x, y) = (
                     e.client_coordinates().x as i32,
                     e.client_coordinates().y as i32,
                 );
-                log::info!("x: {x}, y: {y}");
+                // log::info!("x: {x}, y: {y}");
 
                 let pos = match (x + menu_width, y + menu_height) {
                     (right_x, bottom_y) if right_x < window_width && bottom_y < window_height => {
