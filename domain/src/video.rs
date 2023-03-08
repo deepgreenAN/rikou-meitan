@@ -6,7 +6,8 @@ use crate::date::Date;
 use crate::ids::Id;
 use crate::DomainError;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::marker::PhantomData;
 
 #[cfg(feature = "server")]
 use sqlx::{postgres::PgRow, FromRow, Row};
@@ -31,8 +32,7 @@ pub type VideoId = Id<VideoIdType>;
 // -------------------------------------------------------------------
 // ## Original
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[serde(try_from = "String", into = "String")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Original;
 
 impl FromStr for Original {
@@ -70,8 +70,7 @@ impl From<Original> for String {
 // -------------------------------------------------------------------
 // ## Kirinuki
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[serde(try_from = "String", into = "String")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Kirinuki;
 
 impl FromStr for Kirinuki {
@@ -107,6 +106,33 @@ impl From<Kirinuki> for String {
 }
 
 // -------------------------------------------------------------------------------------------------
+// serialize and deserialize function
+
+fn serialize_phantom<S, T>(_: &PhantomData<T>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: Into<String> + Default,
+{
+    let type_str: String = T::default().into();
+    s.serialize_str(&type_str)
+}
+
+fn deserialize_phantom<'de, D, T>(d: D) -> Result<PhantomData<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: TryFrom<String>,
+{
+    let unit_type_str: String = Deserialize::deserialize(d)?;
+    let _unit_type: T = unit_type_str.try_into().map_err(|_| {
+        serde::de::Error::custom(DomainError::DomainParseError(
+            "Invalid string for video type".to_string(),
+        ))
+    })?;
+
+    Ok(PhantomData)
+}
+
+// -------------------------------------------------------------------------------------------------
 // # Video
 
 /// Videoのエンティティ
@@ -125,7 +151,13 @@ pub struct Video<T> {
     /// ライク数
     like: u32,
     /// 動画の種類(Kirinuki, Original)
-    video_type: T,
+    #[serde(
+        serialize_with = "serialize_phantom",
+        deserialize_with = "deserialize_phantom"
+    )]
+    #[serde(bound(serialize = "T: Into<String> + Default"))]
+    #[serde(bound(deserialize = "T: TryFrom<String>"))]
+    video_type: PhantomData<T>,
 }
 
 impl<T: Default> Video<T> {
@@ -143,7 +175,7 @@ impl<T: Default> Video<T> {
             date: date_ymd.try_into()?,
             author,
             like: 0,
-            video_type: T::default(),
+            video_type: PhantomData,
         })
     }
     /// ドメイン固有型を用いたコンストラクタ
@@ -155,7 +187,7 @@ impl<T: Default> Video<T> {
             date,
             author,
             like: 0,
-            video_type: T::default(),
+            video_type: PhantomData,
         }
     }
     /// titleを取得
@@ -231,7 +263,8 @@ where
         let date: NaiveDate = row.try_get("date")?;
         let author: String = row.try_get("author")?;
         let like: i32 = row.try_get("like")?;
-        let video_type: String = row.try_get("video_type")?;
+        let video_type_str: String = row.try_get("video_type")?;
+        let _video_type: T = video_type_str.try_into()?;
 
         Ok(Self {
             title,
@@ -240,7 +273,7 @@ where
             date: date.try_into()?,
             author,
             like: like as u32,
-            video_type: video_type.try_into()?,
+            video_type: PhantomData,
         })
     }
 }
@@ -248,7 +281,7 @@ where
 // -------------------------------------------------------------------------------------------------
 // Dummy trait
 
-#[cfg(feature = "fake")]
+#[cfg(any(feature = "fake", test))]
 impl<T: Default> Dummy<Faker> for Video<T> {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
@@ -269,7 +302,7 @@ impl<T: Default> Dummy<Faker> for Video<T> {
     }
 }
 
-#[cfg(feature = "fake")]
+#[cfg(any(feature = "fake", test))]
 impl<T: Default> Dummy<std::ops::Range<Date>> for Video<T> {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
@@ -294,6 +327,7 @@ impl<T: Default> Dummy<std::ops::Range<Date>> for Video<T> {
 mod test {
     use super::{Kirinuki, Original, Video};
     use fake::{Fake, Faker};
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_like_increment() {
@@ -315,6 +349,19 @@ mod test {
         assert_eq!(kirinuki, Kirinuki);
 
         assert_eq!(Kirinuki.to_string(), "Kirinuki".to_string());
+    }
+
+    #[test]
+    fn serialize_and_deserialize() {
+        let video = Faker.fake::<Video<Original>>();
+        let video_json = serde_json::to_string(&video).unwrap();
+        assert_eq!(
+            video,
+            serde_json::from_str::<Video<Original>>(&video_json).unwrap()
+        );
+
+        let res_err = serde_json::from_str::<Video<Kirinuki>>(&video_json);
+        assert!(matches!(res_err, Err(_)))
     }
 
     #[test]

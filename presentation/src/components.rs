@@ -1,5 +1,6 @@
 mod accordion_episodes;
 mod add_button;
+mod edit_modal;
 mod intersection_bottom;
 mod movie_card;
 mod player;
@@ -10,6 +11,7 @@ mod validation_input;
 
 pub use accordion_episodes::AccordionEpisodes;
 pub use add_button::AddButton;
+pub use edit_modal::EditModal;
 pub use intersection_bottom::IntersectionBottom;
 pub use movie_card::{MovieCard, MovieContainer};
 pub use player::Player;

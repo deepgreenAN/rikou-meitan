@@ -1,4 +1,4 @@
-use crate::components::{InputType, ValidationInput};
+use crate::components::{EditModal, InputType, ValidationInput};
 use domain::{
     episode::{Episode, EpisodeContent},
     Date,
@@ -40,7 +40,6 @@ pub struct EditEpisodeProps<'a> {
 }
 
 pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
-    let is_previewed = use_state(cx, || false);
     let episode_form = use_ref(cx, || {
         if let Some(base_episode) = cx.props.base_episode.as_ref() {
             EpisodeForm {
@@ -57,99 +56,96 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
         false => "新しいエピソードを追加",
     };
 
-    cx.render(rsx! {
-        div { class: "edit-episode-container", 
-            onclick: move |_|{cx.props.on_cancel.call(())}, //なぜかonmousedownのstop_propagationが効かない
-            div { class: "edit-episode-ui-container", 
-                onclick: move |e| {e.stop_propagation();},
-                div { class: "edit-episode-input-container",
-                    div { class: "edit-episode-input-caption", "{input_caption}"}
-                    ValidationInput{
-                        class:"edit-episode-input-date",
-                        on_input: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
-                        error_message: "※有効なDateではありません",
-                        label_component: cx.render(rsx!{
-                            div { class: "label-container",
-                                div { class:"label-main", "エピソードの年月日"}
-                                div { class:"label-detail", "アバウトで大丈夫です。後で編集できます。"}
-                            }
-                        }),
-                        required: true,
-                        input_type:InputType::InputDate,
-                        initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.date()}),
-                    }
-                    ValidationInput{
-                        class:"edit-episode-input-content",
-                        on_input: move |value: Option<EpisodeContent>|{episode_form.with_mut(|form|{form.content = value})},
-                        error_message: "※無効なhtmlが含まれています",
-                        label_component: cx.render(rsx!{
-                            div { class: "label-container",
-                                div { class:"label-main", "エピソード内容"}
-                                div { class:"label-detail", "リンク・リスト・太字・斜体などのhtmlも使えます"}
-                            }
-                        }),
-                        required: true,
-                        input_type:InputType::TextArea,
-                        initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.content().clone()}),
-                    }
-                    div { class: "edit-episode-input-bottom",
-                        button { onclick:move |_|{is_previewed.set(true)}, "プレビューを表示"}
-                        button { onclick: move |_|{cx.props.on_cancel.call(())}, "キャンセル"}
-                        // 削除ボタン
-                        cx.props.base_episode.as_ref().map(|episode|{
-                            rsx!{
-                                cx.props.on_remove.as_ref().map(|on_remove|{
-                                    rsx!{
-                                        button {onclick: move |_|{on_remove.call(episode.clone())}, "削除"}
-                                    }
-                                })
-                            }
-                        })
-                    }
-
+    // フォーム入力部分
+    let input_element = rsx! {
+        ValidationInput{
+            class:"edit-episode-input-date",
+            on_input: move |value: Option<Date>|{episode_form.with_mut(|form|{form.date = value})},
+            error_message: "※有効なDateではありません",
+            label_component: cx.render(rsx!{
+                div { class: "label-container",
+                    div { class:"label-main", "エピソードの年月日"}
+                    div { class:"label-detail", "アバウトで大丈夫です。後で編集できます。"}
                 }
-                is_previewed.get().then(||{
-                    rsx!{
-                        div { class: "edit-episode-preview-container",
-                            div { class: "edit-episode-preview-caption", "プレビュー"}
-                            match TryInto::<Episode>::try_into(episode_form.with(|form|{form.clone()})) {
-                                Ok(episode) => {
-                                    let content = episode.content().to_string();
-                                    let (year, month, day) = episode.date().to_ymd();
-                                    rsx! {
-                                        ul {
-                                            li{
-                                                div { class:"preview-item-container",
-                                                    span { class: "preview-date", format!("{year}/{month}/{day}")}
-                                                    span { class: "preview-content", dangerous_inner_html: "{content}"}
-                                                }
-                                            }
-                                        }
-                                        div { class: "edit-episode-preview-bottom", 
-                                            button { onclick: move |_|{
-                                                if let Some(base_episode) = cx.props.base_episode.as_ref() {
-                                                    let mut base_episode = base_episode.clone();
-                                                    base_episode.assign(episode.clone());
-                                                    cx.props.on_submit.call(base_episode);
-                                                } else {
-                                                    cx.props.on_submit.call(episode.clone());
-                                                }
-                                            }
-                                            ,"送信"}
-                                        }
-                                    }
-                                },
-                                Err(error_message) => {
-                                    let message = format!("プレビューを表示できません: {error_message}");
-                                    rsx! {
-                                        div { class: "failed-preview-content", "{message}"}
-                                        div { class: "edit-episode-preview-bottom", button { disabled: "true", "送信"}}
-                                    }
-                                }
-                            }
+            }),
+            required: true,
+            input_type:InputType::InputDate,
+            initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.date()}),
+        }
+        ValidationInput{
+            class:"edit-episode-input-content",
+            on_input: move |value: Option<EpisodeContent>|{episode_form.with_mut(|form|{form.content = value})},
+            error_message: "※無効なhtmlが含まれています",
+            label_component: cx.render(rsx!{
+                div { class: "label-container",
+                    div { class:"label-main", "エピソード内容"}
+                    div { class:"label-detail", "リンク・リスト・太字・斜体などのhtmlも使えます"}
+                }
+            }),
+            required: true,
+            input_type:InputType::TextArea,
+            initial_value: cx.props.base_episode.as_ref().map(|episode|{episode.content().clone()}),
+        }
+    };
+
+    // プレビュー部分
+    let preview_element = rsx! {
+        match TryInto::<Episode>::try_into(episode_form.with(|form|{form.clone()})) {
+            Ok(episode) => {
+                let content = episode.content().to_string();
+                let (year, month, day) = episode.date().to_ymd();
+                rsx! {
+                    ul {
+                        li{
+                            span { class: "preview-date", format!("{year}/{month}/{day}")}
+                            span { class: "preview-content", dangerous_inner_html: "{content}"}
+
                         }
                     }
-                })
+                    div { class: "edit-preview-bottom",
+                        button { onclick: move |_|{
+                            if let Some(base_episode) = cx.props.base_episode.as_ref() {
+                                let mut base_episode = base_episode.clone();
+                                base_episode.assign(episode.clone());
+                                cx.props.on_submit.call(base_episode);
+                            } else {
+                                cx.props.on_submit.call(episode.clone());
+                            }
+                        }
+                        ,"送信"}
+                    }
+                }
+            },
+            Err(error_message) => {
+                let message = format!("プレビューを表示できません: {error_message}");
+                rsx! {
+                    div { class: "failed-preview-content", "{message}"}
+                    div { class: "edit-preview-bottom", button { disabled: "true", "送信"}}
+                }
+            }
+        }
+    };
+
+    cx.render(rsx! {
+        if let Some(on_remove) = cx.props.on_remove.as_ref() {
+            let base_episode = cx.props.base_episode.as_ref().expect("Set base episode");
+            rsx!{
+                EditModal{
+                    caption: input_caption.to_string(),
+                    on_cancel: move |_| {cx.props.on_cancel.call(())},
+                    on_remove: move |_| {on_remove.call(base_episode.clone())},
+                    input: cx.render(input_element),
+                    preview: cx.render(preview_element)
+                }
+            }
+        } else {
+            rsx!{
+                EditModal{
+                    caption: input_caption.to_string(),
+                    on_cancel: move |_| {cx.props.on_cancel.call(())},
+                    input: cx.render(input_element),
+                    preview: cx.render(preview_element)
+                }
             }
         }
     })

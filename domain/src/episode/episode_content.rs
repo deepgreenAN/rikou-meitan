@@ -92,7 +92,7 @@ mod test {
 
     #[test]
     fn generate_fake() {
-        let _ = (0..10000)
+        let _ = (0..100)
             .map(|_| Faker.fake::<EpisodeContent>())
             .collect::<Vec<_>>(); // 高コスト
     }
