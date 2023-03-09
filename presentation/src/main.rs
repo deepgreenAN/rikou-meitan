@@ -45,12 +45,14 @@ fn App(cx: Scope) -> Element {
                     Route { to: "/", HomePage{}}
                     Route { to: "/episodes", EpisodesPage{admin: admin}}
                     Route { to: "/clips", ClipsPage{admin: admin}}
-                    Route { to: "/originals", VideosPage{admin: admin}}
+                    Route { to: "/originals", VideosPage{admin: admin, _video_type: domain::video::Original}}
+                    Route { to: "/kirinukis", VideosPage{admin: admin, _video_type: domain::video::Kirinuki}}
                     // 以下はadmin関連
                     Route { to: "/admin", AdminPage{}}
                     Route { to: "/admin/episodes", EpisodesPage{admin:true}}
                     Route { to: "/admin/clips", ClipsPage{admin:true}}
-                    Route { to: "/admin/originals", VideosPage{admin: true}}
+                    Route { to: "/admin/originals", VideosPage{admin: true, _video_type: domain::video::Original}}
+                    Route { to: "/admin/kirinukis", VideosPage{admin: true, _video_type: domain::video::Kirinuki}}
                 }
                 Footer{}
             }

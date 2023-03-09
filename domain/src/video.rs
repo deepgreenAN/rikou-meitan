@@ -160,7 +160,7 @@ pub struct Video<T> {
     video_type: PhantomData<T>,
 }
 
-impl<T: Default> Video<T> {
+impl<T> Video<T> {
     /// プリミティブを用いたコンストラクタ
     pub fn new(
         title: String,

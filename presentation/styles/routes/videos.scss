@@ -15,4 +15,32 @@
             color: var(--primary-color);   
         }
     }
+
+    #intersection-bottom {
+        width: 100%;
+    }
+
+    .edit-container {
+        .edit-video-title {
+            font-size: 1.2rem;
+            line-height: 1.5rem;
+            width: 100%;
+            resize: none;
+            height: 3rem;
+        }
+        .edit-video-url {
+            font-size: 1.1rem;
+            line-height: 2rem;
+            width: 100%;
+        }
+        .edit-video-date {
+            font-size: 1.2rem;
+            line-height: 1.5rem;
+        }
+        .edit-video-author {
+            font-size: 1.2rem;
+            line-height: 1.5rem;
+            width: 100%;
+        }
+    }
 }

@@ -2,13 +2,17 @@ mod more_button;
 mod toc;
 
 use crate::components::{AccordionEpisodes, MovieCard, MovieContainer, Player};
-use domain::{episode::Episode, movie_clip::MovieClip, Date};
+use domain::{
+    episode::Episode,
+    movie_clip::MovieClip,
+    video::{Kirinuki, Original, Video},
+    Date,
+};
 use more_button::MoreButton;
 use toc::{Toc, TocContent};
 
 use dioxus::prelude::*;
 use fake::{Fake, Faker};
-// use gloo_timers::future::TimeoutFuture;
 
 pub fn HomePage(cx: Scope) -> Element {
     let orikou_desc_str = include_str!(concat!(
@@ -18,15 +22,17 @@ pub fn HomePage(cx: Scope) -> Element {
 
     let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
+    let originals_ref = use_ref(cx, || Option::<Vec<Video<Original>>>::None);
+    let kirinukis_ref = use_ref(cx, || Option::<Vec<Video<Kirinuki>>>::None);
 
     let episode_start: Date = (2023, 1, 1).try_into().expect("Date sanity check");
     let episode_end: Date = (2024, 1, 1).try_into().expect("Date sanity check");
 
+    // 初期化
     use_effect(cx, (), {
-        to_owned![episodes_ref, movie_clips_ref];
+        to_owned![episodes_ref, movie_clips_ref, originals_ref, kirinukis_ref];
 
         |_| async move {
-            // TimeoutFuture::new(3000).await;
             episodes_ref.set(Some(
                 (0..10)
                     .map(|_| (episode_start..episode_end).fake::<Episode>())
@@ -37,7 +43,19 @@ pub fn HomePage(cx: Scope) -> Element {
                 (0..6)
                     .map(|_| Faker.fake::<MovieClip>())
                     .collect::<Vec<_>>(),
-            ))
+            ));
+
+            originals_ref.set(Some(
+                (0..6)
+                    .map(|_| Faker.fake::<Video<Original>>())
+                    .collect::<Vec<_>>(),
+            ));
+
+            kirinukis_ref.set(Some(
+                (0..6)
+                    .map(|_| Faker.fake::<Video<Kirinuki>>())
+                    .collect::<Vec<_>>(),
+            ));
         }
     });
 
@@ -56,7 +74,7 @@ pub fn HomePage(cx: Scope) -> Element {
                     }
                 }
                 TocContent{
-                    id: "episode",
+                    id: "episodes",
                     title: "エピソード",
                     AccordionEpisodes{
                         title: "2023",
@@ -67,7 +85,7 @@ pub fn HomePage(cx: Scope) -> Element {
                     MoreButton{to:"/episodes"}
                 }
                 TocContent{
-                    id: "clip",
+                    id: "clips",
                     title: "クリップ",
                     MovieContainer{
                         movie_clips_ref.read().as_ref().map(|movie_clips|{
@@ -89,6 +107,54 @@ pub fn HomePage(cx: Scope) -> Element {
                         })
                     }
                     MoreButton{to:"/clips"}
+                }
+                TocContent{
+                    id: "originals",
+                    title: "コラボ配信",
+                    MovieContainer{
+                        originals_ref.read().as_ref().map(|originals|{
+                            rsx!{
+                                originals.iter().map(|original|{
+                                    let id = original.id();
+                                    rsx!{
+                                        MovieCard{
+                                            key: "{id}",
+                                            date: original.date(),
+                                            title: original.title(),
+                                            author: original.author(),
+                                            movie_url: original.url().clone(),
+                                            id: format!("original-{id}")
+                                        }
+                                    }
+                                })
+                            }
+                        })
+                    }
+                    MoreButton{to:"/originals"}
+                }
+                TocContent{
+                    id: "kirinukis",
+                    title: "切り抜き",
+                    MovieContainer{
+                        kirinukis_ref.read().as_ref().map(|kirinukis|{
+                            rsx!{
+                                kirinukis.iter().map(|kirinuki|{
+                                    let id = kirinuki.id();
+                                    rsx!{
+                                        MovieCard{
+                                            key: "{id}",
+                                            date: kirinuki.date(),
+                                            title: kirinuki.title(),
+                                            author: kirinuki.author(),
+                                            movie_url: kirinuki.url().clone(),
+                                            id: format!("original-{id}")
+                                        }
+                                    }
+                                })
+                            }
+                        })
+                    }
+                    MoreButton{to:"/kirinukis"}
                 }
             }
         }

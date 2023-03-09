@@ -119,11 +119,12 @@ impl MovieClip {
     pub fn create_date(&self) -> Date {
         self.create_date
     }
-    /// id, likeはそのままにotherのフィールドを自身にコピー．
+    /// id, like, create_date はそのままにotherのフィールドを自身にコピー．
     pub fn assign(&mut self, other: Self) {
         let new_self = Self {
             id: self.id(),
             like: self.like(),
+            create_date: self.create_date(),
             ..other
         };
         *self = new_self;
@@ -232,6 +233,7 @@ mod test {
         let mut movie_clip = Faker.fake::<MovieClip>();
         let previous_id = movie_clip.id();
         let previous_like = movie_clip.like();
+        let previous_create_date = movie_clip.create_date();
 
         let other_clip = Faker.fake::<MovieClip>();
 
@@ -239,9 +241,9 @@ mod test {
 
         assert_eq!(previous_id, movie_clip.id());
         assert_eq!(previous_like, movie_clip.like());
+        assert_eq!(previous_create_date, movie_clip.create_date());
         assert_eq!(movie_clip.title(), other_clip.title());
         assert_eq!(movie_clip.url(), other_clip.url());
-        assert_eq!(movie_clip.create_date(), other_clip.create_date());
         assert_eq!(movie_clip.range(), other_clip.range());
     }
 }

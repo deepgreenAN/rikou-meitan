@@ -41,18 +41,22 @@
                 // line-height: 5cqw;
                 // height: 10cqw;
             }
-            .movie-card-date {
+            .movie-card-left-bottom {
                 margin-left: 1rem;
                 margin-top: 0.5rem;
                 font-size: 1.2rem;
+                display: flex;
+                gap: 1rem;
                 @media screen and (max-width: static_var.$smartphone_size) {
                     margin-left: 2cqw;
                     margin-top: 1cqw;
                     font-size: 3cqw;
+                    gap: 1cqw;
                 }
                 // margin-left: 2cqw;
                 // margin-top: 1cqw;
                 // font-size: 3cqw;
+                // gap: 1cqw;
             }
         }
         .movie-card-right {

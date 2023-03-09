@@ -26,6 +26,9 @@ pub struct MovieCardProps<'a> {
     movie_url: MovieUrl,
     /// 編集ボタンを押したときの処理
     on_modify: Option<EventHandler<'a>>,
+    /// 投稿者
+    #[props(into)]
+    author: Option<String>
 }
 
 pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
@@ -55,11 +58,18 @@ pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
             div { class: "movie-card-caption",
                 div { class: "movie-card-left",
                     div { class: "movie-card-title", "{cx.props.title}"}
-                    if let Some(date) = cx.props.date {
-                        let (year, month, day) = date.to_ymd();
-                        rsx!{
-                            div { class: "movie-card-date", format!("{year}/{month}/{day}")}
-                        }
+                    div { class: "movie-card-left-bottom",
+                        cx.props.date.map(|date|{
+                            let (year, month, day) = date.to_ymd();
+                            rsx!{
+                                div { format!("{year}/{month}/{day}")}
+                            } 
+                        })
+                        cx.props.author.as_ref().map(|author|{
+                            rsx!{
+                                div {"{author}"}
+                            }
+                        })
                     }
                 }
                 div { class: "movie-card-right",

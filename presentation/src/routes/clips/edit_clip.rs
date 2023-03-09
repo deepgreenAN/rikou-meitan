@@ -35,7 +35,7 @@ impl TryFrom<MovieClipForm> for MovieClip {
 }
 
 // -------------------------------------------------------------------------------------------------
-// AddMovieClipコンポーネント
+// EditMovieClipコンポーネント
 
 #[derive(Props)]
 pub struct EditMovieClipProps<'a> {
@@ -149,18 +149,20 @@ pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
                     }
                 }
 
-                div { class: "edit-preview-bottom", button {
-                    onclick: move |_|{
-                        if let Some(base_movie_clip) = cx.props.base_movie_clip.as_ref() {
-                            let mut base_movie_clip = base_movie_clip.clone();
-                            base_movie_clip.assign(movie_clip.clone());
-                            cx.props.on_submit.call(base_movie_clip);
-                        } else {
-                            cx.props.on_submit.call(movie_clip.clone());
-                        }
+                div { class: "edit-preview-bottom",
+                    button {
+                        onclick: move |_|{
+                            if let Some(base_movie_clip) = cx.props.base_movie_clip.as_ref() {
+                                let mut base_movie_clip = base_movie_clip.clone();
+                                base_movie_clip.assign(movie_clip.clone());
+                                cx.props.on_submit.call(base_movie_clip);
+                            } else {
+                                cx.props.on_submit.call(movie_clip.clone());
+                            }
+                        },
+                        "送信"
                     }
-                    ,"送信"
-                }}
+                }
             },
             Err(error_message) => {
                 let message = format!("プレビューを表示できません: {error_message}");
