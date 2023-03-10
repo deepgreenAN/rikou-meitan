@@ -20,8 +20,16 @@ web-sys = { version = "^0.3", features = [
     "MediaQueryList",
     "Event",
     "ScrollBehavior",
-    "ScrollIntoViewOptions"
+    "ScrollIntoViewOptions",
+    "Blob", 
+    "BlobPropertyBag", 
+    "Url", 
+    "HtmlAnchorElement",
+    "FileList", 
+    "File", 
+    "FileReader"
 ] }
+js-sys = "^0.3"
 dioxus = "^0.3.2"
 dioxus-web = "^0.3.1"
 dioxus-router = "0.3.0"

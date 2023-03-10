@@ -15,8 +15,7 @@ pub fn IntersectionBottom<'a>(cx: Scope<'a, IntersectionBottomProps<'a>>) -> Ele
         let intersection_handler = cx.props.intersection_handler.clone();
         |_| async move {
             let target_element = gloo_utils::document()
-                .query_selector("#intersection-bottom")
-                .unwrap_throw()
+                .get_element_by_id("intersection-bottom")
                 .unwrap_throw();
             intersection_handler.observe(&target_element);
         }
