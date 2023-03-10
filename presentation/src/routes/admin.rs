@@ -106,6 +106,8 @@ pub fn AdminPage(cx: Scope) -> Element {
             div {id: "admin-menu-caption", "メニュー"}
             Link{ to: "/admin/episodes", "エピソード"}
             Link{ to: "/admin/clips", "クリップ"}
+            Link{ to: "/admin/originals", "コラボ配信"}
+            Link{ to: "/admin/kirinukis", "切り抜き"}
 
             div {id: "admin-json-loader-container",
                 episode_json_loader,
