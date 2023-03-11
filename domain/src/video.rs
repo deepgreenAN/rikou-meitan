@@ -223,7 +223,7 @@ impl<T> Video<T> {
         self.like
     }
     /// likeを一つ増やす
-    pub fn like_increment(&mut self) {
+    pub fn increment_like(&mut self) {
         self.like += 1;
     }
     /// authorを取得
@@ -296,7 +296,7 @@ impl<T: Default> Dummy<Faker> for Video<T> {
 
         let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
         for _ in 0..like_num {
-            video.like_increment();
+            video.increment_like();
         }
         video
     }
@@ -317,7 +317,7 @@ impl<T: Default> Dummy<std::ops::Range<Date>> for Video<T> {
 
         let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
         for _ in 0..like_num {
-            video.like_increment();
+            video.increment_like();
         }
         video
     }
@@ -330,11 +330,11 @@ mod test {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_like_increment() {
+    fn test_increment_like() {
         let mut video: Video<Original> = Faker.fake();
 
         let like = video.like();
-        video.like_increment();
+        video.increment_like();
         assert_eq!(like + 1, video.like());
     }
 

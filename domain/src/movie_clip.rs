@@ -112,7 +112,7 @@ impl MovieClip {
         self.like
     }
     /// likeを一つ増やす
-    pub fn like_increment(&mut self) {
+    pub fn increment_like(&mut self) {
         self.like += 1;
     }
     /// create_dateを取得
@@ -177,7 +177,7 @@ impl Dummy<Faker> for MovieClip {
         // like
         let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
         for _ in 0..like_num {
-            movie_clip.like_increment();
+            movie_clip.increment_like();
         }
 
         movie_clip
@@ -199,7 +199,7 @@ impl Dummy<std::ops::Range<Date>> for MovieClip {
         // like
         let like_num = (0..1000).fake_with_rng::<usize, R>(rng);
         for _ in 0..like_num {
-            movie_clip.like_increment();
+            movie_clip.increment_like();
         }
 
         movie_clip
@@ -212,11 +212,11 @@ mod test {
     use fake::{Fake, Faker};
 
     #[test]
-    fn movie_clip_like_increment() {
+    fn movie_clip_increment_like() {
         let mut movie_clip = Faker.fake::<MovieClip>();
         let like = movie_clip.like();
 
-        movie_clip.like_increment();
+        movie_clip.increment_like();
         assert_eq!(like + 1, movie_clip.like());
     }
 
