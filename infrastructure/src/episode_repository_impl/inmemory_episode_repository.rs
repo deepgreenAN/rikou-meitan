@@ -69,7 +69,7 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
             .collect::<Vec<_>>();
         Ok(episodes)
     }
-    async fn remove_by_id(&self, id: EpisodeId) -> Result<(), InfraError> {
+    async fn remove(&self, id: EpisodeId) -> Result<(), InfraError> {
         match self.map.lock().unwrap().remove(&id.to_uuid()) {
             None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
@@ -174,7 +174,7 @@ mod test {
 
     #[rstest]
     #[tokio::test]
-    async fn test_episode_save_and_remove_by_id(
+    async fn test_episode_save_and_remove(
         episodes: Result<Vec<Episode>, InfraError>,
     ) -> Result<(), InfraError> {
         let mut episodes = episodes?;
@@ -185,7 +185,7 @@ mod test {
         }
 
         let removed_episode = episodes.remove(1); // 二番目を削除
-        repo.remove_by_id(removed_episode.id()).await?;
+        repo.remove(removed_episode.id()).await?;
 
         let mut rest_episodes = repo.all().await?;
         rest_episodes.sort_by_key(|episode| episode.id());
@@ -216,7 +216,7 @@ mod test {
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
 
-        let res = repo.remove_by_id(episode.id()).await;
+        let res = repo.remove(episode.id()).await;
         assert_matches!(res, Err(InfraError::NoRecordError));
 
         Ok(())

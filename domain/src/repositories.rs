@@ -29,7 +29,7 @@ pub trait MovieClipRepository {
     /// Likeで並べてreference以降のMovieClipをlength分取得する．
     async fn order_by_like_later(
         &self,
-        reference: MovieClipId,
+        reference: MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error>;
     /// create_dateで並べてstartからendまでの範囲分のMovieClipを取得する．
@@ -46,9 +46,9 @@ pub trait MovieClipRepository {
     /// create_dateで並べてreference以降のMovieClipをlength分取得する．
     async fn order_by_create_date_later(
         &self,
-        reference: MovieClipId,
+        reference: MovieClip,
         length: usize,
-    ) -> Result<Vec<MovieClipId>, <Self as MovieClipRepository>::Error>;
+    ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error>;
     /// idを持つ要素を削除する．
     async fn remove(&self, id: MovieClipId) -> Result<(), <Self as MovieClipRepository>::Error>;
 }
@@ -105,6 +105,7 @@ pub trait VideoRepository<T> {
     async fn order_by_like_later(
         &self,
         reference: Video<T>,
+        length: usize,
     ) -> Result<Vec<Video<T>>, <Self as VideoRepository<T>>::Error>;
     async fn remove(&self, id: VideoId) -> Result<(), <Self as VideoRepository<T>>::Error>;
 }

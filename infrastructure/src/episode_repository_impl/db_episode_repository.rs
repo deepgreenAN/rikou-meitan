@@ -62,7 +62,7 @@ UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
 
         Ok(ordered_by_date_range)
     }
-    pub async fn remove_by_id(conn: &mut PgConnection, id: EpisodeId) -> Result<(), InfraError> {
+    pub async fn remove(conn: &mut PgConnection, id: EpisodeId) -> Result<(), InfraError> {
         sqlx::query(r#"DELETE FROM episodes WHERE id = $1 RETURNING *"#)
             .bind(id.to_uuid())
             .fetch_one(conn)
@@ -114,9 +114,9 @@ impl EpisodeRepository for EpisodePgDBRepository {
             episode_sql_runner::order_by_date_range(&mut conn, start, end).await?;
         Ok(ordered_by_date_range)
     }
-    async fn remove_by_id(&self, id: EpisodeId) -> Result<(), InfraError> {
+    async fn remove(&self, id: EpisodeId) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
-        episode_sql_runner::remove_by_id(&mut conn, id).await?;
+        episode_sql_runner::remove(&mut conn, id).await?;
         Ok(())
     }
 }
@@ -259,7 +259,7 @@ mod test {
     #[ignore]
     #[rstest]
     #[tokio::test]
-    async fn test_episode_save_and_remove_by_id(
+    async fn test_episode_save_and_remove(
         episodes: Result<Vec<Episode>, InfraError>,
         #[future] pool: Result<PgPool, InfraError>,
     ) -> Result<(), InfraError> {
@@ -275,7 +275,7 @@ mod test {
 
         let removed_episode = episodes.remove(1); // 二番目の要素を削除
 
-        episode_sql_runner::remove_by_id(&mut transaction, removed_episode.id()).await?;
+        episode_sql_runner::remove(&mut transaction, removed_episode.id()).await?;
 
         let mut rest_episodes = episode_sql_runner::all(&mut transaction).await?;
         rest_episodes.sort_by_key(|episode| episode.id());
@@ -323,7 +323,7 @@ mod test {
         let mut transaction = pool.begin().await?;
 
         let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
-        let res = episode_sql_runner::remove_by_id(&mut transaction, episode.id()).await;
+        let res = episode_sql_runner::remove(&mut transaction, episode.id()).await;
         assert_matches!(res, Err(InfraError::NoRecordError));
 
         // ロールバック

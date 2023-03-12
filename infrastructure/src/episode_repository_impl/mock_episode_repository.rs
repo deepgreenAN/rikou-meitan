@@ -21,6 +21,6 @@ mock! {
             start: Date,
             end: Date,
         ) -> Result<Vec<Episode>, <Self as EpisodeRepository>::Error>;
-        async fn remove_by_id(&self, id: EpisodeId) -> Result<(), <Self as EpisodeRepository>::Error>;
+        async fn remove(&self, id: EpisodeId) -> Result<(), <Self as EpisodeRepository>::Error>;
     }
 }

@@ -55,19 +55,36 @@ WHERE id = $5 RETURNING *
         Ok(())
     }
 
+    pub async fn increment_like(
+        conn: &mut PgConnection,
+        id: MovieClipId,
+    ) -> Result<(), InfraError> {
+        sqlx::query(
+            r#"
+UPDATE movie_clips SET "like" = "like" + 1 WHERE id = $1 RETURNING *
+        "#,
+        )
+        .bind(id.to_uuid())
+        .fetch_one(conn)
+        .await
+        .map_err(|_| InfraError::NoRecordError)?;
+
+        Ok(())
+    }
+
     pub async fn all(conn: &mut PgConnection) -> Result<Vec<MovieClip>, InfraError> {
-        let all_movie_clips = sqlx::query_as::<Postgres, MovieClip>(r#"SELECT * FROM movie_clips"#)
+        let all_clips = sqlx::query_as::<Postgres, MovieClip>(r#"SELECT * FROM movie_clips"#)
             .fetch_all(conn)
             .await?;
 
-        Ok(all_movie_clips)
+        Ok(all_clips)
     }
 
-    pub async fn order_by_like_limit(
+    pub async fn order_by_like(
         conn: &mut PgConnection,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
-        let ordered_by_limited_movie_clips = sqlx::query_as::<Postgres, MovieClip>(
+        let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
 SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
                 "#,
@@ -76,7 +93,26 @@ SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
         .fetch_all(conn)
         .await?;
 
-        Ok(ordered_by_limited_movie_clips)
+        Ok(ordered_clips)
+    }
+
+    pub async fn order_by_like_later(
+        conn: &mut PgConnection,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
+            r#"
+SELECT * FROM movie_clips WHERE $1 <= "like" AND $2 < id ORDER BY "like" DESC, id LIMIT $3         
+            "#,
+        )
+        .bind(reference.like() as i32)
+        .bind(reference.id().to_uuid())
+        .bind(length as i32)
+        .fetch_all(conn)
+        .await?;
+
+        Ok(ordered_clips)
     }
 
     pub async fn order_by_create_date_range(
@@ -84,7 +120,7 @@ SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
         start: Date,
         end: Date,
     ) -> Result<Vec<MovieClip>, InfraError> {
-        let ordered_by_create_data_and_range = sqlx::query_as::<Postgres, MovieClip>(
+        let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
 SELECT * FROM movie_clips WHERE $1 <= create_date AND create_date < $2 ORDER BY create_date ASC
             "#,
@@ -94,10 +130,45 @@ SELECT * FROM movie_clips WHERE $1 <= create_date AND create_date < $2 ORDER BY 
         .fetch_all(conn)
         .await?;
 
-        Ok(ordered_by_create_data_and_range)
+        Ok(ordered_clips)
     }
 
-    pub async fn remove_by_id(conn: &mut PgConnection, id: MovieClipId) -> Result<(), InfraError> {
+    pub async fn order_by_create_date(
+        conn: &mut PgConnection,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
+            r#"
+SELECT * FROM movie_clips ORDER BY create_date DESC LIMIT $1
+            "#,
+        )
+        .bind(length as i32)
+        .fetch_all(conn)
+        .await?;
+
+        Ok(ordered_clips)
+    }
+
+    pub async fn order_by_create_date_later(
+        conn: &mut PgConnection,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
+            r#"
+SELECT * FROM movie_clips WHERE $1 <= create_date AND $2 < id ORDER BY create_date DESC, id LIMIT $3
+            "#,
+        )
+        .bind(reference.create_date().to_chrono()?)
+        .bind(reference.id().to_uuid())
+        .bind(length as i32)
+        .fetch_all(conn)
+        .await?;
+
+        Ok(ordered_clips)
+    }
+
+    pub async fn remove(conn: &mut PgConnection, id: MovieClipId) -> Result<(), InfraError> {
         sqlx::query(
             r#"
 DELETE FROM movie_clips WHERE id = $1 RETURNING *
@@ -133,25 +204,36 @@ impl MovieClipRepository for MovieClipPgDBRepository {
         movie_clip_sql_runner::save(&mut conn, movie_clip).await?;
         Ok(())
     }
-
     async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;
         movie_clip_sql_runner::edit(&mut conn, movie_clip).await?;
         Ok(())
     }
-
+    async fn increment_like(&self, id: MovieClipId) -> Result<(), InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        movie_clip_sql_runner::increment_like(&mut conn, id).await?;
+        Ok(())
+    }
     async fn all(&self) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
         let movie_clips = movie_clip_sql_runner::all(&mut conn).await?;
         Ok(movie_clips)
     }
-
-    async fn order_by_like_limit(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
+    async fn order_by_like(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
-        let movie_clips = movie_clip_sql_runner::order_by_like_limit(&mut conn, length).await?;
+        let movie_clips = movie_clip_sql_runner::order_by_like(&mut conn, length).await?;
         Ok(movie_clips)
     }
-
+    async fn order_by_like_later(
+        &self,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        let movie_clips =
+            movie_clip_sql_runner::order_by_like_later(&mut conn, reference, length).await?;
+        Ok(movie_clips)
+    }
     async fn order_by_create_date_range(
         &self,
         start: Date,
@@ -162,10 +244,24 @@ impl MovieClipRepository for MovieClipPgDBRepository {
             movie_clip_sql_runner::order_by_create_date_range(&mut conn, start, end).await?;
         Ok(movie_clips)
     }
-
-    async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
+    async fn order_by_create_date(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
-        movie_clip_sql_runner::remove_by_id(&mut conn, id).await?;
+        let movie_clips = movie_clip_sql_runner::order_by_create_date(&mut conn, length).await?;
+        Ok(movie_clips)
+    }
+    async fn order_by_create_date_later(
+        &self,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        let movie_clips =
+            movie_clip_sql_runner::order_by_create_date_later(&mut conn, reference, length).await?;
+        Ok(movie_clips)
+    }
+    async fn remove(&self, id: MovieClipId) -> Result<(), InfraError> {
+        let mut conn = self.pool.acquire().await?;
+        movie_clip_sql_runner::remove(&mut conn, id).await?;
         Ok(())
     }
 }
@@ -301,7 +397,7 @@ mod test {
             .enumerate()
             .map(|(i, mut movie_clip)| {
                 for _ in 0..(movie_clips_length - i) {
-                    movie_clip.like_increment(); // likeをインクリメント
+                    movie_clip.increment_like(); // likeをインクリメント
                 }
                 movie_clip
             })
@@ -319,7 +415,7 @@ mod test {
         let length = 2_usize;
 
         let ordered_by_like_movie_clips =
-            movie_clip_sql_runner::order_by_like_limit(&mut transaction, length).await?;
+            movie_clip_sql_runner::order_by_like(&mut transaction, length).await?;
 
         movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順なため
         let movie_clips = movie_clips.into_iter().take(length).collect::<Vec<_>>();
@@ -389,7 +485,7 @@ mod test {
         }
 
         let removed_movie_clip = movie_clips.remove(1); // 二番目のデータ
-        movie_clip_sql_runner::remove_by_id(&mut transaction, removed_movie_clip.id()).await?;
+        movie_clip_sql_runner::remove(&mut transaction, removed_movie_clip.id()).await?;
 
         let mut rest_movie_clips = movie_clip_sql_runner::all(&mut transaction).await?;
         rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id());
@@ -441,8 +537,7 @@ mod test {
         // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
-        let res =
-            movie_clip_sql_runner::remove_by_id(&mut transaction, MovieClipId::generate()).await;
+        let res = movie_clip_sql_runner::remove(&mut transaction, MovieClipId::generate()).await;
 
         assert_matches!(res, Err(InfraError::NoRecordError));
 
