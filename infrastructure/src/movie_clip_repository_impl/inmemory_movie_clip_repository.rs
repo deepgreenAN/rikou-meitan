@@ -46,6 +46,9 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
             }
         }
     }
+    async fn increment_like(&self, id: MovieClipId) -> Result<(), InfraError> {
+        todo!()
+    }
 
     async fn all(&self) -> Result<Vec<MovieClip>, InfraError> {
         let movie_clips = self
@@ -57,11 +60,20 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
             .collect::<Vec<MovieClip>>();
         Ok(movie_clips)
     }
-    async fn order_by_like_limit(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
+    async fn order_by_like(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
         let mut movie_clips = self.all().await?;
         movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順なため
         Ok(movie_clips.into_iter().take(length).collect::<Vec<_>>())
     }
+
+    async fn order_by_like_later(
+        &self,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, InfraError> {
+        todo!()
+    }
+
     async fn order_by_create_date_range(
         &self,
         start: Date,
@@ -76,7 +88,23 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
             })
             .collect::<Vec<_>>())
     }
-    async fn remove_by_id(&self, id: MovieClipId) -> Result<(), InfraError> {
+
+    async fn order_by_create_date(
+        &self,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
+        todo!()
+    }
+
+    async fn order_by_create_date_later(
+        &self,
+        reference: MovieClip,
+        length: usize,
+    ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
+        todo!()
+    }
+
+    async fn remove(&self, id: MovieClipId) -> Result<(), InfraError> {
         match self.map.lock().unwrap().remove(&id.to_uuid()) {
             None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
@@ -176,7 +204,7 @@ mod test {
 
     #[rstest]
     #[tokio::test]
-    async fn test_movie_clip_save_and_order_by_like_limit(
+    async fn test_movie_clip_save_and_order_by_like(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
         let movie_clips = movie_clips?;
@@ -186,7 +214,7 @@ mod test {
             .enumerate()
             .map(|(i, mut movie_clip)| {
                 for _ in 0..(movie_clips_length - i) {
-                    movie_clip.like_increment(); // likeをインクリメント
+                    movie_clip.increment_like(); // likeをインクリメント
                 }
                 movie_clip
             })
@@ -199,7 +227,7 @@ mod test {
         }
 
         let length = 2_usize;
-        let ordered_by_like_movie_clips = repo.order_by_like_limit(length).await?;
+        let ordered_by_like_movie_clips = repo.order_by_like(length).await?;
 
         movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順のため
         let movie_clips = movie_clips.into_iter().take(length).collect::<Vec<_>>();
@@ -250,7 +278,7 @@ mod test {
         }
 
         let removed_movie_clip = movie_clips.remove(1); // 二番目のデータ
-        repo.remove_by_id(removed_movie_clip.id()).await?;
+        repo.remove(removed_movie_clip.id()).await?;
 
         let mut rest_movie_clips = repo.all().await?;
         rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id());
@@ -292,7 +320,7 @@ mod test {
             (2022, 11, 23),
         )?;
 
-        let res = repo.remove_by_id(movie_clip.id()).await;
+        let res = repo.remove(movie_clip.id()).await;
         assert_matches!(res, Err(InfraError::NoRecordError));
         Ok(())
     }

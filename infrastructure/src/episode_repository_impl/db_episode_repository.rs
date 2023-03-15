@@ -125,21 +125,20 @@ impl EpisodeRepository for EpisodePgDBRepository {
 mod test {
     use super::episode_sql_runner;
     use crate::InfraError;
-    use assert_matches::assert_matches;
-    use domain::episode::Episode;
-    use domain::Date;
+    use domain::{episode::Episode, Date};
+
+    use fake::{Fake, Faker};
     use pretty_assertions::assert_eq;
+    use rand::{distributions::Distribution, seq::SliceRandom};
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
-    use std::time::Duration;
+    use std::{cmp::Ordering, time::Duration};
 
     #[fixture]
     fn episodes() -> Result<Vec<Episode>, InfraError> {
-        Ok(vec![
-            Episode::new((2022, 11, 21), "Some Episode Content1".to_string())?,
-            Episode::new((2022, 11, 19), "Some Episode Content2".to_string())?,
-            Episode::new((2022, 11, 22), "Some Episode Content3".to_string())?,
-        ])
+        Ok((0..100)
+            .map(|_| Faker.fake::<Episode>())
+            .collect::<Vec<_>>())
     }
 
     #[fixture]
@@ -165,13 +164,15 @@ mod test {
         // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
+        // データベースへ保存
         for episode in episodes.iter().cloned() {
             episode_sql_runner::save(&mut transaction, episode).await?;
         }
 
         let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
+        // データベースからの取得結果をidでソート
         episodes_res.sort_by_key(|episode| episode.id());
-
+        // 参照元をidでソート
         episodes.sort_by_key(|episode| episode.id());
 
         assert_eq!(episodes, episodes_res);
@@ -195,20 +196,25 @@ mod test {
         // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
+        // データベースへ保存
         for episode in episodes.iter().cloned() {
             episode_sql_runner::save(&mut transaction, episode).await?;
         }
 
-        let mut edited_episode = episodes[1].clone();
-        *edited_episode.date_mut() = Date::from_ymd(2022, 11, 23)?;
-        *edited_episode.content_mut() = "Another Episode Content".to_string().try_into()?;
-        episodes[1] = edited_episode.clone();
+        // episodesの一部を編集
+        for _ in 0..(episodes.len() / 2_usize) {
+            let edited_episode = episodes.choose_mut(&mut rand::thread_rng()).unwrap();
+            let new_episode = Faker.fake::<Episode>();
+            edited_episode.assign(new_episode);
 
-        episode_sql_runner::edit(&mut transaction, edited_episode).await?;
+            episode_sql_runner::edit(&mut transaction, edited_episode.clone()).await?;
+        }
 
         let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
+        // データベースの取得結果をidでソート
         episodes_res.sort_by_key(|episode| episode.id());
 
+        // 参照元をidでソート
         episodes.sort_by_key(|episode| episode.id());
 
         assert_eq!(episodes, episodes_res);
@@ -236,19 +242,25 @@ mod test {
             episode_sql_runner::save(&mut transaction, episode).await?;
         }
 
-        let start = Date::from_ymd(2022, 11, 19)?;
-        let end = Date::from_ymd(2022, 11, 22)?;
+        let start = Faker.fake::<Date>();
+        let end = Faker.fake::<Date>();
 
-        let ordered_by_date_range =
-            episode_sql_runner::order_by_date_range(&mut transaction, start, end).await?;
+        // 参照元をDate, idの順でソート・フィルター
+        episodes.sort_by(|x, y| x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id())));
+        episodes.retain(|episode| start <= episode.date() && episode.date() < end);
 
-        episodes.sort_by_key(|episode| episode.date());
-        let episodes = episodes
-            .into_iter()
-            .filter(|episode| start <= episode.date() && episode.date() < end)
-            .collect::<Vec<_>>();
+        // データベースから得られた結果をDateが同じ場合のみidでソート
+        let mut episodes_res =
+        episode_sql_runner::order_by_date_range(&mut transaction, start, end).await?;
+        episodes_res.sort_by(|x, y| {
+            if let Ordering::Equal = x.date().cmp(&y.date()) {
+                x.id().cmp(&y.id())
+            } else {
+                Ordering::Equal
+            }
+        });
 
-        assert_eq!(episodes, ordered_by_date_range);
+        assert_eq!(episodes, episodes_res);
 
         // ロールバック
         transaction.rollback().await?;
@@ -273,13 +285,24 @@ mod test {
             episode_sql_runner::save(&mut transaction, episode).await?;
         }
 
-        let removed_episode = episodes.remove(1); // 二番目の要素を削除
+        // episodesの一部を削除
+        let mut episodes_len = episodes.len();
+        let remove_number = episodes_len / 10;
+        for _ in 0..remove_number {
+            let remove_index = rand::distributions::Uniform::from(0_usize..episodes_len)
+                .sample(&mut rand::thread_rng());
+            let removed_episode = episodes.remove(remove_index);
+            episode_sql_runner::remove(&mut transaction, removed_episode.id()).await?;
 
-        episode_sql_runner::remove(&mut transaction, removed_episode.id()).await?;
+            // episode_renを一つ減らす．
+            episodes_len -= 1;
+        }
 
         let mut rest_episodes = episode_sql_runner::all(&mut transaction).await?;
+        // データベースから得られた結果をidでソート
         rest_episodes.sort_by_key(|episode| episode.id());
 
+        // 参照元をidでソート
         episodes.sort_by_key(|episode| episode.id());
 
         assert_eq!(episodes, rest_episodes);
@@ -301,9 +324,9 @@ mod test {
         // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
-        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let episode = Faker.fake::<Episode>();
         let res = episode_sql_runner::edit(&mut transaction, episode).await;
-        assert_matches!(res, Err(InfraError::NoRecordError));
+        assert!(matches!(res, Err(InfraError::NoRecordError)));
 
         // ロールバック
         transaction.rollback().await?;
@@ -322,9 +345,9 @@ mod test {
         // トランザクションの開始
         let mut transaction = pool.begin().await?;
 
-        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let episode = Faker.fake::<Episode>();
         let res = episode_sql_runner::remove(&mut transaction, episode.id()).await;
-        assert_matches!(res, Err(InfraError::NoRecordError));
+        assert!(matches!(res, Err(InfraError::NoRecordError)));
 
         // ロールバック
         transaction.rollback().await?;

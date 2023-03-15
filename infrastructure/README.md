@@ -22,7 +22,7 @@ sqlx database drop
 ## テスト
 ```
 cargo test
-cargo test -- --ignore
+cargo test -- --ignored
 ```
 
 ## データベースの終了
