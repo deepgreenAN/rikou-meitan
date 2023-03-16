@@ -28,7 +28,7 @@ mock! {
         ) -> Result<Vec<MovieClip>, InfraError>;
         async fn order_by_like_later(
             &self,
-            reference: MovieClip,
+            reference: &MovieClip,
             length: usize,
         ) -> Result<Vec<MovieClip>, InfraError>;
         async fn order_by_create_date_range(
@@ -42,7 +42,7 @@ mock! {
         ) -> Result<Vec<MovieClip>, InfraError>;
         async fn order_by_create_date_later(
             &self,
-            reference: MovieClip,
+            reference: &MovieClip,
             length: usize,
         ) -> Result<Vec<MovieClip>, InfraError>;
         async fn remove(

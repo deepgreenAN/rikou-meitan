@@ -15,6 +15,7 @@ mod movie_clip_sql_runner {
     use domain::Date;
     use sqlx::{PgConnection, Postgres};
 
+    /// MovieClipを一つ保存
     pub async fn save(conn: &mut PgConnection, movie_clip: MovieClip) -> Result<(), InfraError> {
         sqlx::query(
             r#"
@@ -36,6 +37,7 @@ VALUES ($1, $2, $3, $4,  $5, $6, $7)
         Ok(())
     }
 
+    /// MovieClipを一つ編集
     pub async fn edit(conn: &mut PgConnection, movie_clip: MovieClip) -> Result<(), InfraError> {
         sqlx::query(
             r#"
@@ -55,7 +57,7 @@ WHERE id = $6 RETURNING *
 
         Ok(())
     }
-
+    /// `id`を持つMovieClipのLikeを一つ増やす
     pub async fn increment_like(
         conn: &mut PgConnection,
         id: MovieClipId,
@@ -73,6 +75,7 @@ UPDATE movie_clips SET "like" = "like" + 1 WHERE id = $1 RETURNING *
         Ok(())
     }
 
+    /// 全てのMovieClipを取得．順番は保証されない．
     pub async fn all(conn: &mut PgConnection) -> Result<Vec<MovieClip>, InfraError> {
         let all_clips = sqlx::query_as::<Postgres, MovieClip>(r#"SELECT * FROM movie_clips"#)
             .fetch_all(conn)
@@ -81,13 +84,14 @@ UPDATE movie_clips SET "like" = "like" + 1 WHERE id = $1 RETURNING *
         Ok(all_clips)
     }
 
+    /// Likeを降順に`length`分のMovieClipを取得．Likeが同じ場合はidで昇順で並べる
     pub async fn order_by_like(
         conn: &mut PgConnection,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
-SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
+SELECT * FROM movie_clips ORDER BY "like" DESC, id ASC LIMIT $1
                 "#,
         )
         .bind(length as i32)
@@ -97,9 +101,10 @@ SELECT * FROM movie_clips ORDER BY "like" DESC LIMIT $1
         Ok(ordered_clips)
     }
 
+    /// Likeを降順・さらにidを昇順として`reference`以降のMovieClipを`length`分取得．
     pub async fn order_by_like_later(
         conn: &mut PgConnection,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
@@ -116,6 +121,7 @@ SELECT * FROM movie_clips WHERE $1 >= "like" AND $2 < id ORDER BY "like" DESC, i
         Ok(ordered_clips)
     }
 
+    /// create_dateを降順として指定した範囲分のMovieClipを`length`分取得．create_dateが同じ場合の順番は保証されない．
     pub async fn order_by_create_date_range(
         conn: &mut PgConnection,
         start: Date,
@@ -134,13 +140,14 @@ SELECT * FROM movie_clips WHERE $1 <= create_date AND create_date < $2 ORDER BY 
         Ok(ordered_clips)
     }
 
+    /// create_dateを降順・さらにidを昇順として`length`分のMovieClipを取得．
     pub async fn order_by_create_date(
         conn: &mut PgConnection,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
-SELECT * FROM movie_clips ORDER BY create_date DESC LIMIT $1
+SELECT * FROM movie_clips ORDER BY create_date DESC, id ASC LIMIT $1
             "#,
         )
         .bind(length as i32)
@@ -150,9 +157,10 @@ SELECT * FROM movie_clips ORDER BY create_date DESC LIMIT $1
         Ok(ordered_clips)
     }
 
+    /// create_dateを降順・さらにidを昇順として`reference`以降のMovieClipを`length`分取得．
     pub async fn order_by_create_date_later(
         conn: &mut PgConnection,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
@@ -169,6 +177,7 @@ SELECT * FROM movie_clips WHERE $1 >= create_date AND $2 < id ORDER BY create_da
         Ok(ordered_clips)
     }
 
+    /// `id`を持つMovieClipを削除．
     pub async fn remove(conn: &mut PgConnection, id: MovieClipId) -> Result<(), InfraError> {
         sqlx::query(
             r#"
@@ -227,7 +236,7 @@ impl MovieClipRepository for MovieClipPgDBRepository {
     }
     async fn order_by_like_later(
         &self,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
@@ -252,7 +261,7 @@ impl MovieClipRepository for MovieClipPgDBRepository {
     }
     async fn order_by_create_date_later(
         &self,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
         let mut conn = self.pool.acquire().await?;
@@ -279,7 +288,8 @@ mod test {
     use rand::{distributions::Distribution, seq::SliceRandom};
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
-    use std::{cmp::Ordering, time::Duration};
+    use std::cmp::Ordering;
+    use std::time::Duration;
 
     #[fixture]
     fn movie_clips() -> Result<Vec<MovieClip>, InfraError> {
@@ -428,15 +438,7 @@ mod test {
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips.into_iter().take(length).collect::<Vec<_>>();
 
-        // 得られた結果をlikeが同じ場合のみidでソート
-        let mut clips_res = movie_clip_sql_runner::order_by_like(&mut transaction, length).await?;
-        clips_res.sort_by(|x, y| {
-            if let Ordering::Equal = x.like().cmp(&y.like()) {
-                x.id().cmp(&y.id())
-            } else {
-                Ordering::Equal
-            }
-        });
+        let clips_res = movie_clip_sql_runner::order_by_like(&mut transaction, length).await?;
 
         assert_eq!(clips, clips_res);
 
@@ -481,16 +483,9 @@ mod test {
             .take(length)
             .collect::<Vec<_>>();
 
-        // 得られた結果をlikeが同じ場合のみidでソート
-        let mut clips_res =
-            movie_clip_sql_runner::order_by_like_later(&mut transaction, reference, length).await?;
-        clips_res.sort_by(|x, y| {
-            if let Ordering::Equal = x.like().cmp(&y.like()) {
-                x.id().cmp(&y.id())
-            } else {
-                Ordering::Equal
-            }
-        });
+        let clips_res =
+            movie_clip_sql_runner::order_by_like_later(&mut transaction, &reference, length)
+                .await?;
 
         assert_eq!(clips, clips_res);
 
@@ -538,6 +533,96 @@ mod test {
                 Ordering::Equal
             }
         });
+
+        assert_eq!(clips, clips_res);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_date(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for clip in clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, clip).await?;
+        }
+
+        let length = clips.len() / 2;
+
+        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        let clips = clips.into_iter().take(length).collect::<Vec<_>>();
+
+        let clips_res =
+            movie_clip_sql_runner::order_by_create_date(&mut transaction, length).await?;
+
+        assert_eq!(clips, clips_res);
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_date_later(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+
+        for clip in clips.iter().cloned() {
+            movie_clip_sql_runner::save(&mut transaction, clip).await?;
+        }
+
+        let length = clips.len() / 2;
+
+        // referenceとなるclipを取得
+        let reference = {
+            let reference_index =
+                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            clips[reference_index].clone()
+        };
+
+        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        let clips = clips
+            .into_iter()
+            .filter(|clip| {
+                clip.create_date() <= reference.create_date() && clip.id() > reference.id()
+            })
+            .take(length)
+            .collect::<Vec<_>>();
+
+        let clips_res =
+            movie_clip_sql_runner::order_by_create_date_later(&mut transaction, &reference, length)
+                .await?;
 
         assert_eq!(clips, clips_res);
 

@@ -29,49 +29,58 @@ impl InMemoryMovieClipRepository {
 #[async_trait]
 impl MovieClipRepository for InMemoryMovieClipRepository {
     type Error = InfraError;
-    async fn save(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
-        self.map
-            .lock()
-            .unwrap()
-            .insert(movie_clip.id().to_uuid(), movie_clip);
+    async fn save(&self, clip: MovieClip) -> Result<(), InfraError> {
+        self.map.lock().unwrap().insert(clip.id().to_uuid(), clip);
         Ok(())
     }
 
-    async fn edit(&self, movie_clip: MovieClip) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(movie_clip.id().to_uuid()) {
+    async fn edit(&self, clip: MovieClip) -> Result<(), InfraError> {
+        match self.map.lock().unwrap().entry(clip.id().to_uuid()) {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
-                *o.get_mut() = movie_clip;
+                *o.get_mut() = clip;
                 Ok(())
             }
         }
     }
     async fn increment_like(&self, id: MovieClipId) -> Result<(), InfraError> {
-        todo!()
+        match self.map.lock().unwrap().entry(id.to_uuid()) {
+            Entry::Vacant(_) => Err(InfraError::NoRecordError),
+            Entry::Occupied(mut o) => {
+                o.get_mut().increment_like();
+                Ok(())
+            }
+        }
     }
 
     async fn all(&self) -> Result<Vec<MovieClip>, InfraError> {
-        let movie_clips = self
+        let clips = self
             .map
             .lock()
             .unwrap()
             .values()
             .cloned()
             .collect::<Vec<MovieClip>>();
-        Ok(movie_clips)
+        Ok(clips)
     }
     async fn order_by_like(&self, length: usize) -> Result<Vec<MovieClip>, InfraError> {
-        let mut movie_clips = self.all().await?;
-        movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順なため
-        Ok(movie_clips.into_iter().take(length).collect::<Vec<_>>())
+        let mut clips = self.all().await?;
+        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
+        Ok(clips.into_iter().take(length).collect::<Vec<_>>())
     }
 
     async fn order_by_like_later(
         &self,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, InfraError> {
-        todo!()
+        let mut clips = self.all().await?;
+        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
+        Ok(clips
+            .into_iter()
+            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .take(length)
+            .collect::<Vec<_>>())
     }
 
     async fn order_by_create_date_range(
@@ -79,13 +88,11 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         start: Date,
         end: Date,
     ) -> Result<Vec<MovieClip>, InfraError> {
-        let mut movie_clips = self.all().await?;
-        movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
-        Ok(movie_clips
+        let mut clips = self.all().await?;
+        clips.sort_by_key(|clip| clip.create_date());
+        Ok(clips
             .into_iter()
-            .filter(|movie_clip| {
-                start <= movie_clip.create_date() && movie_clip.create_date() < end
-            })
+            .filter(|clip| start <= clip.create_date() && clip.create_date() < end)
             .collect::<Vec<_>>())
     }
 
@@ -93,15 +100,33 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         &self,
         length: usize,
     ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
-        todo!()
+        let mut clips = self.all().await?;
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        Ok(clips.into_iter().take(length).collect::<Vec<_>>())
     }
 
     async fn order_by_create_date_later(
         &self,
-        reference: MovieClip,
+        reference: &MovieClip,
         length: usize,
     ) -> Result<Vec<MovieClip>, <Self as MovieClipRepository>::Error> {
-        todo!()
+        let mut clips = self.all().await?;
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        Ok(clips
+            .into_iter()
+            .filter(|clip| {
+                reference.create_date() >= clip.create_date() && reference.id() < clip.id()
+            })
+            .take(length)
+            .collect::<Vec<_>>())
     }
 
     async fn remove(&self, id: MovieClipId) -> Result<(), InfraError> {
@@ -116,38 +141,23 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
 mod test {
     use super::InMemoryMovieClipRepository;
     use crate::InfraError;
-    use assert_matches::assert_matches;
-    use domain::movie_clip::MovieClip;
-    use domain::Date;
     use domain::MovieClipRepository;
+    use domain::{
+        movie_clip::{MovieClip, MovieClipId},
+        Date,
+    };
+
+    use fake::{Fake, Faker};
     use pretty_assertions::assert_eq;
+    use rand::{distributions::Distribution, seq::SliceRandom};
     use rstest::{fixture, rstest};
+    use std::cmp::Ordering;
 
     #[fixture]
     fn movie_clips() -> Result<Vec<MovieClip>, InfraError> {
-        Ok(vec![
-            MovieClip::new(
-                "MovieClip 1".to_string(),
-                "https://www.youtube.com/watch?v=B7OPlsdBuVc".to_string(),
-                100,
-                200,
-                (2022, 11, 21),
-            )?,
-            MovieClip::new(
-                "MovieClip 2".to_string(),
-                "https://www.youtube.com/watch?v=NHpILI4NpCI".to_string(),
-                200,
-                300,
-                (2022, 11, 22),
-            )?,
-            MovieClip::new(
-                "MovieClip 3".to_string(),
-                "https://www.youtube.com/watch?v=6LAn0lbMpZ8".to_string(),
-                400,
-                500,
-                (2022, 11, 19),
-            )?,
-        ])
+        Ok((0..100)
+            .map(|_| Faker.fake::<MovieClip>())
+            .collect::<Vec<_>>())
     }
 
     #[rstest]
@@ -155,20 +165,20 @@ mod test {
     async fn test_movie_clip_save_and_all(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut movie_clips = movie_clips?;
+        let mut clips = movie_clips?;
 
         let repo = InMemoryMovieClipRepository::new();
 
-        for i in movie_clips.iter().cloned() {
-            repo.save(i).await?;
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
         }
 
-        let mut movie_clips_res = repo.all().await?;
-        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
+        let mut clips_res = repo.all().await?;
+        clips_res.sort_by_key(|clip| clip.id());
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+        clips.sort_by_key(|clip| clip.id());
 
-        assert_eq!(movie_clips, movie_clips_res);
+        assert_eq!(clips, clips_res);
         Ok(())
     }
 
@@ -177,28 +187,59 @@ mod test {
     async fn test_movie_clip_save_and_edit_and_all(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut movie_clips = movie_clips?;
+        let mut clips = movie_clips?;
 
         let repo = InMemoryMovieClipRepository::new();
 
-        for i in movie_clips.iter().cloned() {
-            repo.save(i).await?;
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
         }
 
         // 編集
-        let mut edited_movie_clip = movie_clips[1].clone(); // 二番目を編集
-        *edited_movie_clip.title_mut() = "Another Movie Clip".to_string();
-        *edited_movie_clip.range_mut() = (1200..1300).try_into()?;
-        movie_clips[1] = edited_movie_clip.clone();
+        // clipsの一部を編集
+        for _ in 0..(clips.len() / 2) {
+            let edited_clip = clips.choose_mut(&mut rand::thread_rng()).unwrap();
+            edited_clip.assign(Faker.fake());
 
-        repo.edit(edited_movie_clip).await?;
+            repo.edit(edited_clip.clone()).await?;
+        }
 
-        let mut movie_clips_res = repo.all().await?;
-        movie_clips_res.sort_by_key(|movie_clip| movie_clip.id());
+        let mut clips_res = repo.all().await?;
+        clips_res.sort_by_key(|clip| clip.id());
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+        clips.sort_by_key(|clip| clip.id());
 
-        assert_eq!(movie_clips, movie_clips_res);
+        assert_eq!(clips, clips_res);
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_increment_like_and_all(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+
+        let repo = InMemoryMovieClipRepository::new();
+
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
+        }
+
+        // clipsの一部をincrement_like
+        for _ in 0..(clips.len() / 2) {
+            let incremented_clip = clips.choose_mut(&mut rand::thread_rng()).unwrap();
+            incremented_clip.increment_like();
+            repo.increment_like(incremented_clip.id()).await?;
+        }
+
+        let mut clips_res = repo.all().await?;
+        clips_res.sort_by_key(|clip| clip.id());
+
+        clips.sort_by_key(|clip| clip.id());
+
+        assert_eq!(clips, clips_res);
+
         Ok(())
     }
 
@@ -207,32 +248,61 @@ mod test {
     async fn test_movie_clip_save_and_order_by_like(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let movie_clips = movie_clips?;
-        let movie_clips_length = movie_clips.len();
-        let mut movie_clips = movie_clips
-            .into_iter()
-            .enumerate()
-            .map(|(i, mut movie_clip)| {
-                for _ in 0..(movie_clips_length - i) {
-                    movie_clip.increment_like(); // likeをインクリメント
-                }
-                movie_clip
-            })
-            .collect::<Vec<_>>();
+        let mut clips = movie_clips?;
 
         let repo = InMemoryMovieClipRepository::new();
 
-        for i in movie_clips.iter().cloned() {
-            repo.save(i).await?;
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
         }
 
-        let length = 2_usize;
-        let ordered_by_like_movie_clips = repo.order_by_like(length).await?;
+        let length = clips.len() / 2;
 
-        movie_clips.sort_by_key(|movie_clip| u32::MAX - movie_clip.like()); // 降順のため
-        let movie_clips = movie_clips.into_iter().take(length).collect::<Vec<_>>();
+        // 参照元をlike(降順), idの順でソート
+        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
+        let clips = clips.into_iter().take(length).collect::<Vec<_>>();
 
-        assert_eq!(movie_clips, ordered_by_like_movie_clips);
+        let clips_res = repo.order_by_like(length).await?;
+
+        assert_eq!(clips, clips_res);
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_like_later(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+
+        let repo = InMemoryMovieClipRepository::new();
+
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
+        }
+
+        let length = clips.len() / 2;
+
+        // referenceとなるclipを取得
+        let reference = {
+            let reference_index =
+                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            clips[reference_index].clone()
+        };
+
+        // 参照元をlike(降順), idの順でソート・フィルタリング
+        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
+        let clips = clips
+            .into_iter()
+            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .take(length)
+            .collect::<Vec<_>>();
+
+        let clips_res = repo.order_by_like_later(&reference, length).await?;
+
+        assert_eq!(clips, clips_res);
+
         Ok(())
     }
 
@@ -241,27 +311,110 @@ mod test {
     async fn test_movie_clip_save_and_order_by_date_range(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut movie_clips = movie_clips?;
+        let mut clips = movie_clips?;
+
         let repo = InMemoryMovieClipRepository::new();
 
-        for i in movie_clips.iter().cloned() {
-            repo.save(i).await?;
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
         }
 
-        let start = Date::from_ymd(2022, 11, 19)?;
-        let end = Date::from_ymd(2022, 11, 22)?;
+        let start = Faker.fake::<Date>();
+        let end = Faker.fake::<Date>();
 
-        let ordered_by_date_range = repo.order_by_create_date_range(start, end).await?;
+        // 参照元をcreate_date, idでソート・範囲をフィルタリング
+        clips.sort_by(|x, y| {
+            x.create_date()
+                .cmp(&y.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        clips.retain(|clip| start <= clip.create_date() && clip.create_date() < end);
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.create_date());
-        let movie_clips = movie_clips
+        // 得られた結果をcreate_dataが同じ場合のみidでソート
+        let mut clips_res = repo.order_by_create_date_range(start, end).await?;
+        clips_res.sort_by(|x, y| {
+            if let Ordering::Equal = x.create_date().cmp(&y.create_date()) {
+                x.id().cmp(&y.id())
+            } else {
+                Ordering::Equal
+            }
+        });
+
+        assert_eq!(clips, clips_res);
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_date(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+
+        let repo = InMemoryMovieClipRepository::new();
+
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
+        }
+
+        let length = clips.len() / 2;
+
+        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        let clips = clips.into_iter().take(length).collect::<Vec<_>>();
+
+        let clips_res = repo.order_by_create_date(length).await?;
+
+        assert_eq!(clips, clips_res);
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_save_and_order_by_date_later(
+        movie_clips: Result<Vec<MovieClip>, InfraError>,
+    ) -> Result<(), InfraError> {
+        let mut clips = movie_clips?;
+
+        let repo = InMemoryMovieClipRepository::new();
+
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
+        }
+
+        let length = clips.len() / 2;
+
+        // referenceとなるclipを取得
+        let reference = {
+            let reference_index =
+                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            clips[reference_index].clone()
+        };
+
+        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
+        clips.sort_by(|x, y| {
+            y.create_date()
+                .cmp(&x.create_date())
+                .then_with(|| x.id().cmp(&y.id()))
+        });
+        let clips = clips
             .into_iter()
-            .filter(|movie_clip| {
-                start <= movie_clip.create_date() && movie_clip.create_date() < end
+            .filter(|clip| {
+                clip.create_date() <= reference.create_date() && clip.id() > reference.id()
             })
+            .take(length)
             .collect::<Vec<_>>();
 
-        assert_eq!(movie_clips, ordered_by_date_range);
+        let clips_res = repo.order_by_create_date_later(&reference, length).await?;
+
+        assert_eq!(clips, clips_res);
+
         Ok(())
     }
 
@@ -270,22 +423,34 @@ mod test {
     async fn test_movie_clip_save_and_remove_and_all(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut movie_clips = movie_clips?;
+        let mut clips = movie_clips?;
+
         let repo = InMemoryMovieClipRepository::new();
 
-        for i in movie_clips.iter().cloned() {
-            repo.save(i).await?;
+        for clip in clips.iter().cloned() {
+            repo.save(clip).await?;
         }
 
-        let removed_movie_clip = movie_clips.remove(1); // 二番目のデータ
-        repo.remove(removed_movie_clip.id()).await?;
+        // clipsの一部を削除
+        let mut clips_len = clips.len();
+        let remove_number = clips_len / 10;
+        for _ in 0..remove_number {
+            let remove_index = rand::distributions::Uniform::from(0_usize..clips_len)
+                .sample(&mut rand::thread_rng());
+            let removed_clip = clips.remove(remove_index);
+            repo.remove(removed_clip.id()).await?;
 
-        let mut rest_movie_clips = repo.all().await?;
-        rest_movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+            // clips_lenを一つ減らす
+            clips_len -= 1;
+        }
 
-        movie_clips.sort_by_key(|movie_clip| movie_clip.id());
+        let mut rest_clips = repo.all().await?;
+        rest_clips.sort_by_key(|clip| clip.id());
 
-        assert_eq!(movie_clips, rest_movie_clips);
+        clips.sort_by_key(|clip| clip.id());
+
+        assert_eq!(clips, rest_clips);
+
         Ok(())
     }
 
@@ -294,16 +459,11 @@ mod test {
     async fn test_movie_clip_edit_no_exists() -> Result<(), InfraError> {
         let repo = InMemoryMovieClipRepository::new();
 
-        let movie_clip = MovieClip::new(
-            "Another Title".to_string(),
-            "https://www.youtube.com/watch?v=lwSEI1ATLWQ".to_string(),
-            1000,
-            1500,
-            (2022, 11, 23),
-        )?;
+        let clip = Faker.fake::<MovieClip>();
 
-        let res = repo.edit(movie_clip).await;
-        assert_matches!(res, Err(InfraError::NoRecordError));
+        let res = repo.edit(clip).await;
+        assert!(matches!(res, Err(InfraError::NoRecordError)));
+
         Ok(())
     }
 
@@ -312,16 +472,10 @@ mod test {
     async fn test_movie_clip_remove_no_exists() -> Result<(), InfraError> {
         let repo = InMemoryMovieClipRepository::new();
 
-        let movie_clip = MovieClip::new(
-            "Another Title".to_string(),
-            "https://www.youtube.com/watch?v=lwSEI1ATLWQ".to_string(),
-            1000,
-            1500,
-            (2022, 11, 23),
-        )?;
+        let res = repo.remove(MovieClipId::generate()).await;
 
-        let res = repo.remove(movie_clip.id()).await;
-        assert_matches!(res, Err(InfraError::NoRecordError));
+        assert!(matches!(res, Err(InfraError::NoRecordError)));
+
         Ok(())
     }
 }
