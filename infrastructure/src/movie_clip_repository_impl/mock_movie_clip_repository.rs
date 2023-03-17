@@ -8,10 +8,10 @@ use mockall::mock;
 
 mock! {
     /// MovieClipのモックリポジトリ
-    pub MovieClipRepositoryImpl {}
+    pub MovieClipRepository {}
 
     #[async_trait]
-    impl MovieClipRepository for MovieClipRepositoryImpl {
+    impl MovieClipRepository for MovieClipRepository {
         type Error = InfraError;
         async fn save(&self, movie_clip: MovieClip)
         -> Result<(), InfraError>;

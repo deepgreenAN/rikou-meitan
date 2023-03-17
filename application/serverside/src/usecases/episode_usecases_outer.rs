@@ -54,14 +54,14 @@ pub mod episode_usecases {
         Ok(repo.order_by_date_range(cmd.start, cmd.end).await?)
     }
 
-    pub(crate) async fn remove_by_id_episode<T>(
+    pub(crate) async fn remove_episode<T>(
         repo: Arc<T>,
         cmd: RemoveByIdEpisodeCommand,
     ) -> Result<(), AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
     {
-        Ok(repo.remove_by_id(cmd.id).await?)
+        Ok(repo.remove(cmd.id).await?)
     }
 }
 
@@ -171,27 +171,27 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_remove_by_id_episode_usecase() {
+    async fn test_remove_episode_usecase() {
         let episode_id = EpisodeId::generate();
 
         let mut mock_repo_ok = MockEpisodeRepositoryImpl::new();
         mock_repo_ok
-            .expect_remove_by_id()
+            .expect_remove()
             .with(predicate::eq(episode_id))
             .return_const(Ok(()));
 
         let cmd = episode_commands::RemoveByIdEpisodeCommand::new(episode_id);
-        let res_ok = episode_usecases::remove_by_id_episode(Arc::new(mock_repo_ok), cmd).await;
+        let res_ok = episode_usecases::remove_episode(Arc::new(mock_repo_ok), cmd).await;
         assert_matches!(res_ok, Ok(_));
 
         let mut mock_repo_err = MockEpisodeRepositoryImpl::new();
         mock_repo_err
-            .expect_remove_by_id()
+            .expect_remove()
             .with(predicate::eq(episode_id))
             .return_const(Err(InfraError::NoRecordError));
 
         let cmd = episode_commands::RemoveByIdEpisodeCommand::new(episode_id);
-        let res_err = episode_usecases::remove_by_id_episode(Arc::new(mock_repo_err), cmd).await;
+        let res_err = episode_usecases::remove_episode(Arc::new(mock_repo_err), cmd).await;
         assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 }

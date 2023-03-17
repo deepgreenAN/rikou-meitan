@@ -15,3 +15,14 @@ CREATE TABLE IF NOT EXISTS episodes (
     content TEXT NOT NULL,
     id uuid PRIMARY KEY NOT NULL
 );
+
+-- videoテーブルについて
+CREATE TABLE IF NOT EXISTS videos (
+    title TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    id uuid PRIMARY KEY NOT NULL,
+    "date" DATE NOT NULL,
+    author TEXT NOT NULL,
+    "like" INT4 NOT NULL,
+    video_type TEXT NOT NULL
+);

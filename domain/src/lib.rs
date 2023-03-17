@@ -16,4 +16,4 @@ pub use ids::Id;
 pub use movie_url::MovieUrl;
 
 #[cfg(feature = "repo")]
-pub use repositories::{EpisodeRepository, MovieClipRepository};
+pub use repositories::{EpisodeRepository, MovieClipRepository, VideoRepository};

@@ -73,13 +73,13 @@ pub async fn order_by_date_range_episodes(
     Ok(Json(episodes))
 }
 
-pub async fn remove_by_id_episode(
+pub async fn remove_episode(
     id: Result<Path<EpisodeId>, PathRejection>,
     State(app_state): State<AppState>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = episode_commands::RemoveByIdEpisodeCommand::new(id);
-    episode_usecases::remove_by_id_episode(app_state.episode_repo, cmd).await?;
+    episode_usecases::remove_episode(app_state.episode_repo, cmd).await?;
     Ok(())
 }
 
@@ -123,7 +123,7 @@ mod test {
                 "/episode/order_date",
                 get(super::order_by_date_range_episodes),
             )
-            .route("/episode/:id", delete(super::remove_by_id_episode))
+            .route("/episode/:id", delete(super::remove_episode))
             .with_state(app_state)
     }
 
@@ -302,7 +302,7 @@ mod test {
         let episode_id = EpisodeId::generate();
 
         {
-            let mock_ctx_ok = mock_episode_usecases::remove_by_id_episode_context();
+            let mock_ctx_ok = mock_episode_usecases::remove_episode_context();
             mock_ctx_ok
                 .expect::<MockEpisodeRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == episode_id)
@@ -320,7 +320,7 @@ mod test {
             assert!(body.is_empty());
         }
         {
-            let mock_ctx_err = mock_episode_usecases::remove_by_id_episode_context();
+            let mock_ctx_err = mock_episode_usecases::remove_episode_context();
             mock_ctx_err
                 .expect::<MockEpisodeRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == episode_id)

@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 // -------------------------------------------------------------------------------------------------
-// # MockMovieClipRepository
+// # InMemoryMovieClipRepository
 
 /// 即席のMovieClipリポジトリ
 #[derive(Default)]

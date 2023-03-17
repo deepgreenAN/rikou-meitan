@@ -41,15 +41,14 @@ VALUES ($1, $2, $3, $4,  $5, $6, $7)
     pub async fn edit(conn: &mut PgConnection, movie_clip: MovieClip) -> Result<(), InfraError> {
         sqlx::query(
             r#"
-UPDATE movie_clips SET title = $1, "url" = $2, "start" = $3, "end" = $4, "like" = $5
-WHERE id = $6 RETURNING *
+UPDATE movie_clips SET title = $1, "url" = $2, "start" = $3, "end" = $4
+WHERE id = $5 RETURNING *
             "#,
         )
         .bind(movie_clip.title().to_string())
         .bind(movie_clip.url().to_string())
         .bind(movie_clip.range().start().to_u32() as i32)
         .bind(movie_clip.range().end().to_u32() as i32)
-        .bind(movie_clip.like() as i32)
         .bind(movie_clip.id().to_uuid())
         .fetch_one(conn)
         .await
@@ -434,7 +433,7 @@ mod test {
 
         let length = clips.len() / 2;
 
-        // 参照元をlike(降順), idの順でソート
+        // 参照元をlike(降順), idの順でソート．length分フィルタリング．
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips.into_iter().take(length).collect::<Vec<_>>();
 
@@ -688,6 +687,27 @@ mod test {
         let clip = Faker.fake::<MovieClip>();
 
         let res = movie_clip_sql_runner::edit(&mut transaction, clip).await;
+        assert!(matches!(res, Err(InfraError::NoRecordError)));
+
+        // ロールバック
+        transaction.rollback().await?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[rstest]
+    #[tokio::test]
+    async fn test_movie_clip_increment_like_no_exists(
+        #[future] pool: Result<PgPool, InfraError>,
+    ) -> Result<(), InfraError> {
+        let pool = pool.await?;
+
+        // トランザクションの開始
+        let mut transaction = pool.begin().await?;
+        let clip = Faker.fake::<MovieClip>();
+
+        let res = movie_clip_sql_runner::increment_like(&mut transaction, clip.id()).await;
         assert!(matches!(res, Err(InfraError::NoRecordError)));
 
         // ロールバック

@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
-        "inmemory"
+        "inmemory",
+        "Kirinuki",
+        "kirinukis"
     ],
     "rust-analyzer.server.extraEnv": {
         "DATABASE_URL": "postgres://postgres:gami3377@localhost/rikou_meitan"

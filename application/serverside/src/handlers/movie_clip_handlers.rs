@@ -70,8 +70,7 @@ pub async fn order_by_like_limit_movie_clips(
     let limit = limit_res.map_err(Into::<AppCommonError>::into)?.0;
     let cmd = movie_clip_commands::OrderByLikeLimitMovieClipCommand::new(limit.length);
     let movie_clips =
-        movie_clip_usecases::order_by_like_limit_movie_clips(app_state.movie_clip_repo, cmd)
-            .await?;
+        movie_clip_usecases::order_by_like_movie_clips(app_state.movie_clip_repo, cmd).await?;
     Ok(Json(movie_clips))
 }
 
@@ -102,7 +101,7 @@ pub async fn remove_by_id_movie_clip(
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(id);
-    movie_clip_usecases::remove_by_id_movie_clip(app_state.movie_clip_repo, cmd).await?;
+    movie_clip_usecases::remove_movie_clip(app_state.movie_clip_repo, cmd).await?;
     Ok(())
 }
 
@@ -324,7 +323,7 @@ mod test {
 
         let length = 1_usize;
 
-        let mock_ctx = mock_movie_clip_usecases::order_by_like_limit_movie_clips_context();
+        let mock_ctx = mock_movie_clip_usecases::order_by_like_movie_clips_context();
         mock_ctx
             .expect::<MockMovieClipRepositoryImpl>()
             .withf(move |_, cmd| cmd.length == length)
@@ -394,7 +393,7 @@ mod test {
         let movie_clip_id = MovieClipId::generate();
 
         {
-            let mock_ctx_ok = mock_movie_clip_usecases::remove_by_id_movie_clip_context();
+            let mock_ctx_ok = mock_movie_clip_usecases::remove_movie_clip_context();
             mock_ctx_ok
                 .expect::<MockMovieClipRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == movie_clip_id)
@@ -413,7 +412,7 @@ mod test {
             assert!(body.is_empty());
         }
         {
-            let mock_ctx_err = mock_movie_clip_usecases::remove_by_id_movie_clip_context();
+            let mock_ctx_err = mock_movie_clip_usecases::remove_movie_clip_context();
             mock_ctx_err
                 .expect::<MockMovieClipRepositoryImpl>()
                 .withf(move |_, cmd| cmd.id == movie_clip_id)

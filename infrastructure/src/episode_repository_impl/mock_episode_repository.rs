@@ -8,10 +8,10 @@ use mockall::mock;
 
 mock! {
     /// EpisodeRepositoryトレイトのモック
-    pub EpisodeRepositoryImpl {}
+    pub EpisodeRepository {}
 
     #[async_trait]
-    impl EpisodeRepository for EpisodeRepositoryImpl {
+    impl EpisodeRepository for EpisodeRepository {
         type Error = InfraError;
         async fn save(&self, episode: Episode) -> Result<(), <Self as EpisodeRepository>::Error>;
         async fn edit(&self, episode: Episode) -> Result<(), <Self as EpisodeRepository>::Error>;

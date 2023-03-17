@@ -11,7 +11,9 @@ sqlx database create
 ## マイグレーション
 マイグレーションを実行
 ```
+cd ..
 sqlx migrate run
+cd infrastructure
 ```
 
 ## データベースの削除

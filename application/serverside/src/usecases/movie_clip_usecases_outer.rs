@@ -44,14 +44,14 @@ pub mod movie_clip_usecases {
         Ok(repo.all().await?)
     }
 
-    pub(crate) async fn order_by_like_limit_movie_clips<T>(
+    pub(crate) async fn order_by_like_movie_clips<T>(
         repo: Arc<T>,
         cmd: OrderByLikeLimitMovieClipCommand,
     ) -> Result<Vec<MovieClip>, AppCommonError>
     where
         T: MovieClipRepository<Error = InfraError> + 'static,
     {
-        Ok(repo.order_by_like_limit(cmd.length).await?)
+        Ok(repo.order_by_like(cmd.length).await?)
     }
 
     pub(crate) async fn order_by_create_date_range_movie_clips<T>(
@@ -64,14 +64,14 @@ pub mod movie_clip_usecases {
         Ok(repo.order_by_create_date_range(cmd.start, cmd.end).await?)
     }
 
-    pub(crate) async fn remove_by_id_movie_clip<T>(
+    pub(crate) async fn remove_movie_clip<T>(
         repo: Arc<T>,
         cmd: RemoveByIdMovieClipCommand,
     ) -> Result<(), AppCommonError>
     where
         T: MovieClipRepository<Error = InfraError> + 'static,
     {
-        Ok(repo.remove_by_id(cmd.id).await?)
+        Ok(repo.remove(cmd.id).await?)
     }
 }
 
@@ -185,7 +185,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_order_by_like_limit_movie_clips_usecase() {
+    async fn test_order_by_like_movie_clips_usecase() {
         let movie_clips = vec![MovieClip::new(
             "Movie Clip Title".to_string(),
             "https://www.youtube.com/watch?v=B7OPlsdBuVc".to_string(),
@@ -199,15 +199,14 @@ mod test {
 
         let mut mock_repo = MockMovieClipRepositoryImpl::new();
         mock_repo
-            .expect_order_by_like_limit()
+            .expect_order_by_like()
             .with(predicate::eq(length))
             .return_const(Ok(movie_clips.clone()));
 
         let cmd = movie_clip_commands::OrderByLikeLimitMovieClipCommand::new(length);
-        let res_vec =
-            movie_clip_usecases::order_by_like_limit_movie_clips(Arc::new(mock_repo), cmd)
-                .await
-                .unwrap();
+        let res_vec = movie_clip_usecases::order_by_like_movie_clips(Arc::new(mock_repo), cmd)
+            .await
+            .unwrap();
         assert_eq!(res_vec, movie_clips);
     }
 
@@ -240,29 +239,27 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_remove_by_id_movie_clip_usecase() {
+    async fn test_remove_movie_clip_usecase() {
         let movie_clip_id = MovieClipId::generate();
 
         let mut mock_repo_ok = MockMovieClipRepositoryImpl::new();
         mock_repo_ok
-            .expect_remove_by_id()
+            .expect_remove()
             .with(predicate::eq(movie_clip_id))
             .return_const(Ok(()));
 
         let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(movie_clip_id);
-        let res_ok =
-            movie_clip_usecases::remove_by_id_movie_clip(Arc::new(mock_repo_ok), cmd).await;
+        let res_ok = movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_ok), cmd).await;
         assert_matches!(res_ok, Ok(_));
 
         let mut mock_repo_err = MockMovieClipRepositoryImpl::new();
         mock_repo_err
-            .expect_remove_by_id()
+            .expect_remove()
             .with(predicate::eq(movie_clip_id))
             .return_const(Err(InfraError::NoRecordError));
 
         let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(movie_clip_id);
-        let res_err =
-            movie_clip_usecases::remove_by_id_movie_clip(Arc::new(mock_repo_err), cmd).await;
+        let res_err = movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_err), cmd).await;
         assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }
 }
