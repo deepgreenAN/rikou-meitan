@@ -1,6 +1,6 @@
 use crate::InfraError;
 use async_trait::async_trait;
-use domain::video::{Video, VideoId};
+use domain::video::{Video, VideoId, VideoType};
 use domain::VideoRepository;
 
 use std::collections::hash_map::Entry;
@@ -13,11 +13,11 @@ use uuid::Uuid;
 
 /// 即席のVideoRepository
 #[derive(Default)]
-pub struct InMemoryVideoRepository<T> {
+pub struct InMemoryVideoRepository<T: VideoType> {
     map: Arc<Mutex<HashMap<Uuid, Video<T>>>>,
 }
 
-impl<T> InMemoryVideoRepository<T> {
+impl<T: VideoType> InMemoryVideoRepository<T> {
     pub fn new() -> Self {
         Self {
             map: Arc::new(Mutex::new(HashMap::new())),
@@ -26,10 +26,7 @@ impl<T> InMemoryVideoRepository<T> {
 }
 
 #[async_trait]
-impl<T> VideoRepository<T> for InMemoryVideoRepository<T>
-where
-    T: Send + Sync + Clone,
-{
+impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
     type Error = InfraError;
     async fn save(&self, video: Video<T>) -> Result<(), InfraError> {
         let exists = self.map.lock().unwrap().insert(video.id().to_uuid(), video);

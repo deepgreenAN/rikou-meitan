@@ -34,7 +34,11 @@ pub type VideoId = Id<VideoIdType>;
 
 /// VideoType各種が実装しているべきトレイト．async_traitやmock_allに対応
 pub trait VideoType:
-    Default
+    Clone
+    + Default
+    + Copy
+    + PartialEq
+    + Eq
     + ToString
     + Into<String>
     + TryFrom<String, Error = crate::DomainError>
@@ -156,7 +160,7 @@ where
 
 /// Videoのエンティティ
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Video<T> {
+pub struct Video<T: VideoType> {
     /// タイトル
     title: String,
     /// 動画のURL
@@ -174,12 +178,10 @@ pub struct Video<T> {
         serialize_with = "serialize_phantom",
         deserialize_with = "deserialize_phantom"
     )]
-    #[serde(bound(serialize = "T: VideoType"))]
-    #[serde(bound(deserialize = "T: VideoType"))]
     video_type: PhantomData<T>,
 }
 
-impl<T> Video<T> {
+impl<T: VideoType> Video<T> {
     /// プリミティブを用いたコンストラクタ
     pub fn new(
         title: String,

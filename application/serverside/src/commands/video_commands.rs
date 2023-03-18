@@ -1,18 +1,18 @@
 use derive_new::new;
-use domain::video::{Video, VideoId};
+use domain::video::{Video, VideoId, VideoType};
 
 #[derive(new)]
-pub(crate) struct SaveVideoCommand<T> {
+pub(crate) struct SaveVideoCommand<T: VideoType> {
     pub video: Video<T>,
 }
 
 #[derive(new)]
-pub(crate) struct EditVideoCommand<T> {
+pub(crate) struct EditVideoCommand<T: VideoType> {
     pub video: Video<T>,
 }
 
 #[derive(new)]
-pub(crate) struct IncrementLikeVideoCommnd {
+pub(crate) struct IncrementLikeVideoCommand {
     pub id: VideoId,
 }
 
@@ -24,7 +24,7 @@ pub(crate) struct OrderByLikeVideoCommand {
 }
 
 #[derive(new)]
-pub(crate) struct OrderByLikeLaterVideoCommand<T> {
+pub(crate) struct OrderByLikeLaterVideoCommand<T: VideoType> {
     pub reference: Video<T>,
     pub length: usize,
 }
@@ -35,7 +35,7 @@ pub(crate) struct OrderByDateVideoCommand {
 }
 
 #[derive(new)]
-pub(crate) struct OrderByDteLaterVideoCommand<T> {
+pub(crate) struct OrderByDateLaterVideoCommand<T: VideoType> {
     pub reference: Video<T>,
     pub length: usize,
 }

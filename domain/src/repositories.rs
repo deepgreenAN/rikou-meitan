@@ -1,6 +1,6 @@
 use crate::episode::{Episode, EpisodeId};
 use crate::movie_clip::{MovieClip, MovieClipId};
-use crate::video::{Video, VideoId};
+use crate::video::{Video, VideoId, VideoType};
 use crate::Date;
 use async_trait::async_trait;
 
@@ -75,7 +75,7 @@ pub trait EpisodeRepository {
 
 /// Video<T>のリポジトリのトレイト
 #[async_trait]
-pub trait VideoRepository<T> {
+pub trait VideoRepository<T: VideoType> {
     type Error;
     /// Video<T>を保存する．
     async fn save(&self, video: Video<T>) -> Result<(), <Self as VideoRepository<T>>::Error>;
