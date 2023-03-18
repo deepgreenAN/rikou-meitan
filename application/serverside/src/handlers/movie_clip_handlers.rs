@@ -68,7 +68,7 @@ pub async fn order_by_like_limit_movie_clips(
     State(app_state): State<AppState>,
 ) -> Result<Json<Vec<MovieClip>>, AppCommonError> {
     let limit = limit_res.map_err(Into::<AppCommonError>::into)?.0;
-    let cmd = movie_clip_commands::OrderByLikeLimitMovieClipCommand::new(limit.length);
+    let cmd = movie_clip_commands::OrderByLikeMovieClipCommand::new(limit.length);
     let movie_clips =
         movie_clip_usecases::order_by_like_movie_clips(app_state.movie_clip_repo, cmd).await?;
     Ok(Json(movie_clips))
@@ -100,7 +100,7 @@ pub async fn remove_by_id_movie_clip(
     State(app_state): State<AppState>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
-    let cmd = movie_clip_commands::RemoveByIdMovieClipCommand::new(id);
+    let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
     movie_clip_usecases::remove_movie_clip(app_state.movie_clip_repo, cmd).await?;
     Ok(())
 }
@@ -112,7 +112,7 @@ mod test {
     use common::AppCommonError;
     use domain::movie_clip::{MovieClip, MovieClipId};
     use domain::Date;
-    use infrastructure::movie_clip_repository_impl::MockMovieClipRepositoryImpl;
+    use infrastructure::movie_clip_repository_impl::MockMovieClipRepository;
 
     use assert_matches::assert_matches;
     use axum::{
@@ -170,7 +170,7 @@ mod test {
             let cloned_movie_clip = movie_clip.clone();
             let mock_ctx_ok = mock_movie_clip_usecases::save_movie_clip_context();
             mock_ctx_ok
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.movie_clip == cloned_movie_clip)
                 .times(1)
                 .return_const(Ok(()));
@@ -191,7 +191,7 @@ mod test {
             let cloned_movie_clip = movie_clip.clone();
             let mock_ctx_err = mock_movie_clip_usecases::save_movie_clip_context();
             mock_ctx_err
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.movie_clip == cloned_movie_clip)
                 .times(1)
                 .return_const(Err(AppCommonError::ConflictError));
@@ -231,7 +231,7 @@ mod test {
             let cloned_movie_clip = movie_clip.clone();
             let mock_ctx_ok = mock_movie_clip_usecases::edit_movie_clip_context();
             mock_ctx_ok
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.movie_clip == cloned_movie_clip)
                 .times(1)
                 .return_const(Ok(()));
@@ -252,7 +252,7 @@ mod test {
             let cloned_movie_clip = movie_clip.clone();
             let mock_ctx_err = mock_movie_clip_usecases::edit_movie_clip_context();
             mock_ctx_err
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.movie_clip == cloned_movie_clip)
                 .times(1)
                 .return_const(Err(AppCommonError::NoRecordError));
@@ -289,7 +289,7 @@ mod test {
 
         let mock_ctx = mock_movie_clip_usecases::all_movie_clips_context();
         mock_ctx
-            .expect::<MockMovieClipRepositoryImpl>()
+            .expect::<MockMovieClipRepository>()
             .times(1)
             .return_const(Ok(movie_clips.clone()));
 
@@ -325,7 +325,7 @@ mod test {
 
         let mock_ctx = mock_movie_clip_usecases::order_by_like_movie_clips_context();
         mock_ctx
-            .expect::<MockMovieClipRepositoryImpl>()
+            .expect::<MockMovieClipRepository>()
             .withf(move |_, cmd| cmd.length == length)
             .times(1)
             .return_const(Ok(movie_clips.clone()));
@@ -363,7 +363,7 @@ mod test {
 
         let mock_ctx = mock_movie_clip_usecases::order_by_create_date_range_movie_clips_context();
         mock_ctx
-            .expect::<MockMovieClipRepositoryImpl>()
+            .expect::<MockMovieClipRepository>()
             .withf(move |_, cmd| cmd.start == start && cmd.end == end)
             .times(1)
             .return_const(Ok(movie_clips.clone()));
@@ -395,7 +395,7 @@ mod test {
         {
             let mock_ctx_ok = mock_movie_clip_usecases::remove_movie_clip_context();
             mock_ctx_ok
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.id == movie_clip_id)
                 .times(1)
                 .return_const(Ok(()));
@@ -414,7 +414,7 @@ mod test {
         {
             let mock_ctx_err = mock_movie_clip_usecases::remove_movie_clip_context();
             mock_ctx_err
-                .expect::<MockMovieClipRepositoryImpl>()
+                .expect::<MockMovieClipRepository>()
                 .withf(move |_, cmd| cmd.id == movie_clip_id)
                 .times(1)
                 .return_const(Err(AppCommonError::NoRecordError));

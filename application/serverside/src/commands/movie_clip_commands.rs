@@ -12,10 +12,21 @@ pub(crate) struct EditMovieClipCommand {
     pub movie_clip: MovieClip,
 }
 
+#[derive(new)]
+pub(crate) struct IncrementLikeMovieClipCommand {
+    pub id: MovieClipId,
+}
+
 pub(crate) struct AllMovieClipCommand;
 
 #[derive(new)]
-pub(crate) struct OrderByLikeLimitMovieClipCommand {
+pub(crate) struct OrderByLikeMovieClipCommand {
+    pub length: usize,
+}
+
+#[derive(new)]
+pub(crate) struct OrderByLikeLaterMovieClipCommand {
+    pub reference: MovieClip,
     pub length: usize,
 }
 
@@ -26,6 +37,17 @@ pub(crate) struct OrderByCreateDateRangeMovieClipCommand {
 }
 
 #[derive(new)]
-pub(crate) struct RemoveByIdMovieClipCommand {
+pub(crate) struct OrderByCreateDateMovieClipCommand {
+    pub length: usize,
+}
+
+#[derive(new)]
+pub(crate) struct OrderByCreateDateLaterMovieClipCommand {
+    pub reference: MovieClip,
+    pub length: usize,
+}
+
+#[derive(new)]
+pub(crate) struct RemoveMovieClipCommand {
     pub id: MovieClipId,
 }

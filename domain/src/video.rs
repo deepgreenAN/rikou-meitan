@@ -30,6 +30,21 @@ pub type VideoId = Id<VideoIdType>;
 // # VideoTypeの各種型
 
 // -------------------------------------------------------------------
+// VideoTypeトレイト
+
+/// VideoType各種が実装しているべきトレイト．async_traitやmock_allに対応
+pub trait VideoType:
+    Default
+    + ToString
+    + Into<String>
+    + TryFrom<String, Error = crate::DomainError>
+    + Send
+    + Sync
+    + Unpin
+{
+}
+
+// -------------------------------------------------------------------
 // ## Original
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -66,6 +81,8 @@ impl From<Original> for String {
         value.to_string()
     }
 }
+
+impl VideoType for Original {}
 
 // -------------------------------------------------------------------
 // ## Kirinuki
@@ -105,13 +122,15 @@ impl From<Kirinuki> for String {
     }
 }
 
+impl VideoType for Kirinuki {}
+
 // -------------------------------------------------------------------------------------------------
 // serialize and deserialize function
 
 fn serialize_phantom<S, T>(_: &PhantomData<T>, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
-    T: Into<String> + Default,
+    T: VideoType,
 {
     let type_str: String = T::default().into();
     s.serialize_str(&type_str)
@@ -120,7 +139,7 @@ where
 fn deserialize_phantom<'de, D, T>(d: D) -> Result<PhantomData<T>, D::Error>
 where
     D: Deserializer<'de>,
-    T: TryFrom<String>,
+    T: VideoType,
 {
     let unit_type_str: String = Deserialize::deserialize(d)?;
     let _unit_type: T = unit_type_str.try_into().map_err(|_| {
@@ -155,8 +174,8 @@ pub struct Video<T> {
         serialize_with = "serialize_phantom",
         deserialize_with = "deserialize_phantom"
     )]
-    #[serde(bound(serialize = "T: Into<String> + Default"))]
-    #[serde(bound(deserialize = "T: TryFrom<String>"))]
+    #[serde(bound(serialize = "T: VideoType"))]
+    #[serde(bound(deserialize = "T: VideoType"))]
     video_type: PhantomData<T>,
 }
 
@@ -251,7 +270,7 @@ impl<T> Video<T> {
 #[cfg(feature = "server")]
 impl<T> FromRow<'_, PgRow> for Video<T>
 where
-    T: TryFrom<String, Error = DomainError>,
+    T: VideoType,
 {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         use chrono::NaiveDate;
@@ -282,7 +301,7 @@ where
 // Dummy trait
 
 #[cfg(any(feature = "fake", test))]
-impl<T: Default> Dummy<Faker> for Video<T> {
+impl<T: VideoType> Dummy<Faker> for Video<T> {
     fn dummy_with_rng<R: Rng + ?Sized>(_config: &Faker, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
         let author = Words(1..3).fake_with_rng::<Vec<String>, R>(rng).join(" ");
@@ -303,7 +322,7 @@ impl<T: Default> Dummy<Faker> for Video<T> {
 }
 
 #[cfg(any(feature = "fake", test))]
-impl<T: Default> Dummy<std::ops::Range<Date>> for Video<T> {
+impl<T: VideoType> Dummy<std::ops::Range<Date>> for Video<T> {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &std::ops::Range<Date>, rng: &mut R) -> Self {
         let title = Words(2..50).fake_with_rng::<Vec<String>, R>(rng).join(" ");
         let author = Words(1..3).fake_with_rng::<Vec<String>, R>(rng).join(" ");

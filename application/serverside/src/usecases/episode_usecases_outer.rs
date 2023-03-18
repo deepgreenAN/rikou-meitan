@@ -3,10 +3,7 @@ use mockall::automock;
 
 #[cfg_attr(test, automock)]
 pub mod episode_usecases {
-    use crate::commands::episode_commands::{
-        AllEpisodeCommand, EditEpisodeCommand, OrderByDateRangeEpisodeCommand,
-        RemoveByIdEpisodeCommand, SaveEpisodeCommand,
-    };
+    use crate::commands::episode_commands;
     use common::AppCommonError;
     use domain::{episode::Episode, EpisodeRepository};
     use infrastructure::InfraError;
@@ -14,7 +11,7 @@ pub mod episode_usecases {
 
     pub(crate) async fn save_episode<T>(
         repo: Arc<T>,
-        cmd: SaveEpisodeCommand,
+        cmd: episode_commands::SaveEpisodeCommand,
     ) -> Result<(), AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
@@ -25,7 +22,7 @@ pub mod episode_usecases {
 
     pub(crate) async fn edit_episode<T>(
         repo: Arc<T>,
-        cmd: EditEpisodeCommand,
+        cmd: episode_commands::EditEpisodeCommand,
     ) -> Result<(), AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
@@ -36,7 +33,7 @@ pub mod episode_usecases {
 
     pub(crate) async fn all_episodes<T>(
         repo: Arc<T>,
-        _cmd: AllEpisodeCommand,
+        _cmd: episode_commands::AllEpisodeCommand,
     ) -> Result<Vec<Episode>, AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
@@ -46,7 +43,7 @@ pub mod episode_usecases {
 
     pub(crate) async fn order_by_date_range_episodes<T>(
         repo: Arc<T>,
-        cmd: OrderByDateRangeEpisodeCommand,
+        cmd: episode_commands::OrderByDateRangeEpisodeCommand,
     ) -> Result<Vec<Episode>, AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
@@ -56,7 +53,7 @@ pub mod episode_usecases {
 
     pub(crate) async fn remove_episode<T>(
         repo: Arc<T>,
-        cmd: RemoveByIdEpisodeCommand,
+        cmd: episode_commands::RemoveEpisodeCommand,
     ) -> Result<(), AppCommonError>
     where
         T: EpisodeRepository<Error = InfraError> + 'static,
@@ -75,7 +72,7 @@ mod test {
         episode::{Episode, EpisodeId},
         Date,
     };
-    use infrastructure::episode_repository_impl::MockEpisodeRepositoryImpl;
+    use infrastructure::episode_repository_impl::MockEpisodeRepository;
     use infrastructure::InfraError;
     use mockall::predicate;
     use pretty_assertions::assert_eq;
@@ -85,7 +82,7 @@ mod test {
     async fn test_save_episode_usecase() {
         let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
 
-        let mut mock_repo_ok = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_ok = MockEpisodeRepository::new();
         mock_repo_ok
             .expect_save()
             .with(predicate::eq(episode.clone()))
@@ -96,7 +93,7 @@ mod test {
         let res_ok = episode_usecases::save_episode(Arc::new(mock_repo_ok), cmd).await;
         assert_matches!(res_ok, Ok(_));
 
-        let mut mock_repo_err = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_err = MockEpisodeRepository::new();
         mock_repo_err
             .expect_save()
             .with(predicate::eq(episode.clone()))
@@ -111,7 +108,7 @@ mod test {
     #[tokio::test]
     async fn test_edit_episode_usecase() {
         let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
-        let mut mock_repo_ok = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_ok = MockEpisodeRepository::new();
         mock_repo_ok
             .expect_edit()
             .with(predicate::eq(episode.clone()))
@@ -122,7 +119,7 @@ mod test {
         let res_ok = episode_usecases::edit_episode(Arc::new(mock_repo_ok), cmd).await;
         assert_matches!(res_ok, Ok(_));
 
-        let mut mock_repo_err = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_err = MockEpisodeRepository::new();
         mock_repo_err
             .expect_edit()
             .with(predicate::eq(episode.clone()))
@@ -137,7 +134,7 @@ mod test {
     #[tokio::test]
     async fn test_all_episodes_usecase() {
         let episodes = vec![Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap()];
-        let mut mock_repo = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo = MockEpisodeRepository::new();
         mock_repo
             .expect_all()
             .times(1)
@@ -156,7 +153,7 @@ mod test {
         let start = Date::from_ymd(2022, 12, 4).unwrap();
         let end = Date::from_ymd(2022, 12, 6).unwrap();
 
-        let mut mock_repo = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo = MockEpisodeRepository::new();
         mock_repo
             .expect_order_by_date_range()
             .withf(move |s, e| start == *s && end == *e)
@@ -174,23 +171,23 @@ mod test {
     async fn test_remove_episode_usecase() {
         let episode_id = EpisodeId::generate();
 
-        let mut mock_repo_ok = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_ok = MockEpisodeRepository::new();
         mock_repo_ok
             .expect_remove()
             .with(predicate::eq(episode_id))
             .return_const(Ok(()));
 
-        let cmd = episode_commands::RemoveByIdEpisodeCommand::new(episode_id);
+        let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
         let res_ok = episode_usecases::remove_episode(Arc::new(mock_repo_ok), cmd).await;
         assert_matches!(res_ok, Ok(_));
 
-        let mut mock_repo_err = MockEpisodeRepositoryImpl::new();
+        let mut mock_repo_err = MockEpisodeRepository::new();
         mock_repo_err
             .expect_remove()
             .with(predicate::eq(episode_id))
             .return_const(Err(InfraError::NoRecordError));
 
-        let cmd = episode_commands::RemoveByIdEpisodeCommand::new(episode_id);
+        let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
         let res_err = episode_usecases::remove_episode(Arc::new(mock_repo_err), cmd).await;
         assert_matches!(res_err, Err(AppCommonError::NoRecordError));
     }

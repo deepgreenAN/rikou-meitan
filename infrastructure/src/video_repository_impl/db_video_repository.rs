@@ -1,5 +1,5 @@
 use crate::InfraError;
-use domain::video::{Video, VideoId};
+use domain::video::{Video, VideoId, VideoType};
 use domain::VideoRepository;
 
 use async_trait::async_trait;
@@ -12,14 +12,14 @@ use std::marker::PhantomData;
 /// videoに関するSQLのランナーモジュール
 mod video_sql_runner {
     use crate::InfraError;
-    use domain::video::{Video, VideoId};
+    use domain::video::{Video, VideoId, VideoType};
     use sqlx::{PgConnection, Postgres};
 
     /// Video<T>を一つ保存
-    pub async fn save<T>(conn: &mut PgConnection, video: Video<T>) -> Result<(), InfraError>
-    where
-        T: Default + ToString,
-    {
+    pub async fn save<T: VideoType>(
+        conn: &mut PgConnection,
+        video: Video<T>,
+    ) -> Result<(), InfraError> {
         sqlx::query(
             r#"
 INSERT INTO videos (title, "url", id, "date", author, "like", video_type)
@@ -41,10 +41,10 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)
     }
 
     /// Video<T>を一つ編集
-    pub async fn edit<T>(conn: &mut PgConnection, video: Video<T>) -> Result<(), InfraError>
-    where
-        T: Default + ToString,
-    {
+    pub async fn edit<T: VideoType>(
+        conn: &mut PgConnection,
+        video: Video<T>,
+    ) -> Result<(), InfraError> {
         sqlx::query(
             r#"
 UPDATE videos SET title = $1, "url" = $2, "date" = $3, author = $4
@@ -65,10 +65,10 @@ WHERE video_type = $5 AND id = $6 RETURNING *
     }
 
     /// `id`を持つVideo<T>のLikeを一つ増やす
-    pub async fn increment_like<T>(conn: &mut PgConnection, id: VideoId) -> Result<(), InfraError>
-    where
-        T: Default + ToString,
-    {
+    pub async fn increment_like<T: VideoType>(
+        conn: &mut PgConnection,
+        id: VideoId,
+    ) -> Result<(), InfraError> {
         sqlx::query(
             r#"
 UPDATE videos SET "like" = "like" + 1 WHERE video_type = $1 AND id = $2 RETURNING *
@@ -84,10 +84,7 @@ UPDATE videos SET "like" = "like" + 1 WHERE video_type = $1 AND id = $2 RETURNIN
     }
 
     /// 全てのVideo<T>を取得
-    pub async fn all<T>(conn: &mut PgConnection) -> Result<Vec<Video<T>>, InfraError>
-    where
-        T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Unpin,
-    {
+    pub async fn all<T: VideoType>(conn: &mut PgConnection) -> Result<Vec<Video<T>>, InfraError> {
         let all_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
 SELECT * FROM videos WHERE video_type = $1
@@ -101,13 +98,10 @@ SELECT * FROM videos WHERE video_type = $1
     }
 
     /// Likeを降順に`length`分のVideo<T>を取得．Likeが同じ場合はidを昇順で並べる．
-    pub async fn order_by_like<T>(
+    pub async fn order_by_like<T: VideoType>(
         conn: &mut PgConnection,
         length: usize,
-    ) -> Result<Vec<Video<T>>, InfraError>
-    where
-        T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Unpin,
-    {
+    ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
 SELECT * FROM videos WHERE video_type = $1 ORDER BY "like" DESC, id ASC LIMIT $2
@@ -122,14 +116,11 @@ SELECT * FROM videos WHERE video_type = $1 ORDER BY "like" DESC, id ASC LIMIT $2
     }
 
     /// Likeを降順・idを昇順に`reference`以降のVideo<T>を`length`分取得．
-    pub async fn order_by_like_later<T>(
+    pub async fn order_by_like_later<T: VideoType>(
         conn: &mut PgConnection,
         reference: &Video<T>,
         length: usize,
-    ) -> Result<Vec<Video<T>>, InfraError>
-    where
-        T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Unpin,
-    {
+    ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
 SELECT * FROM videos WHERE video_type = $1 AND $2 >= "like" AND $3 < id ORDER BY "like" DESC, id ASC LIMIT $4
@@ -146,13 +137,10 @@ SELECT * FROM videos WHERE video_type = $1 AND $2 >= "like" AND $3 < id ORDER BY
     }
 
     /// dateを降順に`length`分の`Video<T>`を取得．dateが同じ場合はidを昇順で並べる．
-    pub async fn order_by_date<T>(
+    pub async fn order_by_date<T: VideoType>(
         conn: &mut PgConnection,
         length: usize,
-    ) -> Result<Vec<Video<T>>, InfraError>
-    where
-        T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Unpin,
-    {
+    ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
 SELECT * FROM videos WHERE video_type = $1 ORDER BY "date" DESC, id ASC LIMIT $2
@@ -167,14 +155,11 @@ SELECT * FROM videos WHERE video_type = $1 ORDER BY "date" DESC, id ASC LIMIT $2
     }
 
     /// dateを降順・idを昇順に`reference`以降の`Video<T>`を`length`分取得．
-    pub async fn order_by_date_later<T>(
+    pub async fn order_by_date_later<T: VideoType>(
         conn: &mut PgConnection,
         reference: &Video<T>,
         length: usize,
-    ) -> Result<Vec<Video<T>>, InfraError>
-    where
-        T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Unpin,
-    {
+    ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
 SELECT * FROM videos WHERE video_type = $1 AND $2 >= "date" AND $3 < id ORDER BY "date" DESC, id ASC LIMIT $4
@@ -224,10 +209,7 @@ impl<T> VideoPgDbRepository<T> {
 }
 
 #[async_trait]
-impl<T> VideoRepository<T> for VideoPgDbRepository<T>
-where
-    T: Default + ToString + TryFrom<String, Error = domain::DomainError> + Send + Sync + Unpin,
-{
+impl<T: VideoType> VideoRepository<T> for VideoPgDbRepository<T> {
     type Error = InfraError;
     async fn save(&self, video: Video<T>) -> Result<(), InfraError> {
         let mut conn = self.pool.acquire().await?;

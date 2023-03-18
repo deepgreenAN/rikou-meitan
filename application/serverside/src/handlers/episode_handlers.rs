@@ -78,7 +78,7 @@ pub async fn remove_episode(
     State(app_state): State<AppState>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
-    let cmd = episode_commands::RemoveByIdEpisodeCommand::new(id);
+    let cmd = episode_commands::RemoveEpisodeCommand::new(id);
     episode_usecases::remove_episode(app_state.episode_repo, cmd).await?;
     Ok(())
 }
@@ -90,7 +90,7 @@ mod test {
     use common::AppCommonError;
     use domain::episode::{Episode, EpisodeId};
     use domain::Date;
-    use infrastructure::episode_repository_impl::MockEpisodeRepositoryImpl;
+    use infrastructure::episode_repository_impl::MockEpisodeRepository;
 
     use assert_matches::assert_matches;
     use axum::{
@@ -139,7 +139,7 @@ mod test {
             let cloned_episode = episode.clone();
             let mock_ctx_ok = mock_episode_usecases::save_episode_context();
             mock_ctx_ok
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.episode == cloned_episode)
                 .return_const(Ok(()));
 
@@ -159,7 +159,7 @@ mod test {
             let cloned_episode = episode.clone();
             let mock_ctx_err = mock_episode_usecases::save_episode_context();
             mock_ctx_err
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.episode == cloned_episode)
                 .return_const(Err(AppCommonError::ConflictError));
 
@@ -192,7 +192,7 @@ mod test {
             let cloned_episode = episode.clone();
             let mock_ctx_ok = mock_episode_usecases::edit_episode_context();
             mock_ctx_ok
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.episode == cloned_episode)
                 .return_const(Ok(()));
 
@@ -212,7 +212,7 @@ mod test {
             let cloned_episode = episode.clone();
             let mock_ctx_err = mock_episode_usecases::edit_episode_context();
             mock_ctx_err
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.episode == cloned_episode)
                 .return_const(Err(AppCommonError::NoRecordError));
 
@@ -243,7 +243,7 @@ mod test {
 
         let mock_ctx = mock_episode_usecases::all_episodes_context();
         mock_ctx
-            .expect::<MockEpisodeRepositoryImpl>()
+            .expect::<MockEpisodeRepository>()
             .return_const(Ok(episodes.clone()));
 
         let request = Request::builder()
@@ -274,7 +274,7 @@ mod test {
 
         let mock_ctx = mock_episode_usecases::order_by_date_range_episodes_context();
         mock_ctx
-            .expect::<MockEpisodeRepositoryImpl>()
+            .expect::<MockEpisodeRepository>()
             .withf(move |_, cmd| start == cmd.start && end == cmd.end)
             .return_const(Ok(episodes.clone()));
 
@@ -304,7 +304,7 @@ mod test {
         {
             let mock_ctx_ok = mock_episode_usecases::remove_episode_context();
             mock_ctx_ok
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.id == episode_id)
                 .return_const(Ok(()));
 
@@ -322,7 +322,7 @@ mod test {
         {
             let mock_ctx_err = mock_episode_usecases::remove_episode_context();
             mock_ctx_err
-                .expect::<MockEpisodeRepositoryImpl>()
+                .expect::<MockEpisodeRepository>()
                 .withf(move |_, cmd| cmd.id == episode_id)
                 .return_const(Err(AppCommonError::NoRecordError));
 

@@ -21,6 +21,6 @@ pub(crate) struct OrderByDateRangeEpisodeCommand {
 }
 
 #[derive(new)]
-pub(crate) struct RemoveByIdEpisodeCommand {
+pub(crate) struct RemoveEpisodeCommand {
     pub id: EpisodeId,
 }

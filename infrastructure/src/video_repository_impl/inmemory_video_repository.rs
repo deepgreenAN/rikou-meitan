@@ -13,11 +13,11 @@ use uuid::Uuid;
 
 /// 即席のVideoRepository
 #[derive(Default)]
-pub struct InmemoryVideoRepository<T> {
+pub struct InMemoryVideoRepository<T> {
     map: Arc<Mutex<HashMap<Uuid, Video<T>>>>,
 }
 
-impl<T> InmemoryVideoRepository<T> {
+impl<T> InMemoryVideoRepository<T> {
     pub fn new() -> Self {
         Self {
             map: Arc::new(Mutex::new(HashMap::new())),
@@ -26,7 +26,7 @@ impl<T> InmemoryVideoRepository<T> {
 }
 
 #[async_trait]
-impl<T> VideoRepository<T> for InmemoryVideoRepository<T>
+impl<T> VideoRepository<T> for InMemoryVideoRepository<T>
 where
     T: Send + Sync + Clone,
 {
@@ -118,7 +118,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::InmemoryVideoRepository;
+    use super::InMemoryVideoRepository;
     use crate::InfraError;
     use domain::video::{Original, Video};
     use domain::VideoRepository;
@@ -142,7 +142,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -165,7 +165,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -195,7 +195,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -225,7 +225,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -251,7 +251,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -290,7 +290,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -316,7 +316,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -355,7 +355,7 @@ mod test {
     ) -> Result<(), InfraError> {
         let mut originals = original_videos?;
 
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         for original in originals.iter().cloned() {
             repo.save(original).await?;
@@ -387,7 +387,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_video_edit_no_exists() -> Result<(), InfraError> {
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         let original = Faker.fake::<Video<Original>>();
 
@@ -401,7 +401,7 @@ mod test {
     #[rstest]
     #[tokio::test]
     async fn test_video_remove_no_exists() -> Result<(), InfraError> {
-        let repo = InmemoryVideoRepository::<Original>::new();
+        let repo = InMemoryVideoRepository::<Original>::new();
 
         let original = Faker.fake::<Video<Original>>();
 
