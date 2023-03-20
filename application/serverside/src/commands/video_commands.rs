@@ -16,26 +16,27 @@ pub(crate) struct IncrementLikeVideoCommand {
     pub id: VideoId,
 }
 
-pub(crate) struct AllVideoCommand;
+#[derive(new)]
+pub(crate) struct AllVideosCommand;
 
 #[derive(new)]
-pub(crate) struct OrderByLikeVideoCommand {
+pub(crate) struct OrderByLikeVideosCommand {
     pub length: usize,
 }
 
 #[derive(new)]
-pub(crate) struct OrderByLikeLaterVideoCommand<T: VideoType> {
+pub(crate) struct OrderByLikeLaterVideosCommand<T: VideoType> {
     pub reference: Video<T>,
     pub length: usize,
 }
 
 #[derive(new)]
-pub(crate) struct OrderByDateVideoCommand {
+pub(crate) struct OrderByDateVideosCommand {
     pub length: usize,
 }
 
 #[derive(new)]
-pub(crate) struct OrderByDateLaterVideoCommand<T: VideoType> {
+pub(crate) struct OrderByDateLaterVideosCommand<T: VideoType> {
     pub reference: Video<T>,
     pub length: usize,
 }

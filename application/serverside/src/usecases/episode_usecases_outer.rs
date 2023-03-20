@@ -66,12 +66,12 @@ pub mod episode_usecases {
 mod test {
     use super::episode_usecases;
     use crate::commands::episode_commands;
-    use assert_matches::assert_matches;
     use common::AppCommonError;
     use domain::{
         episode::{Episode, EpisodeId},
         Date,
     };
+    use fake::{Fake, Faker};
     use infrastructure::episode_repository_impl::MockEpisodeRepository;
     use infrastructure::InfraError;
     use mockall::predicate;
@@ -80,60 +80,65 @@ mod test {
 
     #[tokio::test]
     async fn test_save_episode_usecase() {
-        let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
+        let episode = Faker.fake::<Episode>();
+        {
+            let mut mock_repo_ok = MockEpisodeRepository::new();
+            mock_repo_ok
+                .expect_save()
+                .with(predicate::eq(episode.clone()))
+                .times(1)
+                .return_const(Ok(()));
 
-        let mut mock_repo_ok = MockEpisodeRepository::new();
-        mock_repo_ok
-            .expect_save()
-            .with(predicate::eq(episode.clone()))
-            .times(1)
-            .return_const(Ok(()));
+            let cmd = episode_commands::SaveEpisodeCommand::new(episode.clone());
+            let res_ok = episode_usecases::save_episode(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockEpisodeRepository::new();
+            mock_repo_err
+                .expect_save()
+                .with(predicate::eq(episode.clone()))
+                .times(1)
+                .return_const(Err(InfraError::ConflictError));
 
-        let cmd = episode_commands::SaveEpisodeCommand::new(episode.clone());
-        let res_ok = episode_usecases::save_episode(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
-
-        let mut mock_repo_err = MockEpisodeRepository::new();
-        mock_repo_err
-            .expect_save()
-            .with(predicate::eq(episode.clone()))
-            .times(1)
-            .return_const(Err(InfraError::ConflictError));
-
-        let cmd = episode_commands::SaveEpisodeCommand::new(episode.clone());
-        let res_err = episode_usecases::save_episode(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::ConflictError));
+            let cmd = episode_commands::SaveEpisodeCommand::new(episode.clone());
+            let res_err = episode_usecases::save_episode(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::ConflictError)));
+        }
     }
 
     #[tokio::test]
     async fn test_edit_episode_usecase() {
-        let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
-        let mut mock_repo_ok = MockEpisodeRepository::new();
-        mock_repo_ok
-            .expect_edit()
-            .with(predicate::eq(episode.clone()))
-            .times(1)
-            .return_const(Ok(()));
+        let episode = Faker.fake::<Episode>();
+        {
+            let mut mock_repo_ok = MockEpisodeRepository::new();
+            mock_repo_ok
+                .expect_edit()
+                .with(predicate::eq(episode.clone()))
+                .times(1)
+                .return_const(Ok(()));
 
-        let cmd = episode_commands::EditEpisodeCommand::new(episode.clone());
-        let res_ok = episode_usecases::edit_episode(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
+            let cmd = episode_commands::EditEpisodeCommand::new(episode.clone());
+            let res_ok = episode_usecases::edit_episode(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockEpisodeRepository::new();
+            mock_repo_err
+                .expect_edit()
+                .with(predicate::eq(episode.clone()))
+                .times(1)
+                .return_const(Err(InfraError::NoRecordError));
 
-        let mut mock_repo_err = MockEpisodeRepository::new();
-        mock_repo_err
-            .expect_edit()
-            .with(predicate::eq(episode.clone()))
-            .times(1)
-            .return_const(Err(InfraError::NoRecordError));
-
-        let cmd = episode_commands::EditEpisodeCommand::new(episode.clone());
-        let res_err = episode_usecases::edit_episode(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
+            let cmd = episode_commands::EditEpisodeCommand::new(episode.clone());
+            let res_err = episode_usecases::edit_episode(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+        }
     }
 
     #[tokio::test]
     async fn test_all_episodes_usecase() {
-        let episodes = vec![Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap()];
+        let episodes = vec![Faker.fake::<Episode>(); 100];
         let mut mock_repo = MockEpisodeRepository::new();
         mock_repo
             .expect_all()
@@ -149,9 +154,9 @@ mod test {
 
     #[tokio::test]
     async fn test_order_by_date_range_episodes_usecase() {
-        let episodes = vec![Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap()];
-        let start = Date::from_ymd(2022, 12, 4).unwrap();
-        let end = Date::from_ymd(2022, 12, 6).unwrap();
+        let episodes = vec![Faker.fake::<Episode>(); 100];
+        let start = Faker.fake::<Date>();
+        let end = Faker.fake::<Date>();
 
         let mut mock_repo = MockEpisodeRepository::new();
         mock_repo
@@ -171,24 +176,27 @@ mod test {
     async fn test_remove_episode_usecase() {
         let episode_id = EpisodeId::generate();
 
-        let mut mock_repo_ok = MockEpisodeRepository::new();
-        mock_repo_ok
-            .expect_remove()
-            .with(predicate::eq(episode_id))
-            .return_const(Ok(()));
+        {
+            let mut mock_repo_ok = MockEpisodeRepository::new();
+            mock_repo_ok
+                .expect_remove()
+                .with(predicate::eq(episode_id))
+                .return_const(Ok(()));
 
-        let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
-        let res_ok = episode_usecases::remove_episode(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
+            let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
+            let res_ok = episode_usecases::remove_episode(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockEpisodeRepository::new();
+            mock_repo_err
+                .expect_remove()
+                .with(predicate::eq(episode_id))
+                .return_const(Err(InfraError::NoRecordError));
 
-        let mut mock_repo_err = MockEpisodeRepository::new();
-        mock_repo_err
-            .expect_remove()
-            .with(predicate::eq(episode_id))
-            .return_const(Err(InfraError::NoRecordError));
-
-        let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
-        let res_err = episode_usecases::remove_episode(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
+            let cmd = episode_commands::RemoveEpisodeCommand::new(episode_id);
+            let res_err = episode_usecases::remove_episode(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+        }
     }
 }

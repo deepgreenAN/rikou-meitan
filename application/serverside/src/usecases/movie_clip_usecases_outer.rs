@@ -119,16 +119,15 @@ pub mod movie_clip_usecases {
 mod test {
     use super::movie_clip_usecases;
     use crate::commands::movie_clip_commands;
-    use infrastructure::InfraError;
-
-    use assert_matches::assert_matches;
     use common::AppCommonError;
     use domain::{
         movie_clip::{MovieClip, MovieClipId},
         Date,
     };
-    use fake::{Fake, Faker};
     use infrastructure::movie_clip_repository_impl::MockMovieClipRepository;
+    use infrastructure::InfraError;
+
+    use fake::{Fake, Faker};
     use mockall::predicate;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
@@ -137,83 +136,92 @@ mod test {
     async fn test_save_movie_clip_usecase() {
         let movie_clip = Faker.fake::<MovieClip>();
 
-        let mut mock_repo_ok = MockMovieClipRepository::new();
-        mock_repo_ok
-            .expect_save()
-            .with(predicate::eq(movie_clip.clone()))
-            .times(1)
-            .return_const(Ok(()));
+        {
+            let mut mock_repo_ok = MockMovieClipRepository::new();
+            mock_repo_ok
+                .expect_save()
+                .with(predicate::eq(movie_clip.clone()))
+                .times(1)
+                .return_const(Ok(()));
 
-        let cmd = movie_clip_commands::SaveMovieClipCommand::new(movie_clip.clone());
-        let res_ok = movie_clip_usecases::save_movie_clip(Arc::new(mock_repo_ok), cmd).await;
-        assert!(matches!(res_ok, Ok(_)));
+            let cmd = movie_clip_commands::SaveMovieClipCommand::new(movie_clip.clone());
+            let res_ok = movie_clip_usecases::save_movie_clip(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockMovieClipRepository::new();
+            mock_repo_err
+                .expect_save()
+                .with(predicate::eq(movie_clip.clone()))
+                .times(1)
+                .return_const(Err(InfraError::ConflictError));
 
-        let mut mock_repo_err = MockMovieClipRepository::new();
-        mock_repo_err
-            .expect_save()
-            .with(predicate::eq(movie_clip.clone()))
-            .times(1)
-            .return_const(Err(InfraError::ConflictError));
-
-        let cmd = movie_clip_commands::SaveMovieClipCommand::new(movie_clip.clone());
-        let res_err = movie_clip_usecases::save_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert!(matches!(res_err, Err(AppCommonError::ConflictError)));
+            let cmd = movie_clip_commands::SaveMovieClipCommand::new(movie_clip.clone());
+            let res_err = movie_clip_usecases::save_movie_clip(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::ConflictError)));
+        }
     }
 
     #[tokio::test]
     async fn test_edit_movie_clip_usecase() {
         let movie_clip = Faker.fake::<MovieClip>();
 
-        let mut mock_repo_ok = MockMovieClipRepository::new();
-        mock_repo_ok
-            .expect_edit()
-            .with(predicate::eq(movie_clip.clone()))
-            .times(1)
-            .return_const(Ok(()));
+        {
+            let mut mock_repo_ok = MockMovieClipRepository::new();
+            mock_repo_ok
+                .expect_edit()
+                .with(predicate::eq(movie_clip.clone()))
+                .times(1)
+                .return_const(Ok(()));
 
-        let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip.clone());
-        let res_ok = movie_clip_usecases::edit_movie_clip(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
+            let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip.clone());
+            let res_ok = movie_clip_usecases::edit_movie_clip(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockMovieClipRepository::new();
+            mock_repo_err
+                .expect_edit()
+                .with(predicate::eq(movie_clip.clone()))
+                .times(1)
+                .return_const(Err(InfraError::NoRecordError));
 
-        let mut mock_repo_err = MockMovieClipRepository::new();
-        mock_repo_err
-            .expect_edit()
-            .with(predicate::eq(movie_clip.clone()))
-            .times(1)
-            .return_const(Err(InfraError::NoRecordError));
-
-        let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip.clone());
-        let res_err = movie_clip_usecases::edit_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+            let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip.clone());
+            let res_err = movie_clip_usecases::edit_movie_clip(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+        }
     }
 
     #[tokio::test]
     async fn test_increment_like_movie_clip_usecase() {
         let id = MovieClipId::generate();
 
-        let mut mock_repo_ok = MockMovieClipRepository::new();
-        mock_repo_ok
-            .expect_increment_like()
-            .with(predicate::eq(id))
-            .times(1)
-            .return_const(Ok(()));
+        {
+            let mut mock_repo_ok = MockMovieClipRepository::new();
+            mock_repo_ok
+                .expect_increment_like()
+                .with(predicate::eq(id))
+                .times(1)
+                .return_const(Ok(()));
 
-        let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
-        let res_ok =
-            movie_clip_usecases::increment_like_movie_clip(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
+            let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
+            let res_ok =
+                movie_clip_usecases::increment_like_movie_clip(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockMovieClipRepository::new();
+            mock_repo_err
+                .expect_increment_like()
+                .with(predicate::eq(id))
+                .times(1)
+                .return_const(Err(InfraError::NoRecordError));
 
-        let mut mock_repo_err = MockMovieClipRepository::new();
-        mock_repo_err
-            .expect_increment_like()
-            .with(predicate::eq(id))
-            .times(1)
-            .return_const(Err(InfraError::NoRecordError));
-
-        let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
-        let res_err =
-            movie_clip_usecases::increment_like_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+            let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
+            let res_err =
+                movie_clip_usecases::increment_like_movie_clip(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+        }
     }
 
     #[tokio::test]
@@ -237,7 +245,7 @@ mod test {
     async fn test_order_by_like_movie_clips_usecase() {
         let clips = vec![Faker.fake::<MovieClip>(); 100];
 
-        let length = 10_usize;
+        let length = 100_usize;
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
@@ -255,7 +263,7 @@ mod test {
     #[tokio::test]
     async fn test_order_by_like_later_movie_clips_usecase() {
         let reference = Faker.fake::<MovieClip>();
-        let length = 10_usize;
+        let length = 100_usize;
 
         let clips = vec![Faker.fake::<MovieClip>(); 100];
 
@@ -303,7 +311,7 @@ mod test {
     async fn test_order_by_create_date_movie_clips_usecase() {
         let clips = vec![Faker.fake::<MovieClip>(); 100];
 
-        let length = 10_usize;
+        let length = 100_usize;
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
@@ -322,7 +330,7 @@ mod test {
     #[tokio::test]
     async fn test_order_by_create_date_later_movie_clips_usecase() {
         let reference = Faker.fake::<MovieClip>();
-        let length = 10_usize;
+        let length = 100_usize;
 
         let clips = vec![Faker.fake::<MovieClip>(); 100];
 
@@ -350,24 +358,28 @@ mod test {
     async fn test_remove_movie_clip_usecase() {
         let id = MovieClipId::generate();
 
-        let mut mock_repo_ok = MockMovieClipRepository::new();
-        mock_repo_ok
-            .expect_remove()
-            .with(predicate::eq(id))
-            .return_const(Ok(()));
+        {
+            let mut mock_repo_ok = MockMovieClipRepository::new();
+            mock_repo_ok
+                .expect_remove()
+                .with(predicate::eq(id))
+                .return_const(Ok(()));
 
-        let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
-        let res_ok = movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_ok), cmd).await;
-        assert_matches!(res_ok, Ok(_));
+            let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
+            let res_ok = movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_ok), cmd).await;
+            assert!(matches!(res_ok, Ok(_)));
+        }
+        {
+            let mut mock_repo_err = MockMovieClipRepository::new();
+            mock_repo_err
+                .expect_remove()
+                .with(predicate::eq(id))
+                .return_const(Err(InfraError::NoRecordError));
 
-        let mut mock_repo_err = MockMovieClipRepository::new();
-        mock_repo_err
-            .expect_remove()
-            .with(predicate::eq(id))
-            .return_const(Err(InfraError::NoRecordError));
-
-        let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
-        let res_err = movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_err), cmd).await;
-        assert_matches!(res_err, Err(AppCommonError::NoRecordError));
+            let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
+            let res_err =
+                movie_clip_usecases::remove_movie_clip(Arc::new(mock_repo_err), cmd).await;
+            assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
+        }
     }
 }

@@ -43,19 +43,12 @@ mod from_server_errors_into_response {
     impl From<InfraError> for AppCommonError {
         fn from(infra_error: InfraError) -> Self {
             match infra_error {
-                InfraError::DomainError(err) => {
-                    AppCommonError::DomainError(format!("{}", InfraError::DomainError(err)))
+                e @ InfraError::DomainError(_) => AppCommonError::DomainError(format!("{e}")),
+                e @ InfraError::DBConnectionError(_) => {
+                    AppCommonError::DBConnectionError(format!("{e}"))
                 }
-                InfraError::DBConnectionError(err) => AppCommonError::DBConnectionError(format!(
-                    "{}",
-                    InfraError::DBConnectionError(err)
-                )),
-                InfraError::OtherSQLXError(err) => {
-                    AppCommonError::OtherSQLXError(format!("{}", InfraError::OtherSQLXError(err)))
-                }
-                InfraError::DBDecodeError(err) => {
-                    AppCommonError::DBDecodeError(format!("{}", InfraError::DBDecodeError(err)))
-                }
+                e @ InfraError::OtherSQLXError(_) => AppCommonError::OtherSQLXError(format!("{e}")),
+                e @ InfraError::DBDecodeError(_) => AppCommonError::DBDecodeError(format!("{e}")),
                 InfraError::ConflictError => AppCommonError::ConflictError,
                 InfraError::NoRecordError => AppCommonError::NoRecordError,
             }

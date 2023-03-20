@@ -26,6 +26,7 @@ use axum::{
 };
 
 use serde::Deserialize;
+use std::str::FromStr;
 
 pub async fn save_episode(
     State(app_state): State<AppState>,
@@ -55,22 +56,48 @@ pub async fn all_episodes(
     Ok(Json(episodes))
 }
 
-#[derive(Deserialize)]
-pub struct DateRange {
-    start: Date,
-    end: Date,
+#[derive(Deserialize, strum_macros::EnumString)]
+#[serde(try_from = "String")]
+#[strum(serialize_all = "snake_case")]
+pub enum SortType {
+    Date,
 }
 
-pub async fn order_by_date_range_episodes(
-    date_range_res: Result<Query<DateRange>, QueryRejection>,
+impl TryFrom<String> for SortType {
+    type Error = <SortType as FromStr>::Err;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.parse()
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+pub struct EpisodeQuery {
+    /// クエリのstart日時
+    start: Option<Date>,
+    /// クエリのend日時
+    end: Option<Date>,
+    /// クエリのソートタイプ
+    sort_type: SortType,
+}
+
+pub async fn get_episodes_with_query(
+    query_res: Result<Query<EpisodeQuery>, QueryRejection>,
     State(app_state): State<AppState>,
 ) -> Result<Json<Vec<Episode>>, AppCommonError> {
-    let date_range = date_range_res?.0;
-    let cmd =
-        episode_commands::OrderByDateRangeEpisodeCommand::new(date_range.start, date_range.end);
-    let episodes =
-        episode_usecases::order_by_date_range_episodes(app_state.episode_repo, cmd).await?;
-    Ok(Json(episodes))
+    let query = query_res?.0;
+
+    match (query.sort_type, query.start, query.end) {
+        (SortType::Date, Some(start), Some(end)) => {
+            let cmd = episode_commands::OrderByDateRangeEpisodeCommand::new(start, end);
+            let episodes =
+                episode_usecases::order_by_date_range_episodes(app_state.episode_repo, cmd).await?;
+            Ok(Json(episodes))
+        }
+        _ => Err(AppCommonError::QueryStringRejectionError(
+            "Invalid query parameter combination.".to_string(),
+        )),
+    }
 }
 
 pub async fn remove_episode(
@@ -92,7 +119,6 @@ mod test {
     use domain::Date;
     use infrastructure::episode_repository_impl::MockEpisodeRepository;
 
-    use assert_matches::assert_matches;
     use axum::{
         body::Body,
         http::{self, Request, StatusCode},
@@ -100,6 +126,7 @@ mod test {
         Router,
     };
 
+    use fake::{Fake, Faker};
     use once_cell::sync::Lazy;
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
@@ -119,10 +146,7 @@ mod test {
                     .patch(super::edit_episode)
                     .get(super::all_episodes),
             )
-            .route(
-                "/episode/order_date",
-                get(super::order_by_date_range_episodes),
-            )
+            .route("/episode/query", get(super::get_episodes_with_query))
             .route("/episode/:id", delete(super::remove_episode))
             .with_state(app_state)
     }
@@ -133,14 +157,16 @@ mod test {
     async fn test_save_episode(mut router: Router) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
 
-        let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
+        let episode = Faker.fake::<Episode>();
 
         {
-            let cloned_episode = episode.clone();
             let mock_ctx_ok = mock_episode_usecases::save_episode_context();
             mock_ctx_ok
                 .expect::<MockEpisodeRepository>()
-                .withf(move |_, cmd| cmd.episode == cloned_episode)
+                .withf({
+                    let episode = episode.clone();
+                    move |_, cmd| cmd.episode == episode
+                })
                 .return_const(Ok(()));
 
             let request = Request::builder()
@@ -156,11 +182,13 @@ mod test {
             assert!(body.is_empty());
         }
         {
-            let cloned_episode = episode.clone();
             let mock_ctx_err = mock_episode_usecases::save_episode_context();
             mock_ctx_err
                 .expect::<MockEpisodeRepository>()
-                .withf(move |_, cmd| cmd.episode == cloned_episode)
+                .withf({
+                    let episode = episode.clone();
+                    move |_, cmd| cmd.episode == episode
+                })
                 .return_const(Err(AppCommonError::ConflictError));
 
             let request = Request::builder()
@@ -176,7 +204,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::ConflictError);
+            assert!(matches!(err, AppCommonError::ConflictError));
         }
     }
 
@@ -186,14 +214,16 @@ mod test {
     async fn test_edit_episode(mut router: Router) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
 
-        let episode = Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap();
+        let episode = Faker.fake::<Episode>();
 
         {
-            let cloned_episode = episode.clone();
             let mock_ctx_ok = mock_episode_usecases::edit_episode_context();
             mock_ctx_ok
                 .expect::<MockEpisodeRepository>()
-                .withf(move |_, cmd| cmd.episode == cloned_episode)
+                .withf({
+                    let episode = episode.clone();
+                    move |_, cmd| cmd.episode == episode
+                })
                 .return_const(Ok(()));
 
             let request = Request::builder()
@@ -209,11 +239,13 @@ mod test {
             assert!(body.is_empty());
         }
         {
-            let cloned_episode = episode.clone();
             let mock_ctx_err = mock_episode_usecases::edit_episode_context();
             mock_ctx_err
                 .expect::<MockEpisodeRepository>()
-                .withf(move |_, cmd| cmd.episode == cloned_episode)
+                .withf({
+                    let episode = episode.clone();
+                    move |_, cmd| cmd.episode == episode
+                })
                 .return_const(Err(AppCommonError::NoRecordError));
 
             let request = Request::builder()
@@ -229,7 +261,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::NoRecordError);
+            assert!(matches!(err, AppCommonError::NoRecordError));
         }
     }
 
@@ -239,7 +271,7 @@ mod test {
     async fn test_all_episodes(mut router: Router) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
 
-        let episodes = vec![Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap()];
+        let episodes = vec![Faker.fake::<Episode>(); 100];
 
         let mock_ctx = mock_episode_usecases::all_episodes_context();
         mock_ctx
@@ -267,10 +299,10 @@ mod test {
     async fn test_order_by_date_episodes(mut router: Router) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
 
-        let episodes = vec![Episode::new((2022, 12, 4), "Some Contents".to_string()).unwrap()];
+        let episodes = vec![Faker.fake::<Episode>(); 100];
 
-        let start = Date::from_ymd(2022, 12, 4).unwrap();
-        let end = Date::from_ymd(2022, 12, 6).unwrap();
+        let start = Faker.fake::<Date>();
+        let end = Faker.fake::<Date>();
 
         let mock_ctx = mock_episode_usecases::order_by_date_range_episodes_context();
         mock_ctx
@@ -280,7 +312,9 @@ mod test {
 
         let request = Request::builder()
             .method(http::Method::GET)
-            .uri(&format!("/episode/order_date?start={start}&end={end}"))
+            .uri(&format!(
+                "/episode/query?start={start}&end={end}&sort_type=date"
+            ))
             .body(Body::empty())
             .unwrap();
 
@@ -338,7 +372,7 @@ mod test {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let err: AppCommonError = serde_json::from_slice(&body).unwrap();
 
-            assert_matches!(err, AppCommonError::NoRecordError);
+            assert!(matches!(err, AppCommonError::NoRecordError));
         }
     }
 }
