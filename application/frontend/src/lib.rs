@@ -1,6 +1,7 @@
 pub mod commands;
 mod error;
 pub mod usecases;
+pub mod utils;
 
 pub use error::AppFrontError;
 

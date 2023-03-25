@@ -2,6 +2,10 @@
     "cSpell.words": [
         "Inmemory",
         "Kirinuki",
-        "kirinukis"
+        "kirinukis",
+        "serverside"
+    ],
+    "rust-analyzer.cargo.features": [
+        "inmemory"
     ]
 }

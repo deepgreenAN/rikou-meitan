@@ -1,5 +1,8 @@
 use crate::components::{EditModal, InputType, MovieCard, RequiredString, ValidationInput};
-use domain::{video::Video, Date, MovieUrl};
+use domain::{
+    video::{Video, VideoType},
+    Date, MovieUrl,
+};
 
 use dioxus::prelude::*;
 
@@ -11,7 +14,7 @@ struct VideoForm {
     author: Option<String>,
 }
 
-impl<T> TryFrom<VideoForm> for Video<T> {
+impl<T: VideoType> TryFrom<VideoForm> for Video<T> {
     type Error = String;
     fn try_from(value: VideoForm) -> Result<Self, Self::Error> {
         Ok(Video::<T>::new_with_domains(
@@ -27,7 +30,7 @@ impl<T> TryFrom<VideoForm> for Video<T> {
 // EditVideoコンポーネント
 
 #[derive(Props)]
-pub struct EditVideoProps<'a, T> {
+pub struct EditVideoProps<'a, T: VideoType> {
     /// 編集のベースとなるVideo．Someである場合に編集モードとなる．
     #[props(!optional)]
     base_video: Option<Video<T>>,
@@ -41,7 +44,7 @@ pub struct EditVideoProps<'a, T> {
 
 pub fn EditVideo<'a, T>(cx: Scope<'a, EditVideoProps<'a, T>>) -> Element
 where
-    T: Clone + crate::utils::Caption,
+    T: VideoType + crate::utils::Caption,
 {
     let video_form = use_ref(cx, || {
         if let Some(base_video) = cx.props.base_video.as_ref() {

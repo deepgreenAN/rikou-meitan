@@ -132,7 +132,15 @@ mod test {
     use fake::{Fake, Faker};
     use mockall::predicate;
     use pretty_assertions::assert_eq;
+    use rstest::{fixture, rstest};
     use std::sync::Arc;
+
+    #[fixture]
+    fn originals() -> Vec<Video<Original>> {
+        (0..100)
+            .map(|_| Faker.fake::<Video<Original>>())
+            .collect::<Vec<_>>()
+    }
 
     #[tokio::test]
     async fn test_save_video_usecase() {
@@ -215,10 +223,9 @@ mod test {
         assert!(matches!(res_err, Err(AppCommonError::NoRecordError)));
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_all_video_usecase() {
-        let originals = vec![Faker.fake::<Video<Original>>(); 100];
-
+    async fn test_all_video_usecase(originals: Vec<Video<Original>>) {
         let mut mock_repo_ok = MockVideoOriginalRepository::new();
         mock_repo_ok
             .expect_all()
@@ -230,10 +237,9 @@ mod test {
         assert_eq!(res_ok.unwrap(), originals);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_video_usecase() {
-        let originals = vec![Faker.fake::<Video<Original>>(); 100];
-
+    async fn test_order_by_like_video_usecase(originals: Vec<Video<Original>>) {
         let length = 100_usize;
 
         let mut mock_repo_ok = MockVideoOriginalRepository::new();
@@ -248,9 +254,9 @@ mod test {
         assert_eq!(res_ok.unwrap(), originals);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_later_video_usecase() {
-        let originals = vec![Faker.fake::<Video<Original>>(); 100];
+    async fn test_order_by_like_later_video_usecase(originals: Vec<Video<Original>>) {
         let reference = Faker.fake::<Video<Original>>();
 
         let length = 100_usize;
@@ -272,10 +278,9 @@ mod test {
         assert_eq!(res_ok.unwrap(), originals);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_video_usecase() {
-        let originals = vec![Faker.fake::<Video<Original>>(); 100];
-
+    async fn test_order_by_date_video_usecase(originals: Vec<Video<Original>>) {
         let length = 100_usize;
 
         let mut mock_repo_ok = MockVideoOriginalRepository::new();
@@ -290,9 +295,9 @@ mod test {
         assert_eq!(res_ok.unwrap(), originals);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_later_video_usecase() {
-        let originals = vec![Faker.fake::<Video<Original>>(); 100];
+    async fn test_order_by_date_later_video_usecase(originals: Vec<Video<Original>>) {
         let reference = Faker.fake::<Video<Original>>();
 
         let length = 100_usize;

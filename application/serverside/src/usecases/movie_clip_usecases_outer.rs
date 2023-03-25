@@ -130,7 +130,15 @@ mod test {
     use fake::{Fake, Faker};
     use mockall::predicate;
     use pretty_assertions::assert_eq;
+    use rstest::{fixture, rstest};
     use std::sync::Arc;
+
+    #[fixture]
+    fn movie_clips() -> Vec<MovieClip> {
+        (0..100)
+            .map(|_| Faker.fake::<MovieClip>())
+            .collect::<Vec<_>>()
+    }
 
     #[tokio::test]
     async fn test_save_movie_clip_usecase() {
@@ -224,10 +232,9 @@ mod test {
         }
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_all_movie_clips_usecase() {
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
-
+    async fn test_all_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
             .expect_all()
@@ -241,31 +248,29 @@ mod test {
         assert_eq!(res_vec, movie_clips.clone());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_movie_clips_usecase() {
-        let clips = vec![Faker.fake::<MovieClip>(); 100];
-
+    async fn test_order_by_like_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let length = 100_usize;
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
             .expect_order_by_like()
             .with(predicate::eq(length))
-            .return_const(Ok(clips.clone()));
+            .return_const(Ok(movie_clips.clone()));
 
         let cmd = movie_clip_commands::OrderByLikeMovieClipCommand::new(length);
         let res_vec = movie_clip_usecases::order_by_like_movie_clips(Arc::new(mock_repo), cmd)
             .await
             .unwrap();
-        assert_eq!(res_vec, clips);
+        assert_eq!(res_vec, movie_clips);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_later_movie_clips_usecase() {
+    async fn test_order_by_like_later_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
-
-        let clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
@@ -276,20 +281,19 @@ mod test {
                     *arg_reference == reference && *arg_length == length
                 }
             })
-            .return_const(Ok(clips.clone()));
+            .return_const(Ok(movie_clips.clone()));
 
         let cmd = movie_clip_commands::OrderByLikeLaterMovieClipCommand::new(reference, length);
         let res_vec =
             movie_clip_usecases::order_by_like_later_movie_clips(Arc::new(mock_repo), cmd)
                 .await
                 .unwrap();
-        assert_eq!(res_vec, clips);
+        assert_eq!(res_vec, movie_clips);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_create_data_range_movie_clips_usecase() {
-        let clips = vec![Faker.fake::<MovieClip>(); 100];
-
+    async fn test_order_by_create_data_range_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 
@@ -297,42 +301,40 @@ mod test {
         mock_repo
             .expect_order_by_create_date_range()
             .withf(move |arg_start, arg_end| start == *arg_start && end == *arg_end)
-            .return_const(Ok(clips.clone()));
+            .return_const(Ok(movie_clips.clone()));
 
         let cmd = movie_clip_commands::OrderByCreateDateRangeMovieClipCommand::new(start, end);
         let res_vec =
             movie_clip_usecases::order_by_create_date_range_movie_clips(Arc::new(mock_repo), cmd)
                 .await
                 .unwrap();
-        assert_eq!(res_vec, clips);
+        assert_eq!(res_vec, movie_clips);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_create_date_movie_clips_usecase() {
-        let clips = vec![Faker.fake::<MovieClip>(); 100];
-
+    async fn test_order_by_create_date_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let length = 100_usize;
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
             .expect_order_by_create_date()
             .with(predicate::eq(length))
-            .return_const(Ok(clips.clone()));
+            .return_const(Ok(movie_clips.clone()));
 
         let cmd = movie_clip_commands::OrderByCreateDateMovieClipCommand::new(length);
         let res_vec =
             movie_clip_usecases::order_by_create_date_movie_clips(Arc::new(mock_repo), cmd)
                 .await
                 .unwrap();
-        assert_eq!(res_vec, clips);
+        assert_eq!(res_vec, movie_clips);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_create_date_later_movie_clips_usecase() {
+    async fn test_order_by_create_date_later_movie_clips_usecase(movie_clips: Vec<MovieClip>) {
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
-
-        let clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let mut mock_repo = MockMovieClipRepository::new();
         mock_repo
@@ -343,7 +345,7 @@ mod test {
                     *arg_reference == reference && *arg_length == length
                 }
             })
-            .return_const(Ok(clips.clone()));
+            .return_const(Ok(movie_clips.clone()));
 
         let cmd =
             movie_clip_commands::OrderByCreateDateLaterMovieClipCommand::new(reference, length);
@@ -351,7 +353,7 @@ mod test {
             movie_clip_usecases::order_by_create_date_later_movie_clips(Arc::new(mock_repo), cmd)
                 .await
                 .unwrap();
-        assert_eq!(res_vec, clips);
+        assert_eq!(res_vec, movie_clips);
     }
 
     #[tokio::test]

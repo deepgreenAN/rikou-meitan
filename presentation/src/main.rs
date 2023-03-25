@@ -12,7 +12,9 @@ use crate::background::Background;
 use crate::footer::Footer;
 use crate::header::Header;
 // 以下はroutes
-use crate::routes::{AdminPage, ClipsPage, EpisodesPage, HomePage, NotFoundPage, VideosPage};
+use crate::routes::{
+    AdminPage, ClipsPage, EpisodesPage, HomePage, NotFoundPage, VideosPage, VideosPageProps,
+};
 
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
@@ -45,14 +47,22 @@ fn App(cx: Scope) -> Element {
                     Route { to: "/", HomePage{}}
                     Route { to: "/episodes", EpisodesPage{admin: admin}}
                     Route { to: "/clips", ClipsPage{admin: admin}}
-                    Route { to: "/originals", VideosPage{admin: admin, _video_type: domain::video::Original}}
-                    Route { to: "/kirinukis", VideosPage{admin: admin, _video_type: domain::video::Kirinuki}}
+                    Route { to: "/originals", 
+                        VideosPage{..VideosPageProps::<domain::video::Original>::builder().admin(admin).build()}
+                    }
+                    Route { to: "/kirinukis", 
+                        VideosPage{..VideosPageProps::<domain::video::Kirinuki>::builder().admin(admin).build()}
+                    }
                     // 以下はadmin関連
                     Route { to: "/admin", AdminPage{}}
                     Route { to: "/admin/episodes", EpisodesPage{admin:true}}
                     Route { to: "/admin/clips", ClipsPage{admin:true}}
-                    Route { to: "/admin/originals", VideosPage{admin: true, _video_type: domain::video::Original}}
-                    Route { to: "/admin/kirinukis", VideosPage{admin: true, _video_type: domain::video::Kirinuki}}
+                    Route { to: "/admin/originals", 
+                        VideosPage{..VideosPageProps::<domain::video::Original>::builder().admin(true).build()}
+                    }
+                    Route { to: "/admin/kirinukis", 
+                        VideosPage{..VideosPageProps::<domain::video::Kirinuki>::builder().admin(true).build()}
+                    }
                 }
                 Footer{}
             }

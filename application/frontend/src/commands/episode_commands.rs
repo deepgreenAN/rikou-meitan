@@ -1,45 +1,27 @@
 use domain::episode::{Episode, EpisodeId};
 use domain::Date;
 
-pub struct SaveEpisodeCommand {
-    pub episode: Episode,
+use derive_new::new;
+
+#[derive(new)]
+pub struct SaveEpisodeCommand<'a> {
+    pub episode: &'a Episode,
 }
 
-impl SaveEpisodeCommand {
-    pub fn new(episode: Episode) -> Self {
-        Self { episode }
-    }
+#[derive(new)]
+pub struct EditEpisodeCommand<'a> {
+    pub episode: &'a Episode,
 }
 
-pub struct EditEpisodeCommand {
-    pub episode: Episode,
-}
+pub struct AllEpisodesCommand;
 
-impl EditEpisodeCommand {
-    pub fn new(episode: Episode) -> Self {
-        Self { episode }
-    }
-}
-
-pub struct AllEpisodeCommand;
-
-pub struct OrderByDateRangeEpisodeCommand {
+#[derive(new)]
+pub struct OrderByDateRangeEpisodesCommand {
     pub start: Date,
     pub end: Date,
 }
 
-impl OrderByDateRangeEpisodeCommand {
-    pub fn new(start: Date, end: Date) -> Self {
-        Self { start, end }
-    }
-}
-
-pub struct RemoveByIdEpisodeCommand {
+#[derive(new)]
+pub struct RemoveEpisodeCommand {
     pub id: EpisodeId,
-}
-
-impl RemoveByIdEpisodeCommand {
-    pub fn new(id: EpisodeId) -> Self {
-        Self { id }
-    }
 }

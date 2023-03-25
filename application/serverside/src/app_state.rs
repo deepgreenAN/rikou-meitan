@@ -22,6 +22,7 @@ use std::sync::Arc;
 pub struct AppState {
     pub movie_clip_repo: Arc<MovieClipPgDBRepository>,
     pub episode_repo: Arc<EpisodePgDBRepository>,
+
     pub original_repo: Arc<VideoPgDbRepository<Original>>,
     pub kirinuki_repo: Arc<VideoPgDbRepository<Kirinuki>>,
 }

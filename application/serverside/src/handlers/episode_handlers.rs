@@ -151,6 +151,13 @@ mod test {
             .with_state(app_state)
     }
 
+    #[fixture]
+    fn episodes() -> Vec<Episode> {
+        (0..100)
+            .map(|_| Faker.fake::<Episode>())
+            .collect::<Vec<_>>()
+    }
+
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
@@ -268,10 +275,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_all_episodes(mut router: Router) {
+    async fn test_all_episodes(mut router: Router, episodes: Vec<Episode>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
-        let episodes = vec![Faker.fake::<Episode>(); 100];
 
         let mock_ctx = mock_episode_usecases::all_episodes_context();
         mock_ctx
@@ -296,10 +301,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_episodes(mut router: Router) {
+    async fn test_order_by_date_episodes(mut router: Router, episodes: Vec<Episode>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
-        let episodes = vec![Faker.fake::<Episode>(); 100];
 
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();

@@ -1,3 +1,8 @@
+## Features
+- `develop` 開発中であることを明示してビルド
+- `fake` フェイクデータを利用する
+- `test_api` テストサーバー(インメモリ・CORSを許容)を利用する。
+
 ## Examples
 `examples/hello_world.rs`を実行する例．その他の設定は`Dioxus.toml`にある
 ```

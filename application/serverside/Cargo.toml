@@ -10,6 +10,7 @@ inmemory = []
 
 [dependencies]
 domain = { path = "../../domain", features = ["repo"] }
+config = { path = "../../config"}
 infrastructure = { path = "../../infrastructure"}
 common = { path = "../common", features = ["server"]}
 derive-new = "0.5.*"

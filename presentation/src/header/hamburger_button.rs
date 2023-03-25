@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 #[derive(Props)]
 pub struct HiddenMenuButtonProps<'a> {
-    pub onclick: EventHandler<'a>,
+    pub onclick: EventHandler<'a, MouseEvent>,
 }
 
 pub fn HamburgerButton<'a>(cx: Scope<'a, HiddenMenuButtonProps<'a>>) -> Element {
@@ -14,7 +14,7 @@ pub fn HamburgerButton<'a>(cx: Scope<'a, HiddenMenuButtonProps<'a>>) -> Element 
     cx.render(rsx! {
         div {
             class: "hamburger-menu-button",
-            onclick: move |_|{cx.props.onclick.call(());},
+            onclick: move |e|{cx.props.onclick.call(e)},
             dangerous_inner_html: "{button_svg}"
         }
     })

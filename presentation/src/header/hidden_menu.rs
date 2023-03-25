@@ -4,21 +4,11 @@ use fermi::use_read;
 #[derive(Props)]
 pub struct HiddenMenuItem<'a> {
     children: Element<'a>,
-    onclick: Option<EventHandler<'a,>>,
 }
 
 pub fn HiddenMenuItem<'a>(cx: Scope<'a, HiddenMenuItem<'a>>) -> Element {
     cx.render(rsx! {
-        if let Some(onclick) = &cx.props.onclick {
-            rsx! {
-                div {class: "hidden-menu-item", onclick: move |_| {onclick.call(())}, &cx.props.children}
-            }
-        } else {
-            rsx! {
-                div {class: "hidden-menu-item", &cx.props.children}
-            }
-        }
-        
+        div {class: "hidden-menu-item", &cx.props.children}
     })
 }
 

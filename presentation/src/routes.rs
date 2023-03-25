@@ -10,4 +10,4 @@ pub use clips::ClipsPage;
 pub use episodes::EpisodesPage;
 pub use home::HomePage;
 pub use not_found::NotFoundPage;
-pub use videos::VideosPage;
+pub use videos::{VideosPage, VideosPageProps};

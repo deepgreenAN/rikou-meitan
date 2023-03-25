@@ -1,4 +1,7 @@
-use std::{fmt::Display, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 pub use crate::MovieUrl;
 
@@ -32,6 +35,11 @@ pub type VideoId = Id<VideoIdType>;
 // -------------------------------------------------------------------
 // VideoTypeトレイト
 
+/// snake_caseで表示するためのトレイト。
+pub trait SnakeCase {
+    fn snake_case() -> String;
+}
+
 /// VideoType各種が実装しているべきトレイト．async_traitやmock_allに対応
 pub trait VideoType:
     Clone
@@ -45,6 +53,9 @@ pub trait VideoType:
     + Send
     + Sync
     + Unpin
+    + SnakeCase
+    + Display
+    + Debug
 {
 }
 
@@ -86,6 +97,12 @@ impl From<Original> for String {
     }
 }
 
+impl SnakeCase for Original {
+    fn snake_case() -> String {
+        "original".to_string()
+    }
+}
+
 impl VideoType for Original {}
 
 // -------------------------------------------------------------------
@@ -123,6 +140,12 @@ impl Display for Kirinuki {
 impl From<Kirinuki> for String {
     fn from(value: Kirinuki) -> Self {
         value.to_string()
+    }
+}
+
+impl SnakeCase for Kirinuki {
+    fn snake_case() -> String {
+        "kirinuki".to_string()
     }
 }
 

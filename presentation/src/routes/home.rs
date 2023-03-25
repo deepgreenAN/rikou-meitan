@@ -11,8 +11,12 @@ use domain::{
 use more_button::MoreButton;
 use toc::{Toc, TocContent};
 
+use frontend::{
+    commands::{episode_commands, movie_clip_commands, video_commands},
+    usecases::{episode_usecase, movie_clip_usecase, video_usecase},
+};
+
 use dioxus::prelude::*;
-use fake::{Fake, Faker};
 
 pub fn HomePage(cx: Scope) -> Element {
     let orikou_desc_str = include_str!(concat!(
@@ -33,29 +37,47 @@ pub fn HomePage(cx: Scope) -> Element {
         to_owned![episodes_ref, movie_clips_ref, originals_ref, kirinukis_ref];
 
         |_| async move {
-            episodes_ref.set(Some(
-                (0..10)
-                    .map(|_| (episode_start..episode_end).fake::<Episode>())
-                    .collect::<Vec<_>>(),
-            ));
+            // episodesの初期化
+            {
+                let cmd = episode_commands::OrderByDateRangeEpisodesCommand::new(
+                    episode_start,
+                    episode_end,
+                );
+                let res = episode_usecase::order_by_date_range_episodes(cmd).await;
+                match res {
+                    Ok(episodes) => episodes_ref.set(Some(episodes)),
+                    Err(e) => log::error!("{}", e),
+                }
+            }
+            // movie_clipsの初期化
+            {
+                let cmd = movie_clip_commands::OrderByLikeMovieClipsCommand::new(6);
+                let res = movie_clip_usecase::order_by_like_movie_clips(cmd).await;
+                match res {
+                    Ok(movie_clips) => movie_clips_ref.set(Some(movie_clips)),
+                    Err(e) => log::error!("{}", e),
+                }
+            }
 
-            movie_clips_ref.set(Some(
-                (0..6)
-                    .map(|_| Faker.fake::<MovieClip>())
-                    .collect::<Vec<_>>(),
-            ));
+            // originalsの初期化
+            {
+                let cmd = video_commands::OrderByLikeVideosCommand::new(6);
+                let res = video_usecase::order_by_like_videos(cmd).await;
+                match res {
+                    Ok(originals) => originals_ref.set(Some(originals)),
+                    Err(e) => log::error!("{}", e),
+                }
+            }
 
-            originals_ref.set(Some(
-                (0..6)
-                    .map(|_| Faker.fake::<Video<Original>>())
-                    .collect::<Vec<_>>(),
-            ));
-
-            kirinukis_ref.set(Some(
-                (0..6)
-                    .map(|_| Faker.fake::<Video<Kirinuki>>())
-                    .collect::<Vec<_>>(),
-            ));
+            // kirinukisの初期化
+            {
+                let cmd = video_commands::OrderByLikeVideosCommand::new(6);
+                let res = video_usecase::order_by_like_videos(cmd).await;
+                match res {
+                    Ok(kirinukis) => kirinukis_ref.set(Some(kirinukis)),
+                    Err(e) => log::error!("{}", e),
+                }
+            }
         }
     });
 

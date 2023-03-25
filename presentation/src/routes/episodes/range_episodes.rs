@@ -4,10 +4,9 @@ use crate::components::{AccordionEpisodes, AddButton, Quiz};
 use crate::utils::use_overlay;
 use domain::{episode::Episode, Date};
 use edit_episode::EditEpisode;
+use frontend::{commands::episode_commands, usecases::episode_usecase};
 
 use dioxus::prelude::*;
-use fake::Fake;
-use gloo_timers::future::TimeoutFuture;
 
 enum EditEpisodeOpen {
     Modify(Episode),
@@ -65,18 +64,23 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     // initial_is_openがtrueだった時のepisodesの初期化
     use_effect(cx, (), {
         to_owned![episodes_ref];
-        |_| async move {
-            if initial_is_open {
-                let is_episodes_none = { episodes_ref.read().is_none() };
-                if is_episodes_none {
-                    TimeoutFuture::new(1000).await;
-                    let mut episodes = (0..10)
-                        .map(|_| (start..end).fake::<Episode>())
-                        .collect::<Vec<_>>();
-                    episodes.sort_by_key(|episode| episode.date());
 
-                    episodes_ref.set(Some(episodes));
-                }
+        |_| async move {
+            // initial_is_openかtrueの場合にデータをフェッチ
+            if initial_is_open {
+                let res = {
+                    let cmd = episode_commands::OrderByDateRangeEpisodesCommand::new(start, end);
+                    episode_usecase::order_by_date_range_episodes(cmd).await
+                };
+
+                match res {
+                    Ok(episodes) => {
+                        episodes_ref.set(Some(episodes));
+                    }
+                    Err(e) => {
+                        log::error!("{}", e)
+                    }
+                };
             }
         }
     });
@@ -85,16 +89,24 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     let on_accordion_open = move |_| {
         cx.spawn({
             to_owned![episodes_ref, is_add_button_show];
-            async move {
-                let is_episodes_none = { episodes_ref.read().is_none() };
-                if is_episodes_none {
-                    TimeoutFuture::new(1000).await;
-                    let mut episodes = (0..10)
-                        .map(|_| (start..end).fake::<Episode>())
-                        .collect::<Vec<_>>();
-                    episodes.sort_by_key(|episode| episode.date());
 
-                    episodes_ref.set(Some(episodes));
+            async move {
+                // episodes_refがNoneの場合にデータをフェッチ
+                if episodes_ref.with(|episodes_opt| episodes_opt.is_none()) {
+                    let res = {
+                        let cmd =
+                            episode_commands::OrderByDateRangeEpisodesCommand::new(start, end);
+                        episode_usecase::order_by_date_range_episodes(cmd).await
+                    };
+
+                    match res {
+                        Ok(episodes) => {
+                            episodes_ref.set(Some(episodes));
+                        }
+                        Err(e) => {
+                            log::error!("{}", e)
+                        }
+                    }
                 }
                 is_add_button_show.set(true);
             }
@@ -107,38 +119,130 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     };
 
     // 新しく追加するときの処理
-    let add_submitted_episode = move |new_episode| {
+    let add_submitted_episode = move |new_episode: Episode| {
         close_add_episode(());
-        episodes_ref.with_mut(|episodes| {
-            if let Some(episodes) = episodes.as_mut() {
-                episodes.push(new_episode);
-                episodes.sort_by_key(|episode| episode.date());
+        // データを新しく追加してソート
+        {
+            let new_episode = new_episode.clone();
+            episodes_ref.with_mut(|episodes| {
+                if let Some(episodes) = episodes.as_mut() {
+                    episodes.push(new_episode);
+                    episodes.sort_by_key(|episode| episode.date());
+                }
+            });
+        }
+
+        // API
+        cx.spawn({
+            to_owned![episodes_ref];
+            async move {
+                let res = {
+                    let cmd = episode_commands::SaveEpisodeCommand::new(&new_episode);
+                    episode_usecase::save_episode(cmd).await
+                };
+
+                if let Err(e) = res {
+                    log::error!("{} Removed movie_clip: {:?}", e, new_episode);
+
+                    // new_movie_clipを削除
+                    episodes_ref.with_mut(|episodes_opt| {
+                        if let Some(episodes) = episodes_opt.as_mut() {
+                            episodes.retain(|episode| episode.id() != new_episode.id());
+                        }
+                    })
+                }
             }
-        });
+        })
     };
 
     // 編集するときの処理
     let modify_submitted_episode = move |modified_episode: Episode| {
         close_add_episode(());
-        episodes_ref.with_mut(|episodes| {
-            if let Some(episodes) = episodes.as_mut() {
-                episodes.iter_mut().for_each(|episode| {
-                    if episode.id() == modified_episode.id() {
-                        *episode = modified_episode.clone();
+        let mut old_episode = Option::<Episode>::None;
+
+        // modified_episodeを編集する
+        {
+            let modified_episode = modified_episode.clone();
+            episodes_ref.with_mut(|episodes| {
+                if let Some(episodes) = episodes.as_mut() {
+                    let found_episode = episodes
+                        .iter_mut()
+                        .find(|episode| episode.id() == modified_episode.id())
+                        .expect("Cannot find modified episode");
+
+                    old_episode = Some(std::mem::replace(found_episode, modified_episode));
+                }
+            });
+        }
+
+        // API
+        cx.spawn({
+            to_owned![episodes_ref];
+            async move {
+                let res = {
+                    let cmd = episode_commands::EditEpisodeCommand::new(&modified_episode);
+                    episode_usecase::edit_episode(cmd).await
+                };
+
+                // レスポンスがエラーの場合
+                if let Err(e) = res {
+                    log::error!("{}, Roll backed episode: {:?}", e, old_episode);
+
+                    // 更新したデータをロールバック
+                    if let Some(old_episode) = old_episode {
+                        episodes_ref.with_mut(|episodes_opt| {
+                            if let Some(episodes) = episodes_opt.as_mut() {
+                                let found_episode = episodes
+                                    .iter_mut()
+                                    .find(|episode| episode.id() == old_episode.id())
+                                    .expect("Cannot find old episode");
+
+                                *found_episode = old_episode;
+                            }
+                        });
                     }
-                });
+                }
             }
-        });
+        })
     };
 
     // 削除するときの処理
     let remove_episode = move |episode_for_remove: Episode| {
         close_add_episode(());
-        episodes_ref.with_mut(|episodes| {
-            if let Some(episodes) = episodes.as_mut() {
-                episodes.retain(|episode| episode.id() != episode_for_remove.id());
+        {
+            episodes_ref.with_mut(|episodes| {
+                if let Some(episodes) = episodes.as_mut() {
+                    episodes.retain(|episode| episode.id() != episode_for_remove.id());
+                }
+            })
+        }
+
+        // API
+        cx.spawn({
+            to_owned![episodes_ref];
+            async move {
+                let res = {
+                    let cmd = episode_commands::RemoveEpisodeCommand::new(episode_for_remove.id());
+                    episode_usecase::remove_episode(cmd).await
+                };
+
+                // レスポンスがエラーの場合
+                if let Err(e) = res {
+                    log::error!("{}. Re-pushed episode: {:?}", e, episode_for_remove);
+
+                    // 削除したデータを再び挿入・ソート
+                    episodes_ref.with_mut(|episodes_opt| {
+                        if let Some(episodes) = episodes_opt {
+                            episodes.push(episode_for_remove);
+
+                            episodes.sort_by(|x, y| {
+                                x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id()))
+                            });
+                        }
+                    });
+                }
             }
-        })
+        });
     };
 
     cx.render(rsx! {

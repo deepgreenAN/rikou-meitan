@@ -88,12 +88,12 @@ pub struct KirinukiQuery {
 pub async fn get_kirinukis_with_query(
     path_query_res: Result<Query<KirinukiQuery>, QueryRejection>,
     State(app_state): State<AppState>,
-    query_info_res: Result<Json<QueryInfo>, JsonRejection>,
+    query_info_res: Result<Json<QueryInfo<Video<Kirinuki>>>, JsonRejection>,
 ) -> Result<Json<Vec<Video<Kirinuki>>>, AppCommonError> {
     let path_query = path_query_res?.0;
     let reference_video = match query_info_res {
         // リクエストに正しいjsonが与えられた場合
-        Ok(query_info) => query_info.0.reference_kirinuki,
+        Ok(query_info) => query_info.0.reference,
         // Jsonが与えら無かった場合
         Err(JsonRejection::MissingJsonContentType(_)) => None,
         // その他のJsonRejection
@@ -150,7 +150,7 @@ pub async fn get_kirinukis_with_query(
     }
 }
 
-pub async fn remove_original(
+pub async fn remove_kirinuki(
     id: Result<Path<VideoId>, PathRejection>,
     State(app_state): State<AppState>,
 ) -> Result<(), AppCommonError> {

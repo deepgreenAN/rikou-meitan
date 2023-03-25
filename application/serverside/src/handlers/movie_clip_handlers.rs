@@ -94,12 +94,12 @@ pub struct MovieClipQuery {
 pub async fn get_movie_clips_with_query(
     query_res: Result<Query<MovieClipQuery>, QueryRejection>,
     State(app_state): State<AppState>,
-    query_info_res: Result<Json<QueryInfo>, JsonRejection>,
+    query_info_res: Result<Json<QueryInfo<MovieClip>>, JsonRejection>,
 ) -> Result<Json<Vec<MovieClip>>, AppCommonError> {
     let query = query_res?.0;
     let movie_clip_reference = match query_info_res {
         // リクエストにjsonが与えられた場合
-        Ok(reference) => reference.0.reference_movie_clip,
+        Ok(reference) => reference.0.reference,
         // // リクエストにjsonが与えられない場合
         Err(JsonRejection::MissingJsonContentType(_)) => None,
         // その他のJsonRejection
@@ -192,7 +192,7 @@ pub async fn remove_movie_clip(
 mod test {
     use super::AppState;
     use crate::usecases::mock_movie_clip_usecases;
-    use common::{AppCommonError, QueryInfo};
+    use common::{AppCommonError, QueryInfoRef};
     use domain::movie_clip::{MovieClip, MovieClipId};
     use domain::Date;
     use infrastructure::movie_clip_repository_impl::MockMovieClipRepository;
@@ -207,6 +207,7 @@ mod test {
     use once_cell::sync::Lazy;
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
+    use std::borrow::Cow;
     use std::sync::Mutex;
     use tower::{Service, ServiceExt};
 
@@ -231,6 +232,14 @@ mod test {
             )
             .with_state(app_state)
     }
+
+    #[fixture]
+    fn movie_clips() -> Vec<MovieClip> {
+        (0..100)
+            .map(|_| Faker.fake::<MovieClip>())
+            .collect::<Vec<_>>()
+    }
+
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
@@ -403,9 +412,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_all_movie_clips(mut router: Router) {
+    async fn test_all_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let mock_ctx = mock_movie_clip_usecases::all_movie_clips_context();
         mock_ctx
@@ -431,9 +439,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_movie_clips(mut router: Router) {
+    async fn test_order_by_like_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let length = 100_usize;
 
@@ -462,9 +469,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_later_movie_clips(mut router: Router) {
+    async fn test_order_by_like_later_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
@@ -479,7 +485,9 @@ mod test {
             .times(1)
             .return_const(Ok(movie_clips.clone()));
 
-        let query_info = QueryInfo::builder().reference_movie_clip(reference).build();
+        let query_info = QueryInfoRef::builder()
+            .reference(Cow::Borrowed(&reference))
+            .build();
 
         let request = Request::builder()
             .method(http::Method::GET)
@@ -500,9 +508,11 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_crate_date_range_movie_clips(mut router: Router) {
+    async fn test_order_by_crate_date_range_movie_clips(
+        mut router: Router,
+        movie_clips: Vec<MovieClip>,
+    ) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
@@ -534,9 +544,11 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_create_date_movie_clips(mut router: Router) {
+    async fn test_order_by_create_date_movie_clips(
+        mut router: Router,
+        movie_clips: Vec<MovieClip>,
+    ) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let length = 100_usize;
 
@@ -567,9 +579,11 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_create_date_later_movie_clips(mut router: Router) {
+    async fn test_order_by_create_date_later_movie_clips(
+        mut router: Router,
+        movie_clips: Vec<MovieClip>,
+    ) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let movie_clips = vec![Faker.fake::<MovieClip>(); 100];
 
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
@@ -584,7 +598,9 @@ mod test {
             .times(1)
             .return_const(Ok(movie_clips.clone()));
 
-        let query_info = QueryInfo::builder().reference_movie_clip(reference).build();
+        let query_info = QueryInfoRef::builder()
+            .reference(Cow::Borrowed(&reference))
+            .build();
 
         let request = Request::builder()
             .method(http::Method::GET)

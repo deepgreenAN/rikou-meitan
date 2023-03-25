@@ -1,55 +1,54 @@
 use domain::movie_clip::{MovieClip, MovieClipId};
 use domain::Date;
 
-pub struct SaveMovieClipCommand {
-    pub movie_clip: MovieClip,
+use derive_new::new;
+
+#[derive(new)]
+pub struct SaveMovieClipCommand<'a> {
+    pub movie_clip: &'a MovieClip,
 }
 
-impl SaveMovieClipCommand {
-    pub fn new(movie_clip: MovieClip) -> Self {
-        Self { movie_clip }
-    }
+#[derive(new)]
+pub struct EditMovieClipCommand<'a> {
+    pub movie_clip: &'a MovieClip,
 }
 
-pub struct EditMovieClipCommand {
-    pub movie_clip: MovieClip,
+#[derive(new)]
+pub struct IncrementLikeMovieClipCommand {
+    pub id: MovieClipId,
 }
 
-impl EditMovieClipCommand {
-    pub fn new(movie_clip: MovieClip) -> Self {
-        Self { movie_clip }
-    }
-}
+pub struct AllMovieClipsCommand;
 
-pub struct AllMovieClipCommand;
-
-pub struct OrderByLikeLimitMovieClipCommand {
+#[derive(new)]
+pub struct OrderByLikeMovieClipsCommand {
     pub length: usize,
 }
 
-impl OrderByLikeLimitMovieClipCommand {
-    pub fn new(length: usize) -> Self {
-        Self { length }
-    }
+#[derive(new)]
+pub struct OrderByLikeLaterMovieClipsCommand<'a> {
+    pub reference: &'a MovieClip,
+    pub length: usize,
 }
 
-pub struct OrderByCreateDateRangeMovieClipCommand {
+#[derive(new)]
+pub struct OrderByCreateDateRangeMovieClipsCommand {
     pub start: Date,
     pub end: Date,
 }
 
-impl OrderByCreateDateRangeMovieClipCommand {
-    pub fn new(start: Date, end: Date) -> Self {
-        Self { start, end }
-    }
+#[derive(new)]
+pub struct OrderByCreateDateMovieClipsCommand {
+    pub length: usize,
 }
 
+#[derive(new)]
+pub struct OrderByCreateDateLaterMovieClipsCommand<'a> {
+    pub reference: &'a MovieClip,
+    pub length: usize,
+}
+
+#[derive(new)]
 pub struct RemoveMovieClipCommand {
     pub id: MovieClipId,
-}
-
-impl RemoveMovieClipCommand {
-    pub fn new(id: MovieClipId) -> Self {
-        Self { id }
-    }
 }

@@ -88,12 +88,12 @@ pub struct OriginalQuery {
 pub async fn get_originals_with_query(
     path_query_res: Result<Query<OriginalQuery>, QueryRejection>,
     State(app_state): State<AppState>,
-    query_info_res: Result<Json<QueryInfo>, JsonRejection>,
+    query_info_res: Result<Json<QueryInfo<Video<Original>>>, JsonRejection>,
 ) -> Result<Json<Vec<Video<Original>>>, AppCommonError> {
     let path_query = path_query_res?.0;
     let reference_video = match query_info_res {
         // リクエストに正しいjsonが与えられた場合
-        Ok(query_info) => query_info.0.reference_original,
+        Ok(query_info) => query_info.0.reference,
         // Jsonが与えら無かった場合
         Err(JsonRejection::MissingJsonContentType(_)) => None,
         // その他のJsonRejection
@@ -165,7 +165,7 @@ mod test {
     use super::AppState;
     use crate::handlers::global::MTX;
     use crate::usecases::mock_video_usecases;
-    use common::{AppCommonError, QueryInfo};
+    use common::{AppCommonError, QueryInfoRef};
     use domain::video::{Original, Video, VideoId};
     use infrastructure::video_repository_impl::MockVideoOriginalRepository;
 
@@ -178,6 +178,7 @@ mod test {
     use fake::{Fake, Faker};
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
+    use std::borrow::Cow;
     use tower::{Service, ServiceExt};
 
     #[fixture]
@@ -198,6 +199,13 @@ mod test {
                 patch(super::increment_like_original),
             )
             .with_state(app_state)
+    }
+
+    #[fixture]
+    fn videos() -> Vec<Video<Original>> {
+        (0..100)
+            .map(|_| Faker.fake::<Video<Original>>())
+            .collect::<Vec<_>>()
     }
 
     #[allow(clippy::await_holding_lock)]
@@ -372,9 +380,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_all_movie_clips(mut router: Router) {
+    async fn test_all_movie_clips(mut router: Router, videos: Vec<Video<Original>>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let videos = vec![Faker.fake::<Video<Original>>(); 100];
 
         let mock_ctx = mock_video_usecases::all_videos_context();
         mock_ctx
@@ -400,9 +407,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_videos(mut router: Router) {
+    async fn test_order_by_like_videos(mut router: Router, videos: Vec<Video<Original>>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let videos = vec![Faker.fake::<Video<Original>>(); 100];
 
         let length = 100_usize;
 
@@ -431,9 +437,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_like_later_videos(mut router: Router) {
+    async fn test_order_by_like_later_videos(mut router: Router, videos: Vec<Video<Original>>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let videos = vec![Faker.fake::<Video<Original>>(); 100];
 
         let reference = Faker.fake::<Video<Original>>();
         let length = 100_usize;
@@ -448,7 +453,9 @@ mod test {
             .times(1)
             .return_const(Ok(videos.clone()));
 
-        let query_info = QueryInfo::builder().reference_original(reference).build();
+        let query_info = QueryInfoRef::builder()
+            .reference(Cow::Borrowed(&reference))
+            .build();
 
         let request = Request::builder()
             .method(http::Method::GET)
@@ -469,9 +476,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_videos(mut router: Router) {
+    async fn test_order_by_date_videos(mut router: Router, videos: Vec<Video<Original>>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let videos = vec![Faker.fake::<Video<Original>>(); 100];
 
         let length = 100_usize;
 
@@ -500,9 +506,8 @@ mod test {
     #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_later_videos(mut router: Router) {
+    async fn test_order_by_date_later_videos(mut router: Router, videos: Vec<Video<Original>>) {
         let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-        let videos = vec![Faker.fake::<Video<Original>>(); 100];
 
         let reference = Faker.fake::<Video<Original>>();
         let length = 100_usize;
@@ -517,7 +522,9 @@ mod test {
             .times(1)
             .return_const(Ok(videos.clone()));
 
-        let query_info = QueryInfo::builder().reference_original(reference).build();
+        let query_info = QueryInfoRef::builder()
+            .reference(Cow::Borrowed(&reference))
+            .build();
 
         let request = Request::builder()
             .method(http::Method::GET)

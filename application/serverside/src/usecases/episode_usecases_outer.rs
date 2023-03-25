@@ -76,7 +76,15 @@ mod test {
     use infrastructure::InfraError;
     use mockall::predicate;
     use pretty_assertions::assert_eq;
+    use rstest::{fixture, rstest};
     use std::sync::Arc;
+
+    #[fixture]
+    fn episodes() -> Vec<Episode> {
+        (0..100)
+            .map(|_| Faker.fake::<Episode>())
+            .collect::<Vec<_>>()
+    }
 
     #[tokio::test]
     async fn test_save_episode_usecase() {
@@ -136,9 +144,9 @@ mod test {
         }
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_all_episodes_usecase() {
-        let episodes = vec![Faker.fake::<Episode>(); 100];
+    async fn test_all_episodes_usecase(episodes: Vec<Episode>) {
         let mut mock_repo = MockEpisodeRepository::new();
         mock_repo
             .expect_all()
@@ -152,9 +160,9 @@ mod test {
         assert_eq!(res_episodes, episodes);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_order_by_date_range_episodes_usecase() {
-        let episodes = vec![Faker.fake::<Episode>(); 100];
+    async fn test_order_by_date_range_episodes_usecase(episodes: Vec<Episode>) {
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 

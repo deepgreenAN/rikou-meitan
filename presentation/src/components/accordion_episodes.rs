@@ -37,12 +37,6 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
         )),
     };
 
-    
-    let episodes_is_some = { // Refの再帰を防ぐため
-        cx.props.episodes.read().is_some()
-    };
-    
-
     cx.render(rsx! {div { class: "accordion-episodes-container",
         div { class: "accordion-bar-container",
             (!cx.props.fixed).then(||{
@@ -67,7 +61,7 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
             div { class: "accordion-title", "{cx.props.title}"}
         }
         is_accordion_open.get().then(||{
-            if episodes_is_some { // データが与えられ多場合
+            if cx.props.episodes.with(|episodes_opt|{episodes_opt.is_some()}) { // データが与えられた場合
                 rsx! {
                     div { class: "accordion-episode-list",
                         ul {

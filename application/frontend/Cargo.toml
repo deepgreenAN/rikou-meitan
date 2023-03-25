@@ -10,6 +10,8 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 test_api = []
+fake = ["domain/fake", "dep:fake"]
+integration_test = []
 
 [dependencies]
 config = { path = "../../config"}
@@ -18,11 +20,17 @@ common = { path = "../common"}
 gloo-net = "^0.2"
 indexmap = "^1.9"
 thiserror = "^1.0"
+serde = "^1.0"
+derive-new = "^0.5"
 
 # optional dependencies
+fake = { version = "^2.5", optional = true}
 
 
 [dev-dependencies]
+domain = { path = "../../domain", features = ["fake"]}
+fake = "^2.5"
+rand = "0.8.5"
 wasm-bindgen-test = "^0.3.34"
 rstest = "^0.16"
-assert_matches = "^1.5.0"
+pretty_assertions = "1.3.0"

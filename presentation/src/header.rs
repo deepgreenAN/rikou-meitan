@@ -65,24 +65,19 @@ pub fn Header(cx: Scope) -> Element {
                 rsx! {
                     HiddenMenu{
                         HiddenMenuItem{
-                            onclick: close_hidden_menu,
-                            Link{ to:"/","ホーム"}
+                            Link{ to:"/","ホーム", onclick: close_hidden_menu}
                         }
                         HiddenMenuItem{
-                            onclick: close_hidden_menu,
-                            Link{ to:"/episodes","エピソード"}
+                            Link{ to:"/episodes","エピソード", onclick: close_hidden_menu}
                         }
                         HiddenMenuItem{
-                            onclick: close_hidden_menu,
-                            Link{ to:"/clips","クリップ"}
+                            Link{ to:"/clips","クリップ", onclick: close_hidden_menu}
                         }
                         HiddenMenuItem{
-                            onclick: close_hidden_menu,
-                            Link{ to:"/originals", "コラボ配信"}
+                            Link{ to:"/originals", "コラボ配信", onclick: close_hidden_menu}
                         }
                         HiddenMenuItem{
-                            onclick: close_hidden_menu,
-                            Link{ to:"/kirinukis", "切り抜き"}
+                            Link{ to:"/kirinukis", "切り抜き", onclick: close_hidden_menu}
                         }
                     }
                     div {
