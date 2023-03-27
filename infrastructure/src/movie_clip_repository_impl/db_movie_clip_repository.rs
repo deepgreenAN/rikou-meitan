@@ -108,7 +108,7 @@ SELECT * FROM movie_clips ORDER BY "like" DESC, id ASC LIMIT $1
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
-SELECT * FROM movie_clips WHERE $1 >= "like" AND $2 < id ORDER BY "like" DESC, id ASC LIMIT $3         
+SELECT * FROM movie_clips WHERE $1 > "like" OR ($1 = "like" AND $2 < id) ORDER BY "like" DESC, id ASC LIMIT $3         
             "#,
         )
         .bind(reference.like() as i32)
@@ -164,7 +164,7 @@ SELECT * FROM movie_clips ORDER BY create_date DESC, id ASC LIMIT $1
     ) -> Result<Vec<MovieClip>, InfraError> {
         let ordered_clips = sqlx::query_as::<Postgres, MovieClip>(
             r#"
-SELECT * FROM movie_clips WHERE $1 >= create_date AND $2 < id ORDER BY create_date DESC, id ASC LIMIT $3
+SELECT * FROM movie_clips WHERE $1 > create_date OR ($1 = create_date AND $2 < id) ORDER BY create_date DESC, id ASC LIMIT $3
             "#,
         )
         .bind(reference.create_date().to_chrono()?)
@@ -478,7 +478,10 @@ mod test {
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips
             .into_iter()
-            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .filter(|clip| {
+                reference.like() > clip.like()
+                    || (reference.like() == clip.like() && reference.id() < clip.id())
+            })
             .take(length)
             .collect::<Vec<_>>();
 
@@ -614,7 +617,8 @@ mod test {
         let clips = clips
             .into_iter()
             .filter(|clip| {
-                clip.create_date() <= reference.create_date() && clip.id() > reference.id()
+                clip.create_date() < reference.create_date()
+                    || (clip.create_date() == reference.create_date() && clip.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();

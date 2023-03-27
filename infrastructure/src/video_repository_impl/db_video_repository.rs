@@ -123,7 +123,7 @@ SELECT * FROM videos WHERE video_type = $1 ORDER BY "like" DESC, id ASC LIMIT $2
     ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
-SELECT * FROM videos WHERE video_type = $1 AND $2 >= "like" AND $3 < id ORDER BY "like" DESC, id ASC LIMIT $4
+SELECT * FROM videos WHERE video_type = $1 AND $2 > "like" OR ($2 = "like" AND $3 < id) ORDER BY "like" DESC, id ASC LIMIT $4
         "#,
         )
         .bind(T::default().to_string())
@@ -162,7 +162,7 @@ SELECT * FROM videos WHERE video_type = $1 ORDER BY "date" DESC, id ASC LIMIT $2
     ) -> Result<Vec<Video<T>>, InfraError> {
         let ordered_videos = sqlx::query_as::<Postgres, Video<T>>(
             r#"
-SELECT * FROM videos WHERE video_type = $1 AND $2 >= "date" AND $3 < id ORDER BY "date" DESC, id ASC LIMIT $4
+SELECT * FROM videos WHERE video_type = $1 AND $2 > "date" OR ($2 = "date" AND $3 < id) ORDER BY "date" DESC, id ASC LIMIT $4
         "#,
         )
         .bind(T::default().to_string())
@@ -495,7 +495,8 @@ mod test {
         let originals = originals
             .into_iter()
             .filter(|original| {
-                original.like() <= reference.like() && original.id() > reference.id()
+                original.like() < reference.like()
+                    || (original.like() == reference.like() && original.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();
@@ -583,7 +584,8 @@ mod test {
         let originals = originals
             .into_iter()
             .filter(|original| {
-                original.date() <= reference.date() && original.id() > reference.id()
+                original.date() < reference.date()
+                    || (original.date() == reference.date() && original.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();

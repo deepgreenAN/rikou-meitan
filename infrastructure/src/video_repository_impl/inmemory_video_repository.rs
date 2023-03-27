@@ -80,7 +80,10 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         clips.sort_by(|x, y| y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips
             .into_iter()
-            .filter(|clip| reference.date() >= clip.date() && reference.id() < clip.id())
+            .filter(|clip| {
+                reference.date() > clip.date()
+                    || (reference.date() == clip.date() && reference.id() < clip.id())
+            })
             .take(length)
             .collect::<Vec<_>>();
         Ok(clips)
@@ -100,7 +103,10 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips
             .into_iter()
-            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .filter(|clip| {
+                reference.like() > clip.like()
+                    || (reference.like() == clip.like() && reference.id() < clip.id())
+            })
             .take(length)
             .collect::<Vec<_>>();
         Ok(clips)
@@ -268,7 +274,8 @@ mod test {
         let originals = originals
             .into_iter()
             .filter(|original| {
-                original.like() <= reference.like() && original.id() > reference.id()
+                original.like() < reference.like()
+                    || (original.like() == reference.like() && original.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();
@@ -333,7 +340,8 @@ mod test {
         let originals = originals
             .into_iter()
             .filter(|original| {
-                original.date() <= reference.date() && original.id() > reference.id()
+                original.date() < reference.date()
+                    || (original.date() == reference.date() && original.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();

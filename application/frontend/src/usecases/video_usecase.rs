@@ -100,7 +100,7 @@ mod product {
             .reference(Borrowed(cmd.reference))
             .build();
 
-        let response = Request::get(&format!(
+        let response = Request::post(&format!(
             "{}/{}/query{}",
             API_BASE_URL,
             T::snake_case(),
@@ -119,6 +119,7 @@ mod product {
         cmd: video_commands::OrderByDateVideosCommand,
     ) -> Result<Vec<Video<T>>, AppFrontError> {
         let query_string = format!("?sort_type=date&length={}", cmd.length);
+
         let response = Request::get(&format!(
             "{}/{}/query{}",
             API_BASE_URL,
@@ -137,14 +138,18 @@ mod product {
         cmd: video_commands::OrderByDateLaterVideosCommand<'_, T>,
     ) -> Result<Vec<Video<T>>, AppFrontError> {
         let query_string = format!("?sort_type=date&length={}", cmd.length);
-        let response = Request::get(&format!(
+        let query_info = QueryInfoRef::builder()
+            .reference(Borrowed(cmd.reference))
+            .build();
+
+        let response = Request::post(&format!(
             "{}/{}/query{}",
             API_BASE_URL,
             T::snake_case(),
             query_string
         ))
         .mode(CORS_MODE)
-        .json(cmd.reference)?
+        .json(&query_info)?
         .send()
         .await?;
 

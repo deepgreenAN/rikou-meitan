@@ -310,7 +310,7 @@ where
             }
             VideoPageMenu{
                 on_click_add_button: open_add_video,
-                on_change_sort_select: move |sort_type: SortType|{log::info!("{}", sort_type)},
+                on_change_sort_select: move |sort_type: SortType|{sort_type_state.set(sort_type)},
             }
             match edit_video_open.get() {
                 EditVideoOpen::Add => rsx!{

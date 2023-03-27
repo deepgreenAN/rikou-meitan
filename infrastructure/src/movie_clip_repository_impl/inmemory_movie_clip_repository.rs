@@ -78,7 +78,10 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         Ok(clips
             .into_iter()
-            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .filter(|clip| {
+                reference.like() > clip.like()
+                    || (reference.like() == clip.like() && reference.id() < clip.id())
+            })
             .take(length)
             .collect::<Vec<_>>())
     }
@@ -123,7 +126,8 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         Ok(clips
             .into_iter()
             .filter(|clip| {
-                reference.create_date() >= clip.create_date() && reference.id() < clip.id()
+                reference.create_date() > clip.create_date()
+                    || (reference.create_date() == clip.create_date() && reference.id() < clip.id())
             })
             .take(length)
             .collect::<Vec<_>>())
@@ -295,7 +299,10 @@ mod test {
         clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
         let clips = clips
             .into_iter()
-            .filter(|clip| reference.like() >= clip.like() && reference.id() < clip.id())
+            .filter(|clip| {
+                reference.like() > clip.like()
+                    || (reference.like() == clip.like() && reference.id() < clip.id())
+            })
             .take(length)
             .collect::<Vec<_>>();
 
@@ -406,7 +413,8 @@ mod test {
         let clips = clips
             .into_iter()
             .filter(|clip| {
-                clip.create_date() <= reference.create_date() && clip.id() > reference.id()
+                clip.create_date() < reference.create_date()
+                    || (reference.create_date() == clip.create_date() && clip.id() > reference.id())
             })
             .take(length)
             .collect::<Vec<_>>();

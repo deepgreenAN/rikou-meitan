@@ -90,7 +90,7 @@ mod product {
             .reference(Borrowed(cmd.reference))
             .build();
 
-        let response = Request::get(&format!(
+        let response = Request::post(&format!(
             "{}{}{}",
             API_BASE_URL, "/movie_clip/query", query_string
         ))
@@ -140,7 +140,7 @@ mod product {
             .reference(Borrowed(cmd.reference))
             .build();
 
-        let response = Request::get(&format!(
+        let response = Request::post(&format!(
             "{}{}{}",
             API_BASE_URL, "/movie_clip/query", query_string
         ))

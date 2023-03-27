@@ -48,7 +48,8 @@ async fn main() {
         )
         .route(
             "/movie_clip/query",
-            get(movie_clip_handlers::get_movie_clips_with_query),
+            get(movie_clip_handlers::get_movie_clips_with_query)
+                .post(movie_clip_handlers::get_movie_clips_with_query),
         )
         .route(
             "/movie_clip/:id",
@@ -68,7 +69,8 @@ async fn main() {
         )
         .route(
             "/original/query",
-            get(original_handlers::get_originals_with_query),
+            get(original_handlers::get_originals_with_query)
+                .post(original_handlers::get_originals_with_query),
         )
         .route("/original/:id", delete(original_handlers::remove_original))
         .route(
@@ -85,7 +87,8 @@ async fn main() {
         )
         .route(
             "/kirinuki/query",
-            get(kirinuki_handlers::get_kirinukis_with_query),
+            get(kirinuki_handlers::get_kirinukis_with_query)
+                .post(kirinuki_handlers::get_kirinukis_with_query),
         )
         .route("/kirinuki/:id", delete(kirinuki_handlers::remove_kirinuki))
         .route(
