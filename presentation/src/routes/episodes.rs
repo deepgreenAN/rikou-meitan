@@ -49,14 +49,18 @@ pub fn EpisodesPage(cx: Scope<EpisodesPageProps>) -> Element {
 
     cx.render(rsx! {
         div {id: "episodes-container",
-            div { id: "episode-title-container",
-                h2 {id: "episode-title", 
+            div { id: "episodes-title-container",
+                h2 {id: "episodes-title", 
                     match cx.props.admin {
                         true => "エピソード(管理者用モード)",
                         false => "エピソード"
                     }
                 }
             } 
+            div {
+                id: "episodes-caption",
+                "エピソードを年ごとにまとめたページです。Youtube動画をiframeで表示しています。"
+            }
             titles.iter().zip(ranges.iter()).zip(initial_is_opens.iter()).map(|((title, range), initial_is_open)|{
                 rsx! {
                     RangeEpisodes{

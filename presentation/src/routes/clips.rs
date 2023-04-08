@@ -122,7 +122,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                                     }
                                 };
                                 match res {
-                                    Ok(mut new_movie_clips) => {
+                                    Ok(new_movie_clips) => {
                                         // データが一つも取得できない場合以降のデータのロードを拒否
                                         if new_movie_clips.is_empty(){
                                             is_load_continue.set(false);
@@ -130,7 +130,14 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
 
                                         movie_clips_ref.with_mut(|movie_clips_vec|{
                                             if let Some(movie_clips_vec) = movie_clips_vec.as_mut() {
-                                                movie_clips_vec.append(&mut new_movie_clips);
+                                                // 重複を確認しながら挿入
+                                                for new_movie_clip in new_movie_clips.into_iter() {
+                                                    let is_not_contain = movie_clips_vec.iter().all(|clip|{clip.id() != new_movie_clip.id()});
+
+                                                    if is_not_contain {
+                                                        movie_clips_vec.push(new_movie_clip);
+                                                    }
+                                                }
                                             }
                                         })
                                     },
@@ -300,6 +307,9 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                         false => "クリップ"
                     }
                 }
+            }
+            div {id: "clips-caption",
+                "Youtube動画のクリップをまとめたページです。Youtube動画をiframeで表示しています。"
             }
             VideoPageMenu{
                 on_click_add_button: open_edit_movie_clip,

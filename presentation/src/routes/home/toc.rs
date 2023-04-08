@@ -14,6 +14,8 @@ pub struct TocContentProps<'a> {
     pub title: String,
     #[props(into)]
     pub id: String,
+    #[props(into)]
+    pub caption: Option<String>,
     pub children: Element<'a>,
 }
 
@@ -21,7 +23,14 @@ pub fn TocContent<'a>(cx: Scope<'a, TocContentProps<'a>>) -> Element {
     cx.render(rsx! {
         div { id:"{cx.props.id}" , class: "toc-content",
             h2 { class: "toc-content-title", "{cx.props.title}"},
-            &cx.props.children
+            {
+                cx.props.caption.as_ref().map(|caption|rsx!{
+                    div{ class:"toc-content-caption", "{caption}"}
+                })
+            }
+            {
+                &cx.props.children
+            }
         }
     })
 }

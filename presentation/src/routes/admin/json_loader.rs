@@ -38,7 +38,7 @@ where
                     .create_element("a")
                     .unwrap_throw()
                     .unchecked_into::<HtmlAnchorElement>();
-                anchor.set_download(&format!("{}.json", title));
+                anchor.set_download(&format!("{title}.json"));
 
                 let content = (make_json_source)().await;
 

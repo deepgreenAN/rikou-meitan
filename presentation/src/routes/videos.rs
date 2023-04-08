@@ -134,14 +134,23 @@ where
                             };
 
                             match res {
-                                Ok(mut new_videos) => {
+                                Ok(new_videos) => {
                                     // データが一つも取得できない場合以降のロードを拒否
                                     if new_videos.is_empty() {
                                         is_load_continue.set(false);
                                     }
                                     videos_ref.with_mut(|videos_opt| {
                                         if let Some(videos) = videos_opt.as_mut() {
-                                            videos.append(&mut new_videos);
+                                            // 重複を防ぎながら挿入
+                                            for new_video in new_videos.into_iter() {
+                                                let is_not_contain = videos
+                                                    .iter()
+                                                    .all(|video| video.id() != new_video.id());
+
+                                                if is_not_contain {
+                                                    videos.push(new_video);
+                                                }
+                                            }
                                         }
                                     });
                                 }
@@ -307,6 +316,9 @@ where
                         false => T::caption()
                     }
                 }
+            }
+            div { class: "videos-caption",
+                format!("Youtubeの{}動画をまとめたページです。Youtube動画をiframeで表示しています。", T::caption())
             }
             VideoPageMenu{
                 on_click_add_button: open_add_video,

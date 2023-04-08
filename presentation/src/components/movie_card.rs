@@ -28,7 +28,9 @@ pub struct MovieCardProps<'a> {
     on_modify: Option<EventHandler<'a>>,
     /// 投稿者
     #[props(into)]
-    author: Option<String>
+    author: Option<String>,
+    /// Likeボタンを押したときの処理
+    on_like: Option<EventHandler<'a>>
 }
 
 pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
@@ -47,7 +49,13 @@ pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
 
     // ライクが押されたときの処理
     let on_like = move |_| {
-        is_liked.modify(|flag|{!flag});
+        if !is_liked.get() {
+            if let Some(on_like) = cx.props.on_like.as_ref() {
+                on_like.call(());
+            }
+        }
+
+        is_liked.set(true);
     };
 
     cx.render(rsx! {

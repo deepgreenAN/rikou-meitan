@@ -98,6 +98,7 @@ pub fn HomePage(cx: Scope) -> Element {
                 TocContent{
                     id: "episodes",
                     title: "エピソード",
+                    caption: "おりコウについてのエピソード",
                     AccordionEpisodes{
                         title: "2023",
                         episodes: episodes_ref.clone(),
@@ -109,6 +110,7 @@ pub fn HomePage(cx: Scope) -> Element {
                 TocContent{
                     id: "clips",
                     title: "クリップ",
+                    caption: "おりコウの配信動画のクリップ(Youtube)",
                     MovieContainer{
                         movie_clips_ref.read().as_ref().map(|movie_clips|{
                             rsx!{
@@ -133,6 +135,7 @@ pub fn HomePage(cx: Scope) -> Element {
                 TocContent{
                     id: "originals",
                     title: "コラボ配信",
+                    caption: "おりコウのコラボ配信(Youtube)",
                     MovieContainer{
                         originals_ref.read().as_ref().map(|originals|{
                             rsx!{
@@ -157,6 +160,7 @@ pub fn HomePage(cx: Scope) -> Element {
                 TocContent{
                     id: "kirinukis",
                     title: "切り抜き",
+                    caption: "おりコウの切り抜き(Youtube)",
                     MovieContainer{
                         kirinukis_ref.read().as_ref().map(|kirinukis|{
                             rsx!{
