@@ -2,6 +2,7 @@ mod more_button;
 mod toc;
 
 use crate::components::{AccordionEpisodes, MovieCard, MovieContainer, Player};
+use crate::utils::{get_liked_ids, push_liked_id};
 use domain::{
     episode::Episode,
     movie_clip::MovieClip,
@@ -17,6 +18,7 @@ use frontend::{
 };
 
 use dioxus::prelude::*;
+use std::collections::HashSet;
 
 pub fn HomePage(cx: Scope) -> Element {
     let orikou_desc_str = include_str!(concat!(
@@ -28,15 +30,31 @@ pub fn HomePage(cx: Scope) -> Element {
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
     let originals_ref = use_ref(cx, || Option::<Vec<Video<Original>>>::None);
     let kirinukis_ref = use_ref(cx, || Option::<Vec<Video<Kirinuki>>>::None);
+    let init_liked_ids = use_state(cx, HashSet::<String>::new);
 
     let episode_start: Date = (2023, 1, 1).try_into().expect("Date sanity check");
     let episode_end: Date = (2024, 1, 1).try_into().expect("Date sanity check");
 
     // 初期化
     use_effect(cx, (), {
-        to_owned![episodes_ref, movie_clips_ref, originals_ref, kirinukis_ref];
+        to_owned![
+            episodes_ref,
+            movie_clips_ref,
+            originals_ref,
+            kirinukis_ref,
+            init_liked_ids
+        ];
 
         |_| async move {
+            match get_liked_ids() {
+                Ok(liked_ids) => {
+                    init_liked_ids.set(liked_ids);
+                }
+                Err(e) => {
+                    log::error!("{e}");
+                }
+            }
+
             // episodesの初期化
             {
                 let cmd = episode_commands::OrderByDateRangeEpisodesCommand::new(
@@ -116,6 +134,8 @@ pub fn HomePage(cx: Scope) -> Element {
                             rsx!{
                                 movie_clips.iter().map(|movie_clip|{
                                     let id = movie_clip.id();
+                                    let is_liked = init_liked_ids.get().contains(&id.to_string());
+
                                     rsx!{
                                         MovieCard{
                                             key:"{id}",
@@ -124,6 +144,25 @@ pub fn HomePage(cx: Scope) -> Element {
                                             title: movie_clip.title(),
                                             movie_url: movie_clip.url().clone(),
                                             id: format!("movie-clip-{id}"),
+                                            on_like: move |_| {
+                                                // API
+                                                cx.spawn(async move {
+                                                    let res = {
+                                                        let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
+                                                        movie_clip_usecase::increment_like(cmd).await
+                                                    };
+
+                                                    match res {
+                                                        Ok(_) => {
+                                                            push_liked_id(id.to_string()).expect("Storage Error.");
+                                                        },
+                                                        Err(e) => {
+                                                            log::error!("{e}");
+                                                        }
+                                                    }
+                                                });
+                                            },
+                                            is_liked: is_liked,
                                         }
                                     }
                                 })
@@ -141,6 +180,8 @@ pub fn HomePage(cx: Scope) -> Element {
                             rsx!{
                                 originals.iter().map(|original|{
                                     let id = original.id();
+                                    let is_liked = init_liked_ids.get().contains(&id.to_string());
+
                                     rsx!{
                                         MovieCard{
                                             key: "{id}",
@@ -148,7 +189,26 @@ pub fn HomePage(cx: Scope) -> Element {
                                             title: original.title(),
                                             author: original.author(),
                                             movie_url: original.url().clone(),
-                                            id: format!("original-{id}")
+                                            id: format!("original-{id}"),
+                                            on_like: move |_| {
+                                                // API
+                                                cx.spawn(async move {
+                                                    let res = {
+                                                        let cmd = video_commands::IncrementLikeVideoCommand::new(id);
+                                                        video_usecase::increment_like::<Original>(cmd).await
+                                                    };
+
+                                                    match res {
+                                                        Ok(_) => {
+                                                            push_liked_id(id.to_string()).expect("Storage Error.");
+                                                        },
+                                                        Err(e) => {
+                                                            log::error!("{e}");
+                                                        }
+                                                    }
+                                                });
+                                            },
+                                            is_liked: is_liked,
                                         }
                                     }
                                 })
@@ -166,6 +226,8 @@ pub fn HomePage(cx: Scope) -> Element {
                             rsx!{
                                 kirinukis.iter().map(|kirinuki|{
                                     let id = kirinuki.id();
+                                    let is_liked = init_liked_ids.get().contains(&id.to_string());
+
                                     rsx!{
                                         MovieCard{
                                             key: "{id}",
@@ -173,7 +235,26 @@ pub fn HomePage(cx: Scope) -> Element {
                                             title: kirinuki.title(),
                                             author: kirinuki.author(),
                                             movie_url: kirinuki.url().clone(),
-                                            id: format!("original-{id}")
+                                            id: format!("original-{id}"),
+                                            on_like: move |_| {
+                                                // API
+                                                cx.spawn(async move {
+                                                    let res = {
+                                                        let cmd = video_commands::IncrementLikeVideoCommand::new(id);
+                                                        video_usecase::increment_like::<Kirinuki>(cmd).await
+                                                    };
+
+                                                    match res {
+                                                        Ok(_) => {
+                                                            push_liked_id(id.to_string()).expect("Storage Error.");
+                                                        },
+                                                        Err(e) => {
+                                                            log::error!("{e}");
+                                                        }
+                                                    }
+                                                });
+                                            },
+                                            is_liked: is_liked
                                         }
                                     }
                                 })

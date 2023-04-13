@@ -5,11 +5,13 @@ use crate::utils::use_overlay;
 use domain::video::{Video, VideoType};
 use edit_video::EditVideo;
 use frontend::{commands::video_commands, usecases::video_usecase};
+use crate::utils::{get_liked_ids, push_liked_id};
 
 use dioxus::prelude::*;
 use gloo_intersection::IntersectionObserverHandler;
 use std::cell::Cell;
 use std::rc::Rc;
+use std::collections::HashSet;
 use strum_macros::{Display, EnumIter, EnumString};
 
 enum EditVideoOpen<T: VideoType> {
@@ -44,6 +46,7 @@ where
     let videos_ref = use_ref(cx, || Option::<Vec<Video<T>>>::None);
     let is_load_continue = cx.use_hook(|| Rc::new(Cell::new(true)));
     let sort_type_state = use_state(cx, SortType::default);
+    let init_liked_ids = use_state(cx, HashSet::<String>::new);
 
     // EditVideo関連
     let edit_video_open = use_state(cx, || EditVideoOpen::Close);
@@ -61,7 +64,22 @@ where
         overlay_state.deactivate();
     };
 
-    // 状態の初期化
+    // 状態の初期化(作成時のみ)
+    use_effect(cx, (), {
+        to_owned![init_liked_ids];
+        |_| async move {
+            match get_liked_ids() {
+                Ok(liked_ids) => {
+                    init_liked_ids.set(liked_ids);
+                },
+                Err(e) => {
+                    log::error!("{e}");
+                }
+            }
+        }
+    });
+
+    // 状態の初期化(ソートタイプに依存)
     use_effect(cx, sort_type_state, {
         to_owned![videos_ref, is_load_continue];
         |sort_type| async move {
@@ -365,6 +383,7 @@ where
                         videos.iter().map(|video|{
                             let video = video.clone();
                             let id = video.id();
+                            let is_liked = init_liked_ids.get().contains(&id.to_string());
                             rsx!{
                                 MovieCard{
                                     key: "{id}",
@@ -376,7 +395,26 @@ where
                                     on_modify: move |_|{
                                         edit_video_open.set(EditVideoOpen::Modify(video.clone()));
                                         overlay_state.activate().expect("Cannot Overlay activate.");
-                                    }
+                                    },
+                                    on_like: move |_|{
+                                        // API
+                                        cx.spawn(async move {
+                                            let res = {
+                                                let cmd = video_commands::IncrementLikeVideoCommand::new(id);
+                                                video_usecase::increment_like::<T>(cmd).await
+                                            };
+
+                                            match res {
+                                                Ok(_) => {
+                                                    push_liked_id(id.to_string()).expect("Storage Error.");
+                                                },
+                                                Err(e) => {
+                                                    log::error!("{e}");
+                                                }
+                                            }
+                                        });
+                                    }, 
+                                    is_liked: is_liked,
                                 }
                             }
                         })

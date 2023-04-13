@@ -1,7 +1,7 @@
 mod edit_clip;
 
 use crate::components::{MovieCard, MovieContainer, IntersectionBottom, Quiz, VideoPageMenu};
-use crate::utils::use_overlay;
+use crate::utils::{use_overlay, get_liked_ids, push_liked_id};
 use domain::movie_clip::MovieClip;
 use edit_clip::EditMovieClip;
 
@@ -12,6 +12,7 @@ use gloo_intersection::IntersectionObserverHandler;
 use strum_macros::{Display, EnumIter, EnumString};
 use std::rc::Rc;
 use std::cell::Cell;
+use std::collections::HashSet;
 
 enum EditMovieClipOpen {
     Modify(MovieClip),
@@ -38,6 +39,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
     let is_load_continue = cx.use_hook(|| Rc::new(Cell::new(true)));
     let sort_type_state = use_state(cx, SortType::default);
+    let init_liked_ids = use_state(cx, HashSet::<String>::new);
 
     // AddMovieClip関連
     let edit_movie_clip_open = use_state(cx, || EditMovieClipOpen::Close);
@@ -54,8 +56,22 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
         edit_movie_clip_open.set(EditMovieClipOpen::Close);
         overlay_state.deactivate();
     };
+    // 状態の初期化(最初のみ実行)
+    use_effect(cx, (), {
+        to_owned![init_liked_ids];
+        |_| async move {
+            match get_liked_ids() {
+                Ok(liked_ids) => {
+                    init_liked_ids.set(liked_ids);
+                },
+                Err(e) => {
+                    log::error!("{e}");
+                }
+            }
+        }
+    });
 
-    // 状態の初期化
+    // 状態の初期化(ソートタイプの変更)
     use_effect(cx, sort_type_state, {
         to_owned![movie_clips_ref, is_load_continue];
         |sort_type| async move {
@@ -264,7 +280,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{}. Re-pushed movie_clip: {:?}", e, clip_for_remove);
+                    log::error!("{} Re-pushed movie_clip: {:?}", e, clip_for_remove);
 
                     // 削除した要素を再び挿入してソート
                     movie_clips_ref.with_mut(|movie_clips_opt|{
@@ -357,6 +373,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                         movie_clips.iter().map(|movie_clip|{
                             let movie_clip = movie_clip.clone();
                             let id = movie_clip.id();
+                            let is_liked = init_liked_ids.get().contains(&id.to_string());
                             rsx!{
                                 MovieCard{
                                     key:"{id}",
@@ -368,7 +385,26 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                                     on_modify: move |_|{
                                         edit_movie_clip_open.set(EditMovieClipOpen::Modify(movie_clip.clone()));
                                         overlay_state.activate().expect("Cannot Overlay activate.");
-                                    }
+                                    },
+                                    on_like: move |_| {
+                                        // API
+                                        cx.spawn(async move {
+                                            let res = {
+                                                let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
+                                                movie_clip_usecase::increment_like(cmd).await
+                                            };
+
+                                            match res {
+                                                Ok(_) => {
+                                                    push_liked_id(id.to_string()).expect("Storage Error.");
+                                                },
+                                                Err(e) => {
+                                                    log::error!("{e}");
+                                                }
+                                            }
+                                        });
+                                    },
+                                    is_liked: is_liked,
                                 }
                             }
                         })

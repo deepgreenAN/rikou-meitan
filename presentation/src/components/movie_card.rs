@@ -6,6 +6,7 @@ use domain::{
 
 use dioxus::prelude::*;
 
+
 // -------------------------------------------------------------------------------------------------
 // MovieCard
 
@@ -30,11 +31,14 @@ pub struct MovieCardProps<'a> {
     #[props(into)]
     author: Option<String>,
     /// Likeボタンを押したときの処理
-    on_like: Option<EventHandler<'a>>
+    on_like: Option<EventHandler<'a>>,
+    /// is_likedの初期値
+    #[props(default = false)]
+    is_liked: bool
 }
 
 pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
-    let is_liked = use_state(cx, ||{false});
+    let is_liked = use_state(cx, ||{false}); // 最初はfalseと仮定
 
     let like_heart_svg_str = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -42,14 +46,14 @@ pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
     ));
 
     // ライクされたときのクラス名
-    let liked_class = match *is_liked.get() {
+    let liked_class = match *is_liked.get() || cx.props.is_liked {
         true => " liked",
         false => ""
     };
 
     // ライクが押されたときの処理
     let on_like = move |_| {
-        if !is_liked.get() {
+        if !is_liked.get() && !cx.props.is_liked {
             if let Some(on_like) = cx.props.on_like.as_ref() {
                 on_like.call(());
             }
@@ -119,3 +123,4 @@ pub fn MovieContainer<'a>(cx: Scope<'a, MovieContainerProps<'a>>) -> Element {
         }
     })
 }
+

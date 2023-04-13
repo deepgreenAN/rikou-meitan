@@ -1,7 +1,12 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
+use rand::{thread_rng, Rng};
 
 pub fn TitleLogo(cx: Scope) -> Element {
+    let is_active = 0.1 > thread_rng().gen::<f64>();
+
+    let title_logo_class = if is_active { "active" } else { "inactive" };
+
     let bottle_svg = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/images/release/bottle-blackandpink-edge.svg"
@@ -20,7 +25,7 @@ pub fn TitleLogo(cx: Scope) -> Element {
     ));
 
     cx.render(rsx! {
-        div { id: "title-logo",
+        div { id: "title-logo", class: "{title_logo_class}",
             div { id: "bottle-svg",
                 dangerous_inner_html: "{bottle_svg}"
             }

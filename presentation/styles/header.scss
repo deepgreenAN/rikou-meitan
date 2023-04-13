@@ -44,10 +44,17 @@
                 transition: width 0.5s;
             }
 
+            &.active {
+                &:hover {
+                    #double-heart-svg {
+                        width: 4rem;
+                    }
+                }
+            }
+
             #moon-svg {
                 width: 10rem;
             }
-
 
             #logo-text-svg {
                 width: 20rem;
@@ -64,14 +71,7 @@
                     filter: drop-shadow(0.2rem 0.2rem 0.4rem var(--primary-color));
                 }
             }
-
-            &:hover {
-                #double-heart-svg {
-                    width: 4rem;
-                }
-            }
         }
-
     }
 
     #header-right {
