@@ -14,6 +14,7 @@ mod video_page_menu;
 pub use accordion_episodes::AccordionEpisodes;
 pub use add_button::AddButton;
 pub use edit_modal::EditModal;
+pub use flow_script::FlowScript;
 pub use intersection_bottom::IntersectionBottom;
 pub use movie_card::{MovieCard, MovieContainer};
 pub use player::Player;

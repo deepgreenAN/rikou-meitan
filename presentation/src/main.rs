@@ -15,6 +15,8 @@ use crate::header::Header;
 use crate::routes::{
     AdminPage, ClipsPage, EpisodesPage, HomePage, NotFoundPage, VideosPage, VideosPageProps,
 };
+// 以下はcomponents
+use crate::components::FlowScript;
 
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
@@ -42,6 +44,7 @@ fn App(cx: Scope) -> Element {
         Background{
             Router {
                 Header{}
+                FlowScript{}
                 div { id: "contents-container",
                     Route { to: "", NotFoundPage{}}
                     Route { to: "/", HomePage{}}

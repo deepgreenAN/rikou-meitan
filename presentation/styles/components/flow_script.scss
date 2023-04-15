@@ -1,0 +1,56 @@
+
+#flow-script-container {
+    width: 100%;
+    padding-top: 1rem;
+    height: 2.5rem;
+    font-size: 1.3rem;
+    
+    white-space:nowrap;
+    overflow: hidden;
+    
+    display: grid;
+    place-items: center;
+
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+
+    #flow-script-inner {
+        width: 100%;
+        color: var(--primary-color);
+        opacity: 0.8;
+        
+        -webkit-animation: flowing 30s linear infinite;
+                animation: flowing 30s linear infinite;
+        display:inline-block; 
+
+    
+        @-webkit-keyframes flowing {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    
+        @keyframes flowing {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+    
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}

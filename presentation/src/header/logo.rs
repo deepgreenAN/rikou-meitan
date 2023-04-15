@@ -3,7 +3,7 @@ use dioxus_router::Link;
 use rand::{thread_rng, Rng};
 
 pub fn TitleLogo(cx: Scope) -> Element {
-    let is_active = 0.1 > thread_rng().gen::<f64>();
+    let is_active = 0.2 > thread_rng().gen::<f64>();
 
     let title_logo_class = if is_active { "active" } else { "inactive" };
 
