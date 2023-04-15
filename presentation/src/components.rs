@@ -1,6 +1,7 @@
 mod accordion_episodes;
 mod add_button;
 mod edit_modal;
+mod flow_script;
 mod intersection_bottom;
 mod movie_card;
 mod player;

@@ -325,7 +325,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                 }
             }
             div {id: "clips-caption",
-                "Youtube動画のクリップをまとめたページです。Youtube動画をiframeで表示しています。"
+                "おりコウのYoutube動画のクリップをまとめたページです。Youtube動画をiframeで表示しています。"
             }
             VideoPageMenu{
                 on_click_add_button: open_edit_movie_clip,

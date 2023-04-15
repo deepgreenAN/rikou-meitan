@@ -182,7 +182,7 @@ where
 // # Video
 
 /// Videoのエンティティ
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Video<T: VideoType> {
     /// タイトル
     title: String,

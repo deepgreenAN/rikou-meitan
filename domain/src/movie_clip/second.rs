@@ -89,6 +89,15 @@ impl SecondRange {
     }
 }
 
+impl Default for SecondRange {
+    fn default() -> Self {
+        Self {
+            start: Second(0),
+            end: Second(1000),
+        }
+    }
+}
+
 impl TryFrom<Range<Second>> for SecondRange {
     type Error = DomainError;
     fn try_from(value: Range<Second>) -> Result<Self, Self::Error> {

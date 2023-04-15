@@ -15,6 +15,12 @@ use rand::Rng;
 #[serde(try_from = "String", into = "String")]
 pub struct EpisodeContent(String);
 
+impl Default for EpisodeContent {
+    fn default() -> Self {
+        Self("default episode content.".to_string())
+    }
+}
+
 // 高コスト
 impl FromStr for EpisodeContent {
     type Err = DomainError;

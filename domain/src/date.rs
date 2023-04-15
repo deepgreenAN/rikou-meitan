@@ -12,7 +12,7 @@ use fake::{Dummy, Fake, Faker};
 use rand::Rng;
 
 /// Date
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct Date(NaiveDate);
 

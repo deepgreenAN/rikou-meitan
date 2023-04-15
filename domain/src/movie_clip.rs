@@ -28,7 +28,7 @@ pub type MovieClipId = Id<MovieClipIdType>;
 // # VideoClip
 
 /// VideoClipのエンティティ
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MovieClip {
     /// クリップのタイトル
     title: String,

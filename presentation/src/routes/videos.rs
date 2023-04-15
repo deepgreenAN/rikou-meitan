@@ -336,7 +336,7 @@ where
                 }
             }
             div { class: "videos-caption",
-                format!("Youtubeの{}動画をまとめたページです。Youtube動画をiframeで表示しています。", T::caption())
+                format!("Youtubeのおりコウの{}動画をまとめたページです。Youtube動画をiframeで表示しています。", T::caption())
             }
             VideoPageMenu{
                 on_click_add_button: open_add_video,

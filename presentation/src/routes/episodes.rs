@@ -59,7 +59,7 @@ pub fn EpisodesPage(cx: Scope<EpisodesPageProps>) -> Element {
             } 
             div {
                 id: "episodes-caption",
-                "エピソードを年ごとにまとめたページです。Youtube動画をiframeで表示しています。"
+                "おりコウのエピソードを年ごとにまとめたページです。Htmlで記述できます。"
             }
             titles.iter().zip(ranges.iter()).zip(initial_is_opens.iter()).map(|((title, range), initial_is_open)|{
                 rsx! {

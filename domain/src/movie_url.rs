@@ -28,6 +28,15 @@ impl MovieUrl {
     }
 }
 
+impl Default for MovieUrl {
+    fn default() -> Self {
+        MovieUrl {
+            url_string: "https://www.youtube.com/watch?v=jNQXAC9IVRw".to_string(),
+            video_id: "jNQXAC9IVRw".to_string(),
+        }
+    }
+}
+
 impl FromStr for MovieUrl {
     type Err = DomainError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {

@@ -6,6 +6,8 @@
     overscroll-behavior: none;
     // heightは子要素に依存
     z-index: -4;
+    display: flex;
+    flex-direction: column;
 
     #background-grad {
         position: absolute;

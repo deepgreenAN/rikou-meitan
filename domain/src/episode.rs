@@ -27,7 +27,7 @@ pub type EpisodeId = Id<EpisodeIdType>;
 // # Episode
 
 /// Episodeのエンティティ
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Episode {
     /// エピソードの日時
     date: Date,

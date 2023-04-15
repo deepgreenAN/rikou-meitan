@@ -20,6 +20,12 @@ impl<T: Clone> Id<T> {
     }
 }
 
+impl<T: Clone> Default for Id<T> {
+    fn default() -> Self {
+        Self::generate()
+    }
+}
+
 impl<T: Clone> From<Uuid> for Id<T> {
     fn from(id: Uuid) -> Id<T> {
         Id(id, PhantomData)
