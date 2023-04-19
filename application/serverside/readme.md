@@ -10,5 +10,5 @@ cargo run --bin test_server
 ```
 インメモリ
 ```
-cargo run --bin test_server --features inmemory
+cargo run --bin api_test_server --features inmemory
 ```
