@@ -7,13 +7,15 @@ async fn main() {
         episode_handlers, kirinuki_handlers, movie_clip_handlers, original_handlers,
     };
 
+    use std::path::Path;
     use std::sync::Arc;
-    use tower_http::cors::{Any, CorsLayer};
 
     use axum::{
-        routing::{delete, get, patch, put},
+        http::StatusCode,
+        routing::{delete, get, get_service, patch, put},
         Router,
     };
+    use tower_http::services::ServeDir;
 
     // inmemoryの場合
     #[cfg(feature = "inmemory")]
@@ -33,6 +35,7 @@ async fn main() {
     #[cfg(feature = "inmemory")]
     type AppState = InMemoryAppState;
 
+    // 各種APIルーター
     let episode_api_router: Router<AppState> = Router::new()
         .route(
             "/episode",
@@ -103,12 +106,18 @@ async fn main() {
             patch(kirinuki_handlers::increment_like_kirinuki),
         );
 
-    let cors_layer = CorsLayer::new()
-        .allow_methods(Any)
-        .allow_headers(Any)
-        .allow_origin(Any);
+    // distのパス
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let dist_path = Path::new(manifest_dir).join("../../presentation/dist");
+    assert!(dist_path.exists());
 
+    // アプリルーター
     let app_router: Router<()> = Router::new()
+        .nest_service(
+            "/",
+            get_service(ServeDir::new(dist_path))
+                .handle_error(|_| async move { StatusCode::NOT_FOUND }),
+        )
         .nest(
             "/api",
             episode_api_router
@@ -116,8 +125,7 @@ async fn main() {
                 .merge(original_api_router)
                 .merge(kirinuki_api_router)
                 .with_state(app_state),
-        )
-        .layer(cors_layer);
+        );
 
     println!("server started: {}", CONFIG.test_server_addr);
 
