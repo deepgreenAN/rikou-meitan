@@ -11,16 +11,16 @@ async fn render(State(base_html): State<String>) -> impl IntoResponse {
 
     let body_content = format!(
         r#"
-        {}
+{}
     <body>
-        <div id=main>
-        {}
+        <div id="main">
+{}
         </div>
     </body>
 </html>
         "#,
         base_html,
-        dioxus_ssr::render(&vdom)
+        dioxus_ssr::pre_render(&vdom)
     );
 
     let response: Response<String> = Response::builder()

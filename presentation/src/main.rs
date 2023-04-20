@@ -22,17 +22,23 @@ fn main() {
 
     // let pre = dioxus_ssr::pre_render(&dom);
 
+    // // プリレンダリングされた内容をmainの内部htmlに挿入
+    // gloo_utils::document()
+    //     .get_element_by_id("main")
+    //     .unwrap_throw()
+    //     .set_inner_html(&pre);
+
+    // // リハイドレーション
+    // dioxus_web::launch_cfg(
+    //     App,
+    //     Config::new().with_default_panic_hook(true).hydrate(true),
+    // );
+
     // プリレンダリングされた内容をmainの内部htmlに挿入
     gloo_utils::document()
         .get_element_by_id("main")
         .unwrap_throw()
         .set_inner_html("");
-
-    // リハイドレーション
-    // dioxus_web::launch_cfg(
-    //     App,
-    //     Config::new().with_default_panic_hook(true).hydrate(true),
-    // );
 
     dioxus_web::launch_cfg(App, Config::new().with_default_panic_hook(true));
 }
