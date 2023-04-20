@@ -9,6 +9,7 @@ edition = "2021"
 develop = []
 fake = ["frontend/fake"]
 test_api = ["frontend/test_api"]
+ssr = []
 
 [dependencies]
 domain = { path = "../domain"}
@@ -35,8 +36,9 @@ web-sys = { version = "^0.3", features = [
 ] }
 js-sys = "^0.3"
 dioxus = "^0.3.2"
-dioxus-web = "^0.3.1"
-dioxus-router = "0.3.0"
+dioxus-web = { version = "^0.3.1", features = ["hydrate"]}
+dioxus-router = "^0.3.0"
+dioxus-ssr = "^0.3.0"
 fermi = "0.3.0"
 gloo-events = "^0.1"
 gloo-utils = "^0.1"

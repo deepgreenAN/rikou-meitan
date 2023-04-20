@@ -12,12 +12,28 @@ dioxus serve --example hello_world
 
 ## Dev
 設定は`Trunk.toml`にある．
+
+### Fake
+APIはサーバーは利用せずフェイクデータを用いる．
+
 ```
 trunk serve
 ```
 
+### テストAPI
+```
+trunk serve trunk_index_develop.html
+```
+
 ## Release
-設定は`Trunk.toml`にある．`trunk_index.html`を本番用に変更してから
+設定は`Trunk.toml`にある．
+
+### SPA
 ```
-trunk build --release
+trunk build trunk_index_spa.html --release
 ```
+### SSR
+```
+trunk build trunk_index_ssr.html --release --dist dist_ssr
+```
+

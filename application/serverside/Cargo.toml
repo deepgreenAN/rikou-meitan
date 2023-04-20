@@ -12,6 +12,7 @@ inmemory = []
 domain = { path = "../../domain", features = ["repo"] }
 config = { path = "../../config"}
 infrastructure = { path = "../../infrastructure"}
+presentation = { path = "../../presentation"}
 common = { path = "../common", features = ["server"]}
 derive-new = "0.5.*"
 axum = "0.6.*"
@@ -21,6 +22,8 @@ tower-http = { version = "0.3.*", features = ["cors", "fs"]}
 sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
 strum = "^0.24"
 strum_macros = "^0.24"
+dioxus-ssr = "^0.3.0"
+dioxus = "^0.3.2"
 
 [dev-dependencies]
 domain = { path = "../../domain", features = ["repo", "fake"] }
@@ -32,5 +35,5 @@ mime = "0.3.*"
 tower = { version = "0.4.*"}
 hyper = { version = "0.14.*", features = ["full"] }
 mockall = "0.11.*"
-once_cell = "1.16.*"
+once_cell = "^1.16"
 
