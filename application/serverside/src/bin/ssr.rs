@@ -1,3 +1,36 @@
+use presentation::App;
+
+use axum::{extract::State, http::Response, response::IntoResponse};
+use std::convert::Infallible;
+
+use dioxus::prelude::*;
+
+async fn render(State(base_html): State<String>) -> impl IntoResponse {
+    let mut vdom = VirtualDom::new(App);
+    let _ = vdom.rebuild();
+
+    let body_content = format!(
+        r#"
+        {}
+    <body>
+        <div id=main>
+        {}
+        </div>
+    </body>
+</html>
+        "#,
+        base_html,
+        dioxus_ssr::render(&vdom)
+    );
+
+    let response: Response<String> = Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(body_content.into())
+        .unwrap();
+
+    Result::<_, Infallible>::Ok(response)
+}
+
 #[tokio::main]
 async fn main() {
     use config::CONFIG;
@@ -15,6 +48,7 @@ async fn main() {
         routing::{delete, get, get_service, patch, put},
         Router,
     };
+    use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
     // inmemoryの場合
@@ -108,15 +142,30 @@ async fn main() {
 
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let dist_path = Path::new(manifest_dir).join("../../presentation/dist");
+    let dist_path = Path::new(manifest_dir).join("../../presentation/dist_ssr");
     assert!(dist_path.exists());
+
+    // base_html
+    let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
+        .await
+        .expect("failed to read index.html");
+
+    let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 
     // アプリルーター
     let app_router: Router<()> = Router::new()
         .nest_service(
             "/",
-            get_service(ServeDir::new(dist_path))
-                .handle_error(|_| async move { StatusCode::NOT_FOUND }),
+            get_service(
+                ServeDir::new(dist_path)
+                    .append_index_html_on_directories(false)
+                    .fallback(
+                        get(render)
+                            .with_state(base_html.to_string())
+                            .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+                    ),
+            )
+            .handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
         )
         .nest(
             "/api",
