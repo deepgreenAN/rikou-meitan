@@ -2,6 +2,11 @@
 async fn main() {
     use config::CONFIG;
     use domain::video::{Kirinuki, Original};
+
+    #[cfg(not(feature = "inmemory"))]
+    use serverside::app_state::AppState;
+
+    #[cfg(feature = "inmemory")]
     use serverside::app_state::InMemoryAppState;
     use serverside::handlers::{
         episode_handlers, kirinuki_handlers, movie_clip_handlers, original_handlers,
@@ -15,6 +20,7 @@ async fn main() {
         routing::{delete, get, get_service, patch, put},
         Router,
     };
+    use sqlx::postgres::PgPoolOptions;
     use tower_http::services::ServeDir;
 
     // inmemoryの場合
@@ -31,6 +37,29 @@ async fn main() {
             kirinuki_repo: Arc::new(InMemoryVideoRepository::<Kirinuki>::new()),
         }
     };
+
+    // データベースの場合
+    #[cfg(not(feature = "inmemory"))]
+    let app_state = async {
+        use infrastructure::episode_repository_impl::EpisodePgDBRepository;
+        use infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository;
+        use infrastructure::video_repository_impl::VideoPgDbRepository;
+
+        let database_url = std::env::var("DATABASE_URL").unwrap();
+        let pool = PgPoolOptions::new()
+            .idle_timeout(std::time::Duration::from_secs(1))
+            .connect(&database_url)
+            .await
+            .unwrap();
+
+        AppState {
+            movie_clip_repo: Arc::new(MovieClipPgDBRepository::new(pool.clone())),
+            episode_repo: Arc::new(EpisodePgDBRepository::new(pool.clone())),
+            original_repo: Arc::new(VideoPgDbRepository::<Original>::new(pool.clone())),
+            kirinuki_repo: Arc::new(VideoPgDbRepository::<Kirinuki>::new(pool.clone())),
+        }
+    }
+    .await;
 
     #[cfg(feature = "inmemory")]
     type AppState = InMemoryAppState;

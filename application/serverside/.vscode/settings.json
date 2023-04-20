@@ -6,6 +6,6 @@
         "serverside"
     ],
     "rust-analyzer.cargo.features": [
-        "inmemory"
+        // "inmemory"
     ]
 }
