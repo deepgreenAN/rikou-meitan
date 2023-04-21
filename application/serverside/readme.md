@@ -10,6 +10,10 @@ cd ../..
 nu postgre_start.nu
 ```
 
+```
+source ../../env.nu
+```
+
 ## サーバー
 
 ### APIサーバーのみ

@@ -5,11 +5,19 @@ use std::convert::Infallible;
 
 use dioxus::prelude::*;
 
-async fn render(State(base_html): State<String>) -> impl IntoResponse {
+/// dioxusアプリケーションのレンダリングを行う
+fn render() -> String {
     let mut vdom = VirtualDom::new(App);
     let _ = vdom.rebuild();
 
-    let body_content = format!(
+    // dioxus_ssr::pre_render(&vdom)
+    dioxus_ssr::render(&vdom)
+}
+
+/// レンダリングと文字列のサーブ
+#[allow(dead_code)]
+async fn render_and_serve(State(base_html): State<String>) -> impl IntoResponse {
+    let full_html = format!(
         r#"
 {}
     <body>
@@ -20,12 +28,22 @@ async fn render(State(base_html): State<String>) -> impl IntoResponse {
 </html>
         "#,
         base_html,
-        dioxus_ssr::pre_render(&vdom)
+        render()
     );
 
     let response: Response<String> = Response::builder()
         .header("Content-Type", "text/html; charset=utf-8")
-        .body(body_content.into())
+        .body(full_html.into())
+        .unwrap();
+
+    Result::<_, Infallible>::Ok(response)
+}
+
+/// 状態文字列のサーブ
+async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+    let response: Response<String> = Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(full_html.into())
         .unwrap();
 
     Result::<_, Infallible>::Ok(response)
@@ -175,6 +193,7 @@ async fn main() {
     let dist_path = Path::new(manifest_dir).join("../../presentation/dist_ssr");
     assert!(dist_path.exists());
 
+    // render_and_serve
     // base_html
     let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
         .await
@@ -182,20 +201,43 @@ async fn main() {
 
     let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 
+    // // ディレクトリ・ルートのサーブを行うサービス(毎回レンダリング)
+    // let serve_dir = ServeDir::new(dist_path)
+    //     .append_index_html_on_directories(false)
+    //     .fallback(
+    //         get(render_and_serve)
+    //             .with_state(base_html.to_string())
+    //             .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+    //     );
+
+    // ディレクトリ・ルートのサーブを行うサービス(起動時のみレンダリング)
+    let full_html = format!(
+        r#"
+{}
+    <body>
+        <div id="main">
+{}
+        </div>
+    </body>
+</html>
+        "#,
+        base_html,
+        render()
+    );
+    let serve_dir = ServeDir::new(dist_path)
+        .append_index_html_on_directories(false)
+        .fallback(
+            get(serve_text)
+                .with_state(full_html)
+                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+        );
+
     // アプリルーター
     let app_router: Router<()> = Router::new()
         .nest_service(
             "/",
-            get_service(
-                ServeDir::new(dist_path)
-                    .append_index_html_on_directories(false)
-                    .fallback(
-                        get(render)
-                            .with_state(base_html.to_string())
-                            .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
-                    ),
-            )
-            .handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
+            get_service(serve_dir)
+                .handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
         )
         .nest(
             "/api",
