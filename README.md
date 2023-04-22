@@ -1,6 +1,11 @@
 # 莉光迷站
 おりコウのファンページ．開発中．
 
+## フレームワーク
+- フロントエンド: [dioxus](https://github.com/DioxusLabs/dioxus)
+- webサーバー: [axum](https://github.com/tokio-rs/axum)
+- データベース: [sqlx](https://github.com/launchbadge/sqlx)
+
 ## ロードマップ
 - ✅ 同期的・個数の決まったプレーヤー
 - ✅ 単一のクリップ
