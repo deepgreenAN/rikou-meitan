@@ -30,7 +30,7 @@ trunk serve trunk_index_develop.html
 
 ### SPA
 ```
-trunk build trunk_index_spa.html --release
+trunk build trunk_index_spa.html --release --dist dist_spa
 ```
 ### SSR
 ```
