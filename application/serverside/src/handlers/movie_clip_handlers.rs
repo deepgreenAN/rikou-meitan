@@ -10,15 +10,15 @@ use crate::usecases::movie_clip_usecases;
 #[cfg(test)]
 use crate::usecases::mock_movie_clip_usecases as movie_clip_usecases;
 
-// AppStateのモック化
+// MovieClipRepositoryのモック化
 #[cfg(all(not(test), feature = "inmemory"))]
-use crate::app_state::InMemoryAppState as AppState;
+use infrastructure::movie_clip_repository_impl::InMemoryMovieClipRepository as MovieClipRepositoryImpl;
 
 #[cfg(all(not(test), not(feature = "inmemory")))]
-use crate::app_state::AppState;
+use infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository as MovieClipRepositoryImpl;
 
 #[cfg(test)]
-use crate::app_state::MockAppState as AppState;
+use infrastructure::movie_clip_repository_impl::MockMovieClipRepository as MovieClipRepositoryImpl;
 
 use axum::{
     extract::rejection::{JsonRejection, PathRejection, QueryRejection},
@@ -26,45 +26,46 @@ use axum::{
 };
 use serde::Deserialize;
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub async fn save_movie_clip(
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
     movie_clip_res: Result<Json<MovieClip>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let movie_clip = movie_clip_res?.0;
 
     let cmd = movie_clip_commands::SaveMovieClipCommand::new(movie_clip);
-    movie_clip_usecases::save_movie_clip(app_state.movie_clip_repo, cmd).await?;
+    movie_clip_usecases::save_movie_clip(movie_clip_repo, cmd).await?;
     Ok(())
 }
 
 pub async fn edit_movie_clip(
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
     movie_clip_res: Result<Json<MovieClip>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let movie_clip = movie_clip_res?.0;
 
     let cmd = movie_clip_commands::EditMovieClipCommand::new(movie_clip);
-    movie_clip_usecases::edit_movie_clip(app_state.movie_clip_repo, cmd).await?;
+    movie_clip_usecases::edit_movie_clip(movie_clip_repo, cmd).await?;
 
     Ok(())
 }
 
 pub async fn increment_like_movie_clip(
     id: Result<Path<MovieClipId>, PathRejection>,
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
-    movie_clip_usecases::increment_like_movie_clip(app_state.movie_clip_repo, cmd).await?;
+    movie_clip_usecases::increment_like_movie_clip(movie_clip_repo, cmd).await?;
     Ok(())
 }
 
 pub async fn all_movie_clips(
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
 ) -> Result<Json<Vec<MovieClip>>, AppCommonError> {
     let cmd = movie_clip_commands::AllMovieClipCommand;
-    let movie_clips = movie_clip_usecases::all_movie_clips(app_state.movie_clip_repo, cmd).await?;
+    let movie_clips = movie_clip_usecases::all_movie_clips(movie_clip_repo, cmd).await?;
     Ok(Json(movie_clips))
 }
 
@@ -93,7 +94,7 @@ pub struct MovieClipQuery {
 
 pub async fn get_movie_clips_with_query(
     query_res: Result<Query<MovieClipQuery>, QueryRejection>,
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
     query_info_res: Result<Json<QueryInfo<MovieClip>>, JsonRejection>,
 ) -> Result<Json<Vec<MovieClip>>, AppCommonError> {
     let query = query_res?.0;
@@ -115,21 +116,17 @@ pub async fn get_movie_clips_with_query(
                     let cmd = movie_clip_commands::OrderByLikeLaterMovieClipCommand::new(
                         reference, length,
                     );
-                    let clips = movie_clip_usecases::order_by_like_later_movie_clips(
-                        app_state.movie_clip_repo,
-                        cmd,
-                    )
-                    .await?;
+                    let clips =
+                        movie_clip_usecases::order_by_like_later_movie_clips(movie_clip_repo, cmd)
+                            .await?;
                     Ok(Json(clips))
                 }
                 // referenceが存在しない場合
                 None => {
                     let cmd = movie_clip_commands::OrderByLikeMovieClipCommand::new(length);
-                    let clips = movie_clip_usecases::order_by_like_movie_clips(
-                        app_state.movie_clip_repo,
-                        cmd,
-                    )
-                    .await?;
+                    let clips =
+                        movie_clip_usecases::order_by_like_movie_clips(movie_clip_repo, cmd)
+                            .await?;
                     Ok(Json(clips))
                 }
             }
@@ -143,7 +140,7 @@ pub async fn get_movie_clips_with_query(
                         reference, length,
                     );
                     let clips = movie_clip_usecases::order_by_create_date_later_movie_clips(
-                        app_state.movie_clip_repo,
+                        movie_clip_repo,
                         cmd,
                     )
                     .await?;
@@ -152,11 +149,9 @@ pub async fn get_movie_clips_with_query(
                 // referenceが存在しない場合
                 None => {
                     let cmd = movie_clip_commands::OrderByCreateDateMovieClipCommand::new(length);
-                    let clips = movie_clip_usecases::order_by_create_date_movie_clips(
-                        app_state.movie_clip_repo,
-                        cmd,
-                    )
-                    .await?;
+                    let clips =
+                        movie_clip_usecases::order_by_create_date_movie_clips(movie_clip_repo, cmd)
+                            .await?;
                     Ok(Json(clips))
                 }
             }
@@ -164,11 +159,9 @@ pub async fn get_movie_clips_with_query(
         // CreateDateでソートしstartとendを指定する場合
         (SortType::CreateDate, None, Some(start), Some(end)) => {
             let cmd = movie_clip_commands::OrderByCreateDateRangeMovieClipCommand::new(start, end);
-            let clips = movie_clip_usecases::order_by_create_date_range_movie_clips(
-                app_state.movie_clip_repo,
-                cmd,
-            )
-            .await?;
+            let clips =
+                movie_clip_usecases::order_by_create_date_range_movie_clips(movie_clip_repo, cmd)
+                    .await?;
             Ok(Json(clips))
         }
         // 無効なクエリの場合
@@ -180,17 +173,16 @@ pub async fn get_movie_clips_with_query(
 
 pub async fn remove_movie_clip(
     id: Result<Path<MovieClipId>, PathRejection>,
-    State(app_state): State<AppState>,
+    State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
-    movie_clip_usecases::remove_movie_clip(app_state.movie_clip_repo, cmd).await?;
+    movie_clip_usecases::remove_movie_clip(movie_clip_repo, cmd).await?;
     Ok(())
 }
 
 #[cfg(test)]
 mod test {
-    use super::AppState;
     use crate::usecases::mock_movie_clip_usecases;
     use common::{AppCommonError, QueryInfoRef};
     use domain::movie_clip::{MovieClip, MovieClipId};
@@ -208,14 +200,14 @@ mod test {
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
     use std::borrow::Cow;
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
     use tower::{Service, ServiceExt};
 
     static MTX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
     #[fixture]
     fn router() -> Router {
-        let app_state = AppState::default();
+        let movie_clip_repo = Arc::new(MockMovieClipRepository::new());
 
         Router::new()
             .route(
@@ -230,7 +222,7 @@ mod test {
                 "/movie_clip/increment_like/:id",
                 patch(super::increment_like_movie_clip),
             )
-            .with_state(app_state)
+            .with_state(movie_clip_repo)
     }
 
     #[fixture]

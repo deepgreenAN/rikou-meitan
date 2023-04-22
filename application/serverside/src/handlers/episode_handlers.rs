@@ -10,15 +10,15 @@ use crate::usecases::episode_usecases;
 #[cfg(test)]
 use crate::usecases::mock_episode_usecases as episode_usecases;
 
-/// AppStateについてのダブル
+// EpisodeRepositoryについてのタプル
 #[cfg(all(not(test), feature = "inmemory"))]
-use crate::app_state::InMemoryAppState as AppState;
+use infrastructure::episode_repository_impl::InMemoryEpisodeRepository as EpisodeRepositoryImpl;
 
 #[cfg(all(not(test), not(feature = "inmemory")))]
-use crate::app_state::AppState;
+use infrastructure::episode_repository_impl::EpisodePgDBRepository as EpisodeRepositoryImpl;
 
 #[cfg(test)]
-use crate::app_state::MockAppState as AppState;
+use infrastructure::episode_repository_impl::MockEpisodeRepository as EpisodeRepositoryImpl;
 
 use axum::{
     extract::rejection::{JsonRejection, PathRejection, QueryRejection},
@@ -27,32 +27,33 @@ use axum::{
 
 use serde::Deserialize;
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub async fn save_episode(
-    State(app_state): State<AppState>,
+    State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
     episode_res: Result<Json<Episode>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let episode = episode_res?.0;
     let cmd = episode_commands::SaveEpisodeCommand::new(episode);
-    episode_usecases::save_episode(app_state.episode_repo, cmd).await?;
+    episode_usecases::save_episode(episode_repo, cmd).await?;
     Ok(())
 }
 
 pub async fn edit_episode(
-    State(app_state): State<AppState>,
+    State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
     episode_res: Result<Json<Episode>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let episode = episode_res?.0;
     let cmd = episode_commands::EditEpisodeCommand::new(episode);
-    episode_usecases::edit_episode(app_state.episode_repo, cmd).await?;
+    episode_usecases::edit_episode(episode_repo, cmd).await?;
     Ok(())
 }
 
 pub async fn all_episodes(
-    State(app_state): State<AppState>,
+    State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
 ) -> Result<Json<Vec<Episode>>, AppCommonError> {
     let cmd = episode_commands::AllEpisodeCommand;
-    let episodes = episode_usecases::all_episodes(app_state.episode_repo, cmd).await?;
+    let episodes = episode_usecases::all_episodes(episode_repo, cmd).await?;
     Ok(Json(episodes))
 }
 
@@ -83,7 +84,7 @@ pub struct EpisodeQuery {
 
 pub async fn get_episodes_with_query(
     query_res: Result<Query<EpisodeQuery>, QueryRejection>,
-    State(app_state): State<AppState>,
+    State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
 ) -> Result<Json<Vec<Episode>>, AppCommonError> {
     let query = query_res?.0;
 
@@ -91,7 +92,7 @@ pub async fn get_episodes_with_query(
         (SortType::Date, Some(start), Some(end)) => {
             let cmd = episode_commands::OrderByDateRangeEpisodeCommand::new(start, end);
             let episodes =
-                episode_usecases::order_by_date_range_episodes(app_state.episode_repo, cmd).await?;
+                episode_usecases::order_by_date_range_episodes(episode_repo, cmd).await?;
             Ok(Json(episodes))
         }
         _ => Err(AppCommonError::QueryStringRejectionError(
@@ -102,17 +103,16 @@ pub async fn get_episodes_with_query(
 
 pub async fn remove_episode(
     id: Result<Path<EpisodeId>, PathRejection>,
-    State(app_state): State<AppState>,
+    State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = episode_commands::RemoveEpisodeCommand::new(id);
-    episode_usecases::remove_episode(app_state.episode_repo, cmd).await?;
+    episode_usecases::remove_episode(episode_repo, cmd).await?;
     Ok(())
 }
 
 #[cfg(test)]
 mod test {
-    use super::AppState;
     use crate::usecases::mock_episode_usecases;
     use common::AppCommonError;
     use domain::episode::{Episode, EpisodeId};
@@ -126,6 +126,8 @@ mod test {
         Router,
     };
 
+    use std::sync::Arc;
+
     use fake::{Fake, Faker};
     use once_cell::sync::Lazy;
     use pretty_assertions::{assert_eq, assert_ne};
@@ -137,7 +139,7 @@ mod test {
 
     #[fixture]
     fn router() -> Router {
-        let app_state = AppState::new();
+        let episode_repo = Arc::new(MockEpisodeRepository::new());
 
         Router::new()
             .route(
@@ -148,7 +150,7 @@ mod test {
             )
             .route("/episode/query", get(super::get_episodes_with_query))
             .route("/episode/:id", delete(super::remove_episode))
-            .with_state(app_state)
+            .with_state(episode_repo)
     }
 
     #[fixture]

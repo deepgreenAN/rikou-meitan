@@ -1,7 +1,6 @@
 pub mod episode_handlers;
-pub mod kirinuki_handlers;
 pub mod movie_clip_handlers;
-pub mod original_handlers;
+pub mod video_handlers;
 
 #[cfg(test)]
 pub mod global {

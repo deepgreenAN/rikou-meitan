@@ -1,6 +1,6 @@
 use crate::commands::video_commands;
 use common::{AppCommonError, QueryInfo};
-use domain::video::{Original, Video, VideoId};
+use domain::video::{Video, VideoId, VideoType};
 
 // video_usecaseのモック化
 #[cfg(not(test))]
@@ -9,15 +9,15 @@ use crate::usecases::video_usecases;
 #[cfg(test)]
 use crate::usecases::mock_video_usecases as video_usecases;
 
-// AppStateのモック化
+// VideoRepoのモック化
 #[cfg(all(not(test), feature = "inmemory"))]
-use crate::app_state::InMemoryAppState as AppState;
+use infrastructure::video_repository_impl::InMemoryVideoRepository as VideoRepositoryImpl;
 
 #[cfg(all(not(test), not(feature = "inmemory")))]
-use crate::app_state::AppState;
+use infrastructure::video_repository_impl::VideoPgDbRepository as VideoRepositoryImpl;
 
 #[cfg(test)]
-use crate::app_state::MockAppState as AppState;
+use infrastructure::video_repository_impl::InMemoryVideoRepository as VideoRepositoryImpl; // 実際には利用しない．
 
 use axum::{
     extract::rejection::{JsonRejection, PathRejection, QueryRejection},
@@ -25,42 +25,43 @@ use axum::{
 };
 use serde::Deserialize;
 use std::str::FromStr;
+use std::sync::Arc;
 
-pub async fn save_original(
-    State(app_state): State<AppState>,
-    video_res: Result<Json<Video<Original>>, JsonRejection>,
+pub async fn save_video<T: VideoType + 'static>(
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
+    video_res: Result<Json<Video<T>>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let video = video_res?.0;
-    let cmd = video_commands::SaveVideoCommand::new(video);
-    video_usecases::save_video(app_state.original_repo, cmd).await?;
+    let cmd = video_commands::SaveVideoCommand::<T>::new(video);
+    video_usecases::save_video(video_repo, cmd).await?;
     Ok(())
 }
 
-pub async fn edit_original(
-    State(app_state): State<AppState>,
-    video_res: Result<Json<Video<Original>>, JsonRejection>,
+pub async fn edit_video<T: VideoType + 'static>(
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
+    video_res: Result<Json<Video<T>>, JsonRejection>,
 ) -> Result<(), AppCommonError> {
     let video = video_res?.0;
-    let cmd = video_commands::EditVideoCommand::new(video);
-    video_usecases::edit_video(app_state.original_repo, cmd).await?;
+    let cmd = video_commands::EditVideoCommand::<T>::new(video);
+    video_usecases::edit_video(video_repo, cmd).await?;
     Ok(())
 }
 
-pub async fn increment_like_original(
+pub async fn increment_like_video<T: VideoType + 'static>(
     id: Result<Path<VideoId>, PathRejection>,
-    State(app_state): State<AppState>,
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = video_commands::IncrementLikeVideoCommand::new(id);
-    video_usecases::increment_like_video(app_state.original_repo, cmd).await?;
+    video_usecases::increment_like_video::<VideoRepositoryImpl<T>, _>(video_repo, cmd).await?;
     Ok(())
 }
 
-pub async fn all_originals(
-    State(app_state): State<AppState>,
-) -> Result<Json<Vec<Video<Original>>>, AppCommonError> {
+pub async fn all_videos<T: VideoType + 'static>(
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
+) -> Result<Json<Vec<Video<T>>>, AppCommonError> {
     let cmd = video_commands::AllVideosCommand;
-    let videos = video_usecases::all_videos(app_state.original_repo, cmd).await?;
+    let videos = video_usecases::all_videos::<VideoRepositoryImpl<T>, _>(video_repo, cmd).await?;
     Ok(Json(videos))
 }
 
@@ -80,16 +81,16 @@ impl TryFrom<String> for SortType {
 }
 
 #[derive(Deserialize)]
-pub struct OriginalQuery {
+pub struct VideoQuery {
     sort_type: SortType,
     length: Option<usize>,
 }
 
-pub async fn get_originals_with_query(
-    path_query_res: Result<Query<OriginalQuery>, QueryRejection>,
-    State(app_state): State<AppState>,
-    query_info_res: Result<Json<QueryInfo<Video<Original>>>, JsonRejection>,
-) -> Result<Json<Vec<Video<Original>>>, AppCommonError> {
+pub async fn get_videos_with_query<T: VideoType + 'static>(
+    path_query_res: Result<Query<VideoQuery>, QueryRejection>,
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
+    query_info_res: Result<Json<QueryInfo<Video<T>>>, JsonRejection>,
+) -> Result<Json<Vec<Video<T>>>, AppCommonError> {
     let path_query = path_query_res?.0;
     let reference_video = match query_info_res {
         // リクエストに正しいjsonが与えられた場合
@@ -109,15 +110,13 @@ pub async fn get_originals_with_query(
                     let cmd =
                         video_commands::OrderByLikeLaterVideosCommand::new(reference_video, length);
                     let videos =
-                        video_usecases::order_by_like_later_videos(app_state.original_repo, cmd)
-                            .await?;
+                        video_usecases::order_by_like_later_videos(video_repo, cmd).await?;
                     Ok(Json(videos))
                 }
                 // QueryInfoにreference_originalが与えられなかった場合
                 None => {
                     let cmd = video_commands::OrderByLikeVideosCommand::new(length);
-                    let videos =
-                        video_usecases::order_by_like_videos(app_state.original_repo, cmd).await?;
+                    let videos = video_usecases::order_by_like_videos(video_repo, cmd).await?;
                     Ok(Json(videos))
                 }
             }
@@ -130,15 +129,13 @@ pub async fn get_originals_with_query(
                     let cmd =
                         video_commands::OrderByDateLaterVideosCommand::new(reference_video, length);
                     let videos =
-                        video_usecases::order_by_date_later_videos(app_state.original_repo, cmd)
-                            .await?;
+                        video_usecases::order_by_date_later_videos(video_repo, cmd).await?;
                     Ok(Json(videos))
                 }
                 // QueryInfoにreference_originalが与えられなかった場合
                 None => {
                     let cmd = video_commands::OrderByDateVideosCommand::new(length);
-                    let videos =
-                        video_usecases::order_by_date_videos(app_state.original_repo, cmd).await?;
+                    let videos = video_usecases::order_by_date_videos(video_repo, cmd).await?;
                     Ok(Json(videos))
                 }
             }
@@ -150,24 +147,23 @@ pub async fn get_originals_with_query(
     }
 }
 
-pub async fn remove_original(
+pub async fn remove_video<T: VideoType + 'static>(
     id: Result<Path<VideoId>, PathRejection>,
-    State(app_state): State<AppState>,
+    State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
 ) -> Result<(), AppCommonError> {
     let id = id?.0;
     let cmd = video_commands::RemoveVideoCommand::new(id);
-    video_usecases::remove_video(app_state.original_repo, cmd).await?;
+    video_usecases::remove_video(video_repo, cmd).await?;
     Ok(())
 }
 
 #[cfg(test)]
 mod test {
-    use super::AppState;
     use crate::handlers::global::MTX;
     use crate::usecases::mock_video_usecases;
     use common::{AppCommonError, QueryInfoRef};
     use domain::video::{Original, Video, VideoId};
-    use infrastructure::video_repository_impl::MockVideoOriginalRepository;
+    use infrastructure::video_repository_impl::InMemoryVideoRepository;
 
     use axum::{
         body::Body,
@@ -179,26 +175,30 @@ mod test {
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
     use std::borrow::Cow;
+    use std::sync::Arc;
     use tower::{Service, ServiceExt};
 
     #[fixture]
     fn router() -> Router {
-        let app_state = AppState::default();
+        let video_repo = Arc::new(InMemoryVideoRepository::<Original>::new());
 
         Router::new()
             .route(
                 "/original",
-                put(super::save_original)
-                    .patch(super::edit_original)
-                    .get(super::all_originals),
+                put(super::save_video::<Original>)
+                    .patch(super::edit_video::<Original>)
+                    .get(super::all_videos::<Original>),
             )
-            .route("/original/query", get(super::get_originals_with_query))
-            .route("/original/:id", delete(super::remove_original))
+            .route(
+                "/original/query",
+                get(super::get_videos_with_query::<Original>),
+            )
+            .route("/original/:id", delete(super::remove_video::<Original>))
             .route(
                 "/original/increment_like/:id",
-                patch(super::increment_like_original),
+                patch(super::increment_like_video::<Original>),
             )
-            .with_state(app_state)
+            .with_state(video_repo)
     }
 
     #[fixture]
@@ -219,7 +219,7 @@ mod test {
         {
             let mock_ctx_ok = mock_video_usecases::save_video_context();
             mock_ctx_ok
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf({
                     let video = video.clone();
                     move |_, cmd| cmd.video == video
@@ -242,7 +242,7 @@ mod test {
         {
             let mock_ctx_err = mock_video_usecases::save_video_context();
             mock_ctx_err
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf({
                     let video = video.clone();
                     move |_, cmd| cmd.video == video
@@ -278,7 +278,7 @@ mod test {
         {
             let mock_ctx_ok = mock_video_usecases::edit_video_context();
             mock_ctx_ok
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf({
                     let video = video.clone();
                     move |_, cmd| cmd.video == video
@@ -301,7 +301,7 @@ mod test {
         {
             let mock_ctx_err = mock_video_usecases::edit_video_context();
             mock_ctx_err
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf({
                     let video = video.clone();
                     move |_, cmd| cmd.video == video
@@ -337,7 +337,7 @@ mod test {
         {
             let mock_ctx_ok = mock_video_usecases::increment_like_video_context();
             mock_ctx_ok
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf(move |_, cmd| cmd.id == video_id)
                 .times(1)
                 .return_const(Ok(()));
@@ -356,7 +356,7 @@ mod test {
         {
             let mock_ctx_err = mock_video_usecases::increment_like_video_context();
             mock_ctx_err
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf(move |_, cmd| cmd.id == video_id)
                 .times(1)
                 .return_const(Err(AppCommonError::NoRecordError));
@@ -385,7 +385,7 @@ mod test {
 
         let mock_ctx = mock_video_usecases::all_videos_context();
         mock_ctx
-            .expect::<MockVideoOriginalRepository, Original>()
+            .expect::<InMemoryVideoRepository<Original>, Original>()
             .times(1)
             .return_const(Ok(videos.clone()));
 
@@ -414,7 +414,7 @@ mod test {
 
         let mock_ctx = mock_video_usecases::order_by_like_videos_context();
         mock_ctx
-            .expect::<MockVideoOriginalRepository, Original>()
+            .expect::<InMemoryVideoRepository<Original>, Original>()
             .withf(move |_, cmd| cmd.length == length)
             .times(1)
             .return_const(Ok(videos.clone()));
@@ -445,7 +445,7 @@ mod test {
 
         let mock_ctx = mock_video_usecases::order_by_like_later_videos_context();
         mock_ctx
-            .expect::<MockVideoOriginalRepository, Original>()
+            .expect::<InMemoryVideoRepository<Original>, Original>()
             .withf({
                 let reference = reference.clone();
                 move |_, cmd| cmd.reference == reference && cmd.length == length
@@ -483,7 +483,7 @@ mod test {
 
         let mock_ctx = mock_video_usecases::order_by_date_videos_context();
         mock_ctx
-            .expect::<MockVideoOriginalRepository, Original>()
+            .expect::<InMemoryVideoRepository<Original>, Original>()
             .withf(move |_, cmd| cmd.length == length)
             .times(1)
             .return_const(Ok(videos.clone()));
@@ -514,7 +514,7 @@ mod test {
 
         let mock_ctx = mock_video_usecases::order_by_date_later_videos_context();
         mock_ctx
-            .expect::<MockVideoOriginalRepository, Original>()
+            .expect::<InMemoryVideoRepository<Original>, Original>()
             .withf({
                 let reference = reference.clone();
                 move |_, cmd| cmd.reference == reference && cmd.length == length
@@ -553,7 +553,7 @@ mod test {
         {
             let mock_ctx_ok = mock_video_usecases::remove_video_context();
             mock_ctx_ok
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf(move |_, cmd| cmd.id == video_id)
                 .times(1)
                 .return_const(Ok(()));
@@ -572,7 +572,7 @@ mod test {
         {
             let mock_ctx_err = mock_video_usecases::remove_video_context();
             mock_ctx_err
-                .expect::<MockVideoOriginalRepository, Original>()
+                .expect::<InMemoryVideoRepository<Original>, Original>()
                 .withf(move |_, cmd| cmd.id == video_id)
                 .times(1)
                 .return_const(Err(AppCommonError::NoRecordError));

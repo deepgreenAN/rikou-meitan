@@ -54,15 +54,7 @@ async fn main() {
     use config::CONFIG;
     use domain::video::{Kirinuki, Original};
 
-    #[cfg(not(feature = "inmemory"))]
-    use serverside::app_state::AppState;
-
-    #[cfg(feature = "inmemory")]
-    use serverside::app_state::InMemoryAppState;
-
-    use serverside::handlers::{
-        episode_handlers, kirinuki_handlers, movie_clip_handlers, original_handlers,
-    };
+    use serverside::handlers::{episode_handlers, movie_clip_handlers, video_handlers};
 
     use std::path::Path;
     use std::sync::Arc;
@@ -76,49 +68,57 @@ async fn main() {
     use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
-    // inmemoryの場合
-    #[cfg(feature = "inmemory")]
-    let app_state = {
-        use infrastructure::episode_repository_impl::InMemoryEpisodeRepository;
-        use infrastructure::movie_clip_repository_impl::InMemoryMovieClipRepository;
-        use infrastructure::video_repository_impl::InMemoryVideoRepository;
-
-        InMemoryAppState {
-            movie_clip_repo: Arc::new(InMemoryMovieClipRepository::new()),
-            episode_repo: Arc::new(InMemoryEpisodeRepository::new()),
-            original_repo: Arc::new(InMemoryVideoRepository::<Original>::new()),
-            kirinuki_repo: Arc::new(InMemoryVideoRepository::<Kirinuki>::new()),
-        }
-    };
-
-    // データベースの場合
     #[cfg(not(feature = "inmemory"))]
-    let app_state = async {
-        use infrastructure::episode_repository_impl::EpisodePgDBRepository;
-        use infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository;
-        use infrastructure::video_repository_impl::VideoPgDbRepository;
-
+    let pool = async {
         let database_url = std::env::var("DATABASE_URL").unwrap();
-        let pool = PgPoolOptions::new()
+        PgPoolOptions::new()
             .idle_timeout(std::time::Duration::from_secs(1))
             .connect(&database_url)
             .await
-            .unwrap();
-
-        AppState {
-            movie_clip_repo: Arc::new(MovieClipPgDBRepository::new(pool.clone())),
-            episode_repo: Arc::new(EpisodePgDBRepository::new(pool.clone())),
-            original_repo: Arc::new(VideoPgDbRepository::<Original>::new(pool.clone())),
-            kirinuki_repo: Arc::new(VideoPgDbRepository::<Kirinuki>::new(pool.clone())),
-        }
+            .unwrap()
     }
     .await;
 
+    // episode_repo
     #[cfg(feature = "inmemory")]
-    type AppState = InMemoryAppState;
+    let episode_repo =
+        Arc::new(infrastructure::episode_repository_impl::InMemoryEpisodeRepository::new());
 
-    // 各種APIルーター
-    let episode_api_router: Router<AppState> = Router::new()
+    #[cfg(not(feature = "inmemory"))]
+    let episode_repo =
+        Arc::new(infrastructure::episode_repository_impl::EpisodePgDBRepository::new(pool.clone()));
+
+    // movie_clip_repo
+    #[cfg(feature = "inmemory")]
+    let movie_clip_repo =
+        Arc::new(infrastructure::movie_clip_repository_impl::InMemoryMovieClipRepository::new());
+
+    #[cfg(not(feature = "inmemory"))]
+    let movie_clip_repo = Arc::new(
+        infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository::new(pool.clone()),
+    );
+
+    // original_repo
+    #[cfg(feature = "inmemory")]
+    let original_repo =
+        Arc::new(infrastructure::video_repository_impl::InMemoryVideoRepository::<Original>::new());
+
+    #[cfg(not(feature = "inmemory"))]
+    let original_repo = Arc::new(
+        infrastructure::video_repository_impl::VideoPgDbRepository::<Original>::new(pool.clone()),
+    );
+
+    // kirinuki_repo
+    #[cfg(feature = "inmemory")]
+    let kirinuki_repo =
+        Arc::new(infrastructure::video_repository_impl::InMemoryVideoRepository::<Kirinuki>::new());
+
+    #[cfg(not(feature = "inmemory"))]
+    let kirinuki_repo = Arc::new(
+        infrastructure::video_repository_impl::VideoPgDbRepository::<Kirinuki>::new(pool.clone()),
+    );
+
+    let episode_api_router: Router<()> = Router::new()
         .route(
             "/episode",
             put(episode_handlers::save_episode)
@@ -129,9 +129,10 @@ async fn main() {
             "/episode/query",
             get(episode_handlers::get_episodes_with_query),
         )
-        .route("/episode/:id", delete(episode_handlers::remove_episode));
+        .route("/episode/:id", delete(episode_handlers::remove_episode))
+        .with_state(episode_repo);
 
-    let movie_clip_api_router: Router<AppState> = Router::new()
+    let movie_clip_api_router: Router<()> = Router::new()
         .route(
             "/movie_clip",
             put(movie_clip_handlers::save_movie_clip)
@@ -150,43 +151,52 @@ async fn main() {
         .route(
             "/movie_clip/increment_like/:id",
             patch(movie_clip_handlers::increment_like_movie_clip),
-        );
+        )
+        .with_state(movie_clip_repo);
 
-    let original_api_router: Router<AppState> = Router::new()
+    let original_api_router: Router<()> = Router::new()
         .route(
             "/original",
-            put(original_handlers::save_original)
-                .patch(original_handlers::edit_original)
-                .get(original_handlers::all_originals),
+            put(video_handlers::save_video::<Original>)
+                .patch(video_handlers::edit_video::<Original>)
+                .get(video_handlers::all_videos::<Original>),
         )
         .route(
             "/original/query",
-            get(original_handlers::get_originals_with_query)
-                .post(original_handlers::get_originals_with_query),
+            get(video_handlers::get_videos_with_query::<Original>)
+                .post(video_handlers::get_videos_with_query::<Original>),
         )
-        .route("/original/:id", delete(original_handlers::remove_original))
+        .route(
+            "/original/:id",
+            delete(video_handlers::remove_video::<Original>),
+        )
         .route(
             "/original/increment_like/:id",
-            patch(original_handlers::increment_like_original),
-        );
+            patch(video_handlers::increment_like_video::<Original>),
+        )
+        .with_state(original_repo);
 
-    let kirinuki_api_router: Router<AppState> = Router::new()
+    let kirinuki_api_router: Router<()> = Router::new()
         .route(
             "/kirinuki",
-            put(kirinuki_handlers::save_kirinuki)
-                .patch(kirinuki_handlers::edit_kirinuki)
-                .get(kirinuki_handlers::all_kirinukis),
+            put(video_handlers::save_video::<Kirinuki>)
+                .patch(video_handlers::edit_video::<Kirinuki>)
+                .get(video_handlers::all_videos::<Kirinuki>),
         )
         .route(
             "/kirinuki/query",
-            get(kirinuki_handlers::get_kirinukis_with_query)
-                .post(kirinuki_handlers::get_kirinukis_with_query),
+            get(video_handlers::get_videos_with_query::<Kirinuki>)
+                .post(video_handlers::get_videos_with_query::<Kirinuki>),
         )
-        .route("/kirinuki/:id", delete(kirinuki_handlers::remove_kirinuki))
+        .route(
+            "/kirinuki/:id",
+            delete(video_handlers::remove_video::<Kirinuki>),
+        )
         .route(
             "/kirinuki/increment_like/:id",
-            patch(kirinuki_handlers::increment_like_kirinuki),
-        );
+            patch(video_handlers::increment_like_video::<Kirinuki>),
+        )
+        .with_state(kirinuki_repo);
 
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
@@ -244,8 +254,7 @@ async fn main() {
             episode_api_router
                 .merge(movie_clip_api_router)
                 .merge(original_api_router)
-                .merge(kirinuki_api_router)
-                .with_state(app_state),
+                .merge(kirinuki_api_router),
         );
 
     println!("server started: {}", CONFIG.test_server_addr);
