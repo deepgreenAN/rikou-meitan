@@ -12,10 +12,11 @@ async fn main() {
         routing::{delete, get, patch, put},
         Router,
     };
-    use sqlx::postgres::PgPoolOptions;
 
     #[cfg(not(feature = "inmemory"))]
     let pool = async {
+        use sqlx::postgres::PgPoolOptions;
+
         let database_url = std::env::var("DATABASE_URL").unwrap();
         PgPoolOptions::new()
             .idle_timeout(std::time::Duration::from_secs(1))

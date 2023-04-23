@@ -19,29 +19,29 @@ source ../../env.nu
 ### APIサーバーのみ
 データベース
 ```
-cargo run --bin api_test_server
+cargo run --example api_test_server
 ```
 インメモリ
 ```
-cargo run --bin api_test_server --features inmemory
+cargo run --example api_test_server --features inmemory
 ```
 
 ### SPA
 データベース
 ```
-cargo run --bin spa
+cargo run --example spa
 ```
 インメモリ
 ```
-cargo run --bin spa --features inmemory
+cargo run --example spa --features inmemory
 ```
 
 ### SSR
 データベース
 ```
-cargo run --bin ssr
+cargo run --example ssr
 ```
 インメモリ
 ```
-cargo run --bin ssr --features inmemory
+cargo run --example ssr --features inmemory
 ```

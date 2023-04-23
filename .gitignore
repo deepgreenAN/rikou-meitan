@@ -4,3 +4,4 @@
 /log
 /Cargo.lock
 /.vscode
+Secrets.toml

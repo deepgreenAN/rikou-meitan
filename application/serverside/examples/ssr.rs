@@ -1,3 +1,54 @@
+use presentation::App;
+
+use axum::{extract::State, http::Response, response::IntoResponse};
+use std::convert::Infallible;
+
+use dioxus::prelude::*;
+
+/// dioxusアプリケーションのレンダリングを行う
+fn render() -> String {
+    let mut vdom = VirtualDom::new(App);
+    let _ = vdom.rebuild();
+
+    // dioxus_ssr::pre_render(&vdom)
+    dioxus_ssr::render(&vdom)
+}
+
+/// レンダリングと文字列のサーブ
+#[allow(dead_code)]
+async fn render_and_serve(State(base_html): State<String>) -> impl IntoResponse {
+    let full_html = format!(
+        r#"
+{}
+    <body>
+        <div id="main">
+{}
+        </div>
+    </body>
+</html>
+        "#,
+        base_html,
+        render()
+    );
+
+    let response: Response<String> = Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(full_html.into())
+        .unwrap();
+
+    Result::<_, Infallible>::Ok(response)
+}
+
+/// 状態文字列のサーブ
+async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+    let response: Response<String> = Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(full_html.into())
+        .unwrap();
+
+    Result::<_, Infallible>::Ok(response)
+}
+
 #[tokio::main]
 async fn main() {
     use config::CONFIG;
@@ -13,11 +64,13 @@ async fn main() {
         routing::{delete, get, get_service, patch, put},
         Router,
     };
-    use sqlx::postgres::PgPoolOptions;
+    use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
     #[cfg(not(feature = "inmemory"))]
     let pool = async {
+        use sqlx::postgres::PgPoolOptions;
+
         let database_url = std::env::var("DATABASE_URL").unwrap();
         PgPoolOptions::new()
             .idle_timeout(std::time::Duration::from_secs(1))
@@ -148,15 +201,54 @@ async fn main() {
 
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let dist_path = Path::new(manifest_dir).join("../../presentation/dist_spa");
+    let dist_path = Path::new(manifest_dir).join("../../presentation/dist_ssr");
     assert!(dist_path.exists());
+
+    // render_and_serve
+    // base_html
+    let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
+        .await
+        .expect("failed to read index.html");
+
+    let (base_html, _) = index_html_text.split_once("<body>").unwrap();
+
+    // // ディレクトリ・ルートのサーブを行うサービス(毎回レンダリング)
+    // let serve_dir = ServeDir::new(dist_path)
+    //     .append_index_html_on_directories(false)
+    //     .fallback(
+    //         get(render_and_serve)
+    //             .with_state(base_html.to_string())
+    //             .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+    //     );
+
+    // ディレクトリ・ルートのサーブを行うサービス(起動時のみレンダリング)
+    let full_html = format!(
+        r#"
+{}
+    <body>
+        <div id="main">
+{}
+        </div>
+    </body>
+</html>
+        "#,
+        base_html,
+        render()
+    );
+    let serve_dir = ServeDir::new(dist_path)
+        .append_index_html_on_directories(false)
+        .fallback(
+            get(serve_text)
+                .with_state(full_html)
+                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+        );
 
     // アプリルーター
     let app_router: Router<()> = Router::new()
         .nest_service(
             "/",
-            get_service(ServeDir::new(dist_path))
-                .handle_error(|_| async move { StatusCode::NOT_FOUND }),
+            get_service(serve_dir)
+                .handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
         )
         .nest(
             "/api",

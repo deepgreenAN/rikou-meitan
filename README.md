@@ -22,3 +22,33 @@
 ## バグ
 - ⬜ SSRの際に余計な文字列が生成される
 - ⬜ モーダルの解除イベントにmouseupが使えない
+
+## Run
+### データベースの起動・マイグレーション
+```
+nu ../postgre_start.nu
+```
+```
+sqlx database create
+sqlx migrate run
+cd ..
+```
+
+### フロントエンドのコンパイル
+```
+cd presentation
+trunk build trunk_index_ssr.html --release --dist dist_ssr
+cd ..
+```
+
+### ローカルでサーバーをビルド
+```
+source env.nu
+cd application/serverside
+cargo run --example ssr
+```
+
+### ローカルでサーバーをビルド(shuttle)
+```
+cargo shuttle run
+```
