@@ -50,10 +50,7 @@ async fn main_server(
     use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
-    let migration_sql = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "./migrations/20221120105557_rikou_meitan.sql"
-    ));
+    let migration_sql = include_str!("../migrations/20221120105557_rikou_meitan.sql");
 
     for statement in migration_sql.split(";") {
         if statement != "" {
@@ -68,7 +65,7 @@ async fn main_server(
     }
 
     // Htmlの作成・ディレクトリサーバー
-    let dist_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("./presentation/dist_ssr");
+    let dist_path = Path::new("presentation/dist_ssr");
     assert!(dist_path.exists());
 
     let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
