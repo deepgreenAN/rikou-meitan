@@ -1,3 +1,3 @@
-name = "rikou-meitan"
+name = 'rikou-meitan'
 # working-directory = "application/serverside"
-working-directory = "."
+working-directory = '.'
