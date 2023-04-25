@@ -10,6 +10,7 @@ edition = "2021"
 members = ["application/serverside","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
 exclude = ["presentation", "application/frontend", "application/integration_test"]
 
+
 [dependencies]
 domain = { path = "./domain", features = ["repo"] }
 config = { path = "./config"}
@@ -18,7 +19,7 @@ infrastructure = { path = "./infrastructure"}
 serverside = { path = "./application/serverside"}
 axum = "0.6.*"
 tokio = { version = "1.*", features = ["full"]}
-tower-http = { version = "0.3.*", features = ["cors", "fs"]}
+tower-http = { version = "0.3.*", features = ["fs"]}
 tower = { version = "^0.4", features = ["full"]}
 sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
 # dioxus-ssr = "^0.3.0"
@@ -27,3 +28,4 @@ futures = "^0.3"
 shuttle-axum = "0.14.0"
 shuttle-runtime = "0.14.0"
 shuttle-shared-db = { version = "0.14.0", features = ["postgres", "sqlx"]}
+shuttle-static-folder = "0.14.0"

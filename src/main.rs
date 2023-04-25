@@ -6,6 +6,7 @@ use shuttle_axum::ShuttleAxum;
 use shuttle_runtime::CustomError as ShuttleCustomError;
 use sqlx::postgres::PgPool;
 // use std::convert::Infallible;
+use std::path::PathBuf;
 
 // /// dioxusアプリケーションのレンダリングを行う
 // fn render() -> String {
@@ -33,12 +34,12 @@ async fn main_server(
         local_uri = "postgres://postgres:{secrets.PASSWORD}@localhost/rikou_meitan"
     )]
     pool: PgPool,
+    #[shuttle_static_folder::StaticFolder(folder = "presentation/dist_ssr")] static_folder: PathBuf,
 ) -> ShuttleAxum {
     use domain::video::{Kirinuki, Original};
 
     use serverside::handlers::{episode_handlers, movie_clip_handlers, video_handlers};
 
-    use std::path::Path;
     use std::sync::Arc;
 
     use axum::{
@@ -50,23 +51,13 @@ async fn main_server(
     use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
-    let migration_sql = include_str!("../migrations/20221120105557_rikou_meitan.sql");
-
-    for statement in migration_sql.split(";") {
-        if statement != "" {
-            let mut conn = pool.acquire().await.map_err(|e| {
-                ShuttleCustomError::msg(format!("Cannot get connection to db. {e}"))
-            })?;
-            sqlx::query(statement)
-                .execute(&mut conn)
-                .await
-                .map_err(|e| ShuttleCustomError::msg(format!("Cannot migrate db. {e}")))?;
-        }
-    }
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .map_err(|e| ShuttleCustomError::msg(format!("Migration error. {e}")))?;
 
     // Htmlの作成・ディレクトリサーバー
-    let dist_path = Path::new("presentation/dist_ssr");
-    assert!(dist_path.exists());
+    // let dist_path = Path::new(&static_folder);
 
     //     let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
     //         .await
@@ -96,7 +87,7 @@ async fn main_server(
     //             .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
     //     );
 
-    let serve_dir = ServeDir::new(dist_path);
+    let serve_dir = ServeDir::new(static_folder);
 
     // EpisodeについてのAPI
     let episode_repo =
