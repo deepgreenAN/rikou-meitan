@@ -1,14 +1,16 @@
-use presentation::App;
-
-use axum::{extract::State, http::Response, response::IntoResponse};
-use dioxus::prelude::*;
 use shuttle_axum::ShuttleAxum;
 use shuttle_runtime::CustomError as ShuttleCustomError;
 use sqlx::postgres::PgPool;
-use std::convert::Infallible;
+
+#[cfg(feature = "ssr")]
+use axum::{extract::State, http::Response, response::IntoResponse};
 
 /// dioxusアプリケーションのレンダリングを行う
+#[cfg(feature = "ssr")]
 fn render() -> String {
+    use dioxus::prelude::*;
+    use presentation::App;
+
     let mut vdom = VirtualDom::new(App);
     let _ = vdom.rebuild();
 
@@ -17,7 +19,10 @@ fn render() -> String {
 }
 
 /// 状態文字列のサーブ
+#[cfg(feature = "ssr")]
 async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+    use std::convert::Infallible;
+
     let response: Response<String> = Response::builder()
         .header("Content-Type", "text/html; charset=utf-8")
         .body(full_html.into())
@@ -46,7 +51,6 @@ async fn main_server(
         routing::{delete, get, get_service, patch, put},
         Router,
     };
-    use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
@@ -71,14 +75,18 @@ async fn main_server(
     let dist_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../presentation/dist_ssr");
     assert!(dist_path.exists());
 
-    let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
-        .await
-        .expect("failed to read index.html");
+    #[cfg(feature = "ssr")]
+    let serve_dir = async {
+        use tower::ServiceExt;
 
-    let (base_html, _) = index_html_text.split_once("<body>").unwrap();
+        let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
+            .await
+            .expect("failed to read index.html");
 
-    let full_html = format!(
-        r#"
+        let (base_html, _) = index_html_text.split_once("<body>").unwrap();
+
+        let full_html = format!(
+            r#"
 {}
     <body>
         <div id="main">
@@ -86,18 +94,23 @@ async fn main_server(
         </div>
     </body>
 </html>
-        "#,
-        base_html,
-        render()
-    );
-
-    let serve_dir = ServeDir::new(dist_path)
-        .append_index_html_on_directories(false)
-        .fallback(
-            get(serve_text)
-                .with_state(full_html)
-                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+            "#,
+            base_html,
+            render()
         );
+
+        ServeDir::new(dist_path)
+            .append_index_html_on_directories(false)
+            .fallback(
+                get(serve_text)
+                    .with_state(full_html)
+                    .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+            )
+    }
+    .await;
+
+    #[cfg(not(feature = "ssr"))]
+    let serve_dir = ServeDir::new(dist_path);
 
     // EpisodeについてのAPI
     let episode_repo =

@@ -1,56 +1,57 @@
-use presentation::App;
-
-use axum::{extract::State, http::Response, response::IntoResponse};
-use std::convert::Infallible;
-
-use dioxus::prelude::*;
-
-/// dioxusアプリケーションのレンダリングを行う
-fn render() -> String {
-    let mut vdom = VirtualDom::new(App);
-    let _ = vdom.rebuild();
-
-    // dioxus_ssr::pre_render(&vdom)
-    dioxus_ssr::render(&vdom)
-}
-
-/// レンダリングと文字列のサーブ
-#[allow(dead_code)]
-async fn render_and_serve(State(base_html): State<String>) -> impl IntoResponse {
-    let full_html = format!(
-        r#"
-{}
-    <body>
-        <div id="main">
-{}
-        </div>
-    </body>
-</html>
-        "#,
-        base_html,
-        render()
-    );
-
-    let response: Response<String> = Response::builder()
-        .header("Content-Type", "text/html; charset=utf-8")
-        .body(full_html.into())
-        .unwrap();
-
-    Result::<_, Infallible>::Ok(response)
-}
-
-/// 状態文字列のサーブ
-async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
-    let response: Response<String> = Response::builder()
-        .header("Content-Type", "text/html; charset=utf-8")
-        .body(full_html.into())
-        .unwrap();
-
-    Result::<_, Infallible>::Ok(response)
-}
-
+#[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
+    use presentation::App;
+
+    use axum::{extract::State, http::Response, response::IntoResponse};
+    use std::convert::Infallible;
+
+    use dioxus::prelude::*;
+
+    /// dioxusアプリケーションのレンダリングを行う
+    fn render() -> String {
+        let mut vdom = VirtualDom::new(App);
+        let _ = vdom.rebuild();
+
+        // dioxus_ssr::pre_render(&vdom)
+        dioxus_ssr::render(&vdom)
+    }
+
+    /// レンダリングと文字列のサーブ
+    #[allow(dead_code)]
+    async fn render_and_serve(State(base_html): State<String>) -> impl IntoResponse {
+        let full_html = format!(
+            r#"
+    {}
+        <body>
+            <div id="main">
+    {}
+            </div>
+        </body>
+    </html>
+            "#,
+            base_html,
+            render()
+        );
+
+        let response: Response<String> = Response::builder()
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body(full_html.into())
+            .unwrap();
+
+        Result::<_, Infallible>::Ok(response)
+    }
+
+    /// 状態文字列のサーブ
+    async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+        let response: Response<String> = Response::builder()
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body(full_html.into())
+            .unwrap();
+
+        Result::<_, Infallible>::Ok(response)
+    }
+
     use config::CONFIG;
     use domain::video::{Kirinuki, Original};
 
@@ -264,4 +265,9 @@ async fn main() {
         .serve(app_router.into_make_service())
         .await
         .unwrap();
+}
+
+#[cfg(not(feature = "ssr"))]
+fn main() {
+    println!("--features ssr を指定して下さい");
 }

@@ -39,9 +39,9 @@ cargo run --example spa --features inmemory
 ### SSR
 データベース
 ```
-cargo run --example ssr
+cargo run --example ssr --features ssr
 ```
 インメモリ
 ```
-cargo run --example ssr --features inmemory
+cargo run --example ssr --features inmemory, ssr
 ```

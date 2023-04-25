@@ -1,9 +1,10 @@
-use presentation::App;
-
-use dioxus::prelude::*;
-use std::io::Write;
-
+#[cfg(feature = "ssr")]
 fn main() {
+    use presentation::App;
+
+    use dioxus::prelude::*;
+    use std::io::Write;
+
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let dist_path = std::path::Path::new(manifest_dir).join("../../presentation/dist_ssr");
@@ -32,4 +33,9 @@ fn main() {
 
     let mut file = std::fs::File::create("rendered.html").unwrap();
     file.write_all(html_content.as_bytes()).unwrap();
+}
+
+#[cfg(not(feature = "ssr"))]
+fn main() {
+    println!("--features ssr を指定して下さい");
 }
