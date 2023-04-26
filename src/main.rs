@@ -84,114 +84,112 @@ async fn main_server(
                 .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
         );
 
-    // EpisodeについてのAPI
-    let episode_repo =
-        Arc::new(infrastructure::episode_repository_impl::EpisodePgDBRepository::new(pool.clone()));
-    let episode_api_router: Router<()> = Router::new()
-        .route(
-            "/episode",
-            put(episode_handlers::save_episode)
-                .patch(episode_handlers::edit_episode)
-                .get(episode_handlers::all_episodes),
-        )
-        .route(
-            "/episode/query",
-            get(episode_handlers::get_episodes_with_query),
-        )
-        .route("/episode/:id", delete(episode_handlers::remove_episode))
-        .with_state(episode_repo);
+    // // EpisodeについてのAPI
+    // let episode_repo =
+    //     Arc::new(infrastructure::episode_repository_impl::EpisodePgDBRepository::new(pool.clone()));
+    // let episode_api_router: Router<()> = Router::new()
+    //     .route(
+    //         "/episode",
+    //         put(episode_handlers::save_episode)
+    //             .patch(episode_handlers::edit_episode)
+    //             .get(episode_handlers::all_episodes),
+    //     )
+    //     .route(
+    //         "/episode/query",
+    //         get(episode_handlers::get_episodes_with_query),
+    //     )
+    //     .route("/episode/:id", delete(episode_handlers::remove_episode))
+    //     .with_state(episode_repo);
 
-    // MovieClipについてのAPI
-    let movie_clip_repo = Arc::new(
-        infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository::new(pool.clone()),
-    );
-    let movie_clip_api_router: Router<()> = Router::new()
-        .route(
-            "/movie_clip",
-            put(movie_clip_handlers::save_movie_clip)
-                .patch(movie_clip_handlers::edit_movie_clip)
-                .get(movie_clip_handlers::all_movie_clips),
-        )
-        .route(
-            "/movie_clip/query",
-            get(movie_clip_handlers::get_movie_clips_with_query)
-                .post(movie_clip_handlers::get_movie_clips_with_query),
-        )
-        .route(
-            "/movie_clip/:id",
-            delete(movie_clip_handlers::remove_movie_clip),
-        )
-        .route(
-            "/movie_clip/increment_like/:id",
-            patch(movie_clip_handlers::increment_like_movie_clip),
-        )
-        .with_state(movie_clip_repo);
+    // // MovieClipについてのAPI
+    // let movie_clip_repo = Arc::new(
+    //     infrastructure::movie_clip_repository_impl::MovieClipPgDBRepository::new(pool.clone()),
+    // );
+    // let movie_clip_api_router: Router<()> = Router::new()
+    //     .route(
+    //         "/movie_clip",
+    //         put(movie_clip_handlers::save_movie_clip)
+    //             .patch(movie_clip_handlers::edit_movie_clip)
+    //             .get(movie_clip_handlers::all_movie_clips),
+    //     )
+    //     .route(
+    //         "/movie_clip/query",
+    //         get(movie_clip_handlers::get_movie_clips_with_query)
+    //             .post(movie_clip_handlers::get_movie_clips_with_query),
+    //     )
+    //     .route(
+    //         "/movie_clip/:id",
+    //         delete(movie_clip_handlers::remove_movie_clip),
+    //     )
+    //     .route(
+    //         "/movie_clip/increment_like/:id",
+    //         patch(movie_clip_handlers::increment_like_movie_clip),
+    //     )
+    //     .with_state(movie_clip_repo);
 
-    // OriginalについてのAPI
-    let original_repo = Arc::new(
-        infrastructure::video_repository_impl::VideoPgDbRepository::<Original>::new(pool.clone()),
-    );
-    let original_api_router: Router<()> = Router::new()
-        .route(
-            "/original",
-            put(video_handlers::save_video::<Original>)
-                .patch(video_handlers::edit_video::<Original>)
-                .get(video_handlers::all_videos::<Original>),
-        )
-        .route(
-            "/original/query",
-            get(video_handlers::get_videos_with_query::<Original>)
-                .post(video_handlers::get_videos_with_query::<Original>),
-        )
-        .route(
-            "/original/:id",
-            delete(video_handlers::remove_video::<Original>),
-        )
-        .route(
-            "/original/increment_like/:id",
-            patch(video_handlers::increment_like_video::<Original>),
-        )
-        .with_state(original_repo);
+    // // OriginalについてのAPI
+    // let original_repo = Arc::new(
+    //     infrastructure::video_repository_impl::VideoPgDbRepository::<Original>::new(pool.clone()),
+    // );
+    // let original_api_router: Router<()> = Router::new()
+    //     .route(
+    //         "/original",
+    //         put(video_handlers::save_video::<Original>)
+    //             .patch(video_handlers::edit_video::<Original>)
+    //             .get(video_handlers::all_videos::<Original>),
+    //     )
+    //     .route(
+    //         "/original/query",
+    //         get(video_handlers::get_videos_with_query::<Original>)
+    //             .post(video_handlers::get_videos_with_query::<Original>),
+    //     )
+    //     .route(
+    //         "/original/:id",
+    //         delete(video_handlers::remove_video::<Original>),
+    //     )
+    //     .route(
+    //         "/original/increment_like/:id",
+    //         patch(video_handlers::increment_like_video::<Original>),
+    //     )
+    //     .with_state(original_repo);
 
-    // KirinukiについてのAPI
-    let kirinuki_repo = Arc::new(
-        infrastructure::video_repository_impl::VideoPgDbRepository::<Kirinuki>::new(pool.clone()),
-    );
-    let kirinuki_api_router: Router<()> = Router::new()
-        .route(
-            "/kirinuki",
-            put(video_handlers::save_video::<Kirinuki>)
-                .patch(video_handlers::edit_video::<Kirinuki>)
-                .get(video_handlers::all_videos::<Kirinuki>),
-        )
-        .route(
-            "/kirinuki/query",
-            get(video_handlers::get_videos_with_query::<Kirinuki>)
-                .post(video_handlers::get_videos_with_query::<Kirinuki>),
-        )
-        .route(
-            "/kirinuki/:id",
-            delete(video_handlers::remove_video::<Kirinuki>),
-        )
-        .route(
-            "/kirinuki/increment_like/:id",
-            patch(video_handlers::increment_like_video::<Kirinuki>),
-        )
-        .with_state(kirinuki_repo);
+    // // KirinukiについてのAPI
+    // let kirinuki_repo = Arc::new(
+    //     infrastructure::video_repository_impl::VideoPgDbRepository::<Kirinuki>::new(pool.clone()),
+    // );
+    // let kirinuki_api_router: Router<()> = Router::new()
+    //     .route(
+    //         "/kirinuki",
+    //         put(video_handlers::save_video::<Kirinuki>)
+    //             .patch(video_handlers::edit_video::<Kirinuki>)
+    //             .get(video_handlers::all_videos::<Kirinuki>),
+    //     )
+    //     .route(
+    //         "/kirinuki/query",
+    //         get(video_handlers::get_videos_with_query::<Kirinuki>)
+    //             .post(video_handlers::get_videos_with_query::<Kirinuki>),
+    //     )
+    //     .route(
+    //         "/kirinuki/:id",
+    //         delete(video_handlers::remove_video::<Kirinuki>),
+    //     )
+    //     .route(
+    //         "/kirinuki/increment_like/:id",
+    //         patch(video_handlers::increment_like_video::<Kirinuki>),
+    //     )
+    //     .with_state(kirinuki_repo);
 
     // アプリルーター
-    let app_router: Router<()> = Router::new()
-        .nest_service(
-            "/",
-            get_service(serve_dir)
-                .handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
-        )
-        .nest(
-            "/api",
-            episode_api_router
-                .merge(movie_clip_api_router)
-                .merge(original_api_router)
-                .merge(kirinuki_api_router),
-        );
+    let app_router: Router<()> = Router::new().nest_service(
+        "/",
+        get_service(serve_dir).handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
+        // )
+        // .nest(
+        //     "/api",
+        //     episode_api_router
+        //         .merge(movie_clip_api_router)
+        //         .merge(original_api_router)
+        //         .merge(kirinuki_api_router),
+    );
     Ok(app_router.into())
 }
