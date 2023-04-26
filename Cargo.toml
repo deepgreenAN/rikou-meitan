@@ -15,15 +15,15 @@ exclude = ["presentation", "application/frontend", "application/integration_test
 domain = { path = "./domain", features = ["repo"] }
 config = { path = "./config"}
 infrastructure = { path = "./infrastructure"}
-# presentation = { path = "./presentation"}
+presentation = { path = "./presentation"}
 serverside = { path = "./application/serverside"}
 axum = "0.6.*"
 tokio = { version = "1.*", features = ["full"]}
 tower-http = { version = "0.3.*", features = ["fs"]}
 tower = { version = "^0.4", features = ["full"]}
 sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
-# dioxus-ssr = "^0.3.0"
-# dioxus = "^0.3.2"
+dioxus-ssr = "^0.3.0"
+dioxus = "^0.3.2"
 futures = "^0.3"
 shuttle-axum = "0.14.0"
 shuttle-runtime = "0.14.0"

@@ -1,31 +1,31 @@
-// use presentation::App;
+use presentation::App;
 
-// use axum::{extract::State, http::Response, response::IntoResponse};
-// use dioxus::prelude::*;
+use axum::{extract::State, http::Response, response::IntoResponse};
+use dioxus::prelude::*;
 use shuttle_axum::ShuttleAxum;
 use shuttle_runtime::CustomError as ShuttleCustomError;
 use sqlx::postgres::PgPool;
-// use std::convert::Infallible;
+use std::convert::Infallible;
 use std::path::PathBuf;
 
-// /// dioxusアプリケーションのレンダリングを行う
-// fn render() -> String {
-//     let mut vdom = VirtualDom::new(App);
-//     let _ = vdom.rebuild();
+/// dioxusアプリケーションのレンダリングを行う
+fn render() -> String {
+    let mut vdom = VirtualDom::new(App);
+    let _ = vdom.rebuild();
 
-//     // dioxus_ssr::pre_render(&vdom)
-//     dioxus_ssr::render(&vdom)
-// }
+    // dioxus_ssr::pre_render(&vdom)
+    dioxus_ssr::render(&vdom)
+}
 
-// /// 状態文字列のサーブ
-// async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
-//     let response: Response<String> = Response::builder()
-//         .header("Content-Type", "text/html; charset=utf-8")
-//         .body(full_html.into())
-//         .unwrap();
+/// 状態文字列のサーブ
+async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+    let response: Response<String> = Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(full_html.into())
+        .unwrap();
 
-//     Result::<_, Infallible>::Ok(response)
-// }
+    Result::<_, Infallible>::Ok(response)
+}
 
 /// メインサーバー
 #[shuttle_runtime::main]
@@ -47,7 +47,7 @@ async fn main_server(
         routing::{delete, get, get_service, patch, put},
         Router,
     };
-    // use tower::ServiceExt;
+    use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
@@ -57,37 +57,32 @@ async fn main_server(
         .map_err(|e| ShuttleCustomError::msg(format!("Migration error. {e}")))?;
 
     // Htmlの作成・ディレクトリサーバー
-    // let dist_path = Path::new(&static_folder);
 
-    //     let index_html_text = tokio::fs::read_to_string(dist_path.join("index.html"))
-    //         .await
-    //         .expect("failed to read index.html");
+    let index_html_text = include_str!("../presentation/dist_ssr/index.html");
 
-    //     let (base_html, _) = index_html_text.split_once("<body>").unwrap();
+    let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 
-    //     let full_html = format!(
-    //         r#"
-    // {}
-    //     <body>
-    //         <div id="main">
-    // {}
-    //         </div>
-    //     </body>
-    // </html>
-    //         "#,
-    //         base_html,
-    //         render()
-    //     );
+    let full_html = format!(
+        r#"
+    {}
+        <body>
+            <div id="main">
+    {}
+            </div>
+        </body>
+    </html>
+            "#,
+        base_html,
+        render()
+    );
 
-    // let serve_dir = ServeDir::new(dist_path)
-    //     .append_index_html_on_directories(false)
-    //     .fallback(
-    //         get(serve_text)
-    //             .with_state(full_html)
-    //             .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
-    //     );
-
-    let serve_dir = ServeDir::new(static_folder);
+    let serve_dir = ServeDir::new(static_folder)
+        .append_index_html_on_directories(false)
+        .fallback(
+            get(serve_text)
+                .with_state(full_html)
+                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+        );
 
     // EpisodeについてのAPI
     let episode_repo =
