@@ -7,7 +7,7 @@ fn main() {
 
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let dist_path = std::path::Path::new(manifest_dir).join("../../presentation/dist_ssr");
+    let dist_path = std::path::Path::new(manifest_dir).join("../../dist_ssr");
     assert!(dist_path.exists());
 
     let index_html_text = std::fs::read_to_string(dist_path.join("index.html")).unwrap();

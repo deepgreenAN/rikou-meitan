@@ -149,7 +149,7 @@ async fn main() {
 
     // distのパス
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let dist_path = Path::new(manifest_dir).join("../../presentation/dist_spa");
+    let dist_path = Path::new(manifest_dir).join("../../dist_spa");
     assert!(dist_path.exists());
 
     // アプリルーター

@@ -52,3 +52,8 @@ cargo run --example ssr
 ```
 cargo shuttle run
 ```
+
+### デプロイ
+```
+nu deploy.nu
+```
