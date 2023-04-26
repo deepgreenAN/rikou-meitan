@@ -1,80 +1,81 @@
-use presentation::App;
+// use presentation::App;
 
-use axum::{extract::State, http::Response, response::IntoResponse};
-use dioxus::prelude::*;
+// use axum::{extract::State, http::Response, response::IntoResponse};
+// use dioxus::prelude::*;
 use shuttle_axum::ShuttleAxum;
-use shuttle_runtime::CustomError as ShuttleCustomError;
-use sqlx::postgres::PgPool;
-use std::convert::Infallible;
-use std::path::PathBuf;
+// use shuttle_runtime::CustomError as ShuttleCustomError;
+// use sqlx::postgres::PgPool;
+// use std::convert::Infallible;
+// use std::path::PathBuf;
 
-/// dioxusアプリケーションのレンダリングを行う
-fn render() -> String {
-    let mut vdom = VirtualDom::new(App);
-    let _ = vdom.rebuild();
+// /// dioxusアプリケーションのレンダリングを行う
+// fn render() -> String {
+//     let mut vdom = VirtualDom::new(App);
+//     let _ = vdom.rebuild();
 
-    // dioxus_ssr::pre_render(&vdom)
-    dioxus_ssr::render(&vdom)
-}
+//     // dioxus_ssr::pre_render(&vdom)
+//     dioxus_ssr::render(&vdom)
+// }
 
-/// 状態文字列のサーブ
-async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
-    let response: Response<String> = Response::builder()
-        .header("Content-Type", "text/html; charset=utf-8")
-        .body(full_html.into())
-        .unwrap();
+// /// 状態文字列のサーブ
+// async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
+//     let response: Response<String> = Response::builder()
+//         .header("Content-Type", "text/html; charset=utf-8")
+//         .body(full_html.into())
+//         .unwrap();
 
-    Result::<_, Infallible>::Ok(response)
-}
+//     Result::<_, Infallible>::Ok(response)
+// }
 
 /// メインサーバー
 #[shuttle_runtime::main]
-async fn main_server(
-    #[shuttle_shared_db::Postgres(
-        local_uri = "postgres://postgres:{secrets.PASSWORD}@localhost/rikou_meitan"
-    )]
-    pool: PgPool,
-    #[shuttle_static_folder::StaticFolder(folder = "presentation/dist_ssr")] static_folder: PathBuf,
+async fn main_server(// #[shuttle_shared_db::Postgres(
+    //     local_uri = "postgres://postgres:{secrets.PASSWORD}@localhost/rikou_meitan"
+    // )]
+    // pool: PgPool,
+    // #[shuttle_static_folder::StaticFolder(folder = "presentation/dist_ssr")] static_folder: PathBuf,
 ) -> ShuttleAxum {
-    use domain::video::{Kirinuki, Original};
+    // use domain::video::{Kirinuki, Original};
 
-    use serverside::handlers::{episode_handlers, movie_clip_handlers, video_handlers};
+    // use serverside::handlers::{episode_handlers, movie_clip_handlers, video_handlers};
 
-    use std::sync::Arc;
+    // use std::sync::Arc;
 
-    use axum::{
-        http::StatusCode,
-        routing::{delete, get, get_service, patch, put},
-        Router,
-    };
-    use tower::ServiceExt;
-    use tower_http::services::ServeDir;
+    // use axum::{
+    //     http::StatusCode,
+    //     routing::{delete, get, get_service, patch, put},
+    //     Router,
+    // };
+    use axum::{routing::get, Router};
+
+    // use tower::ServiceExt;
+    // use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .map_err(|e| ShuttleCustomError::msg(format!("Migration error. {e}")))?;
+    // sqlx::migrate!("./migrations")
+    //     .run(&pool)
+    //     .await
+    //     .map_err(|e| ShuttleCustomError::msg(format!("Migration error. {e}")))?;
 
-    // Htmlの作成・ディレクトリサーバー
+    // // Htmlの作成・ディレクトリサーバー
 
-    let index_html_text = include_str!("../presentation/dist_ssr/index.html");
+    // let index_html_text = include_str!("../presentation/dist_ssr/index.html");
 
-    let (base_html, _) = index_html_text.split_once("<body>").unwrap();
+    // let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 
-    let full_html = format!(
-        r#"
-    {}
-        <body>
-            <div id="main">
-    {}
-            </div>
-        </body>
-    </html>
-            "#,
-        base_html,
-        render()
-    );
+    // let full_html = format!(
+    //     r#"
+    // {}
+    //     <body>
+    //         <div id="main">
+    // {}
+    //         </div>
+    //     </body>
+    // </html>
+    //         "#,
+    //     base_html,
+    //     render()
+    // );
 
     // let serve_dir = ServeDir::new(static_folder)
     //     .append_index_html_on_directories(false)
@@ -190,7 +191,7 @@ async fn main_server(
         //         .merge(movie_clip_api_router)
         //         .merge(original_api_router)
         //         .merge(kirinuki_api_router),
-        get(|| async { full_html }),
+        get(|| async { "Hello World".to_string() }),
     );
     Ok(app_router.into())
 }
