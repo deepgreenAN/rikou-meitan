@@ -34,7 +34,7 @@ async fn main_server(
         local_uri = "postgres://postgres:{secrets.PASSWORD}@localhost/rikou_meitan"
     )]
     pool: PgPool,
-    #[shuttle_static_folder::StaticFolder(folder = "presentation/dist_ssr")] static_folder: PathBuf,
+    #[shuttle_static_folder::StaticFolder(folder = "dist_ssr")] static_folder: PathBuf,
 ) -> ShuttleAxum {
     use domain::video::{Kirinuki, Original};
 
@@ -59,7 +59,7 @@ async fn main_server(
 
     // // Htmlの作成・ディレクトリサーバー
 
-    let index_html_text = include_str!("../presentation/dist_ssr/index.html");
+    let index_html_text = include_str!("../dist_ssr/index.html");
 
     let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 

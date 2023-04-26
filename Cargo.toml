@@ -10,7 +10,6 @@ publish = false
 [workspace]
 members = ["application/serverside","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
 exclude = ["presentation", "application/frontend", "application/integration_test"]
-# members = ["application/serverside","application/common","domain","infrastructure","config","presentation", "application/frontend", "application/integration_test"]  # 一時的
 
 
 [dependencies]
