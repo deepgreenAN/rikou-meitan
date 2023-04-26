@@ -76,13 +76,13 @@ async fn main_server(
         render()
     );
 
-    let serve_dir = ServeDir::new(static_folder)
-        .append_index_html_on_directories(false)
-        .fallback(
-            get(serve_text)
-                .with_state(full_html)
-                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
-        );
+    // let serve_dir = ServeDir::new(static_folder)
+    //     .append_index_html_on_directories(false)
+    //     .fallback(
+    //         get(serve_text)
+    //             .with_state(full_html)
+    //             .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
+    //     );
 
     // // EpisodeについてのAPI
     // let episode_repo =
@@ -182,7 +182,7 @@ async fn main_server(
     // アプリルーター
     let app_router: Router<()> = Router::new().nest_service(
         "/",
-        get_service(serve_dir).handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
+        // get_service(serve_dir).handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
         // )
         // .nest(
         //     "/api",
@@ -190,6 +190,7 @@ async fn main_server(
         //         .merge(movie_clip_api_router)
         //         .merge(original_api_router)
         //         .merge(kirinuki_api_router),
+        get(|| async { full_html }),
     );
     Ok(app_router.into())
 }
