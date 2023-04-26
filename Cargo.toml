@@ -2,30 +2,31 @@
 name = "rikou_meitan"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
 [workspace]
 members = ["application/serverside","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
-exclude = ["presentation", "application/frontend", "application/integration_test"]
+# exclude = ["presentation", "application/frontend", "application/integration_test"]
 
 
 [dependencies]
-domain = { path = "./domain", features = ["repo"] }
-config = { path = "./config"}
-infrastructure = { path = "./infrastructure"}
-presentation = { path = "./presentation"}
-serverside = { path = "./application/serverside"}
-axum = "0.6.*"
-tokio = { version = "1.*", features = ["full"]}
-tower-http = { version = "0.3.*", features = ["fs"]}
-tower = { version = "^0.4", features = ["full"]}
-sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
-dioxus-ssr = "^0.3.0"
-dioxus = "^0.3.2"
-futures = "^0.3"
+# domain = { path = "./domain", features = ["repo"] }
+# config = { path = "./config"}
+# infrastructure = { path = "./infrastructure"}
+# presentation = { path = "./presentation"}
+# serverside = { path = "./application/serve"}
+axum = "0.6.16"
+tokio = "1.27.0"
+# tower-http = { version = "0.3.*", features = ["fs"]}
+# tower = { version = "^0.4", features = ["full"]}
+# sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
+# dioxus-ssr = "^0.3.0"
+# dioxus = "^0.3.2"
+# futures = "^0.3"
 shuttle-axum = "0.14.0"
 shuttle-runtime = "0.14.0"
-shuttle-shared-db = { version = "0.14.0", features = ["postgres", "sqlx"]}
-shuttle-static-folder = "0.14.0"
+# shuttle-shared-db = { version = "0.14.0", features = ["postgres", "sqlx"]}
+# shuttle-static-folder = "0.14.0"

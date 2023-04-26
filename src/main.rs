@@ -181,8 +181,11 @@ async fn main_server(// #[shuttle_shared_db::Postgres(
     //     .with_state(kirinuki_repo);
 
     // アプリルーター
-    let app_router: Router<()> = Router::new().nest_service(
+    let app_router: Router<()> = Router::new().route(
         "/",
+        get(|| async { "Hello World".to_string() }),
+        //.nest_service(
+        // "/",
         // get_service(serve_dir).handle_error(|_| async move { StatusCode::INTERNAL_SERVER_ERROR }),
         // )
         // .nest(
@@ -191,7 +194,6 @@ async fn main_server(// #[shuttle_shared_db::Postgres(
         //         .merge(movie_clip_api_router)
         //         .merge(original_api_router)
         //         .merge(kirinuki_api_router),
-        get(|| async { "Hello World".to_string() }),
     );
     Ok(app_router.into())
 }
