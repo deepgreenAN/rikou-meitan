@@ -6,4 +6,3 @@
 /.vscode
 Secrets.toml
 .git
-dist_ssr
