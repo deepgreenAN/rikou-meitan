@@ -2,8 +2,8 @@
     position: absolute;
     width: 100%;
     min-height: 100vh;
-    -ms-scroll-chaining: none;
-    overscroll-behavior: none;
+    // -ms-scroll-chaining: none;
+    // overscroll-behavior: none;
     // heightは子要素に依存
     z-index: -4;
     display: flex;

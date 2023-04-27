@@ -6,10 +6,6 @@
     flex-direction: row;
     justify-content: center;
 
-    @media screen and (max-width: static_var.$smartphone_size) {
-        justify-content: center;
-    }
-
     #toc-container {
         position: -webkit-sticky;
         position: sticky;
@@ -49,7 +45,6 @@
             & {
                 display: none;
             }
-
         }
     }
 

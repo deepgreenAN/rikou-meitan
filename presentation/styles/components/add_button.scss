@@ -1,9 +1,10 @@
+@use "../static_var.scss";
+
 .add-button-container {
-    min-width: 15rem;
-    height: 3rem;
     display: flex;
     align-items: center;
     justify-content: center;
+
     color: var(--primary-color);
     border-radius: 0.5rem;
     border-color: var(--primary-color);
@@ -15,13 +16,29 @@
         -ms-user-select: none;
             user-select: none;
 
+    width: 15rem;
+    height: 3rem;
+    gap: 1rem;
+
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            width: 25rem;
+            height: 5rem;
+        }
+    }
+
     .add-button-svg {
-        width: 2rem;
+        width: 10%;
         padding-top: 0.2rem;
     }
     .add-button-text {
-        margin-left: 1rem;
         font-size: 2rem;
+
+        @media screen and (max-width: static_var.$smartphone_size) {
+            & {
+                font-size: 3rem;
+            }
+        }
     }
 
     &:hover {
