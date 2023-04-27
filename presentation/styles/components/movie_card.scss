@@ -29,11 +29,13 @@
             .movie-card-title {
                 overflow: hidden;
                 text-overflow: ellipsis;
-
+                
+                padding-left: 0.5rem;
                 font-size: 1.5rem;
                 line-height: 1.7rem;
                 height: 3.4rem;
                 @media screen and (max-width: static_var.$smartphone_size) {
+                    padding-left: 2cqw;
                     font-size: 4cqw;
                     line-height: 5cqw;
                     height: 10cqw;
@@ -43,14 +45,14 @@
                 // height: 10cqw;
             }
             .movie-card-left-bottom {
-                margin-left: 1rem;
-                margin-top: 0.5rem;
+                padding-left: 1rem;
+                padding-top: 0.5rem;
                 font-size: 1.2rem;
                 display: flex;
                 gap: 1rem;
                 @media screen and (max-width: static_var.$smartphone_size) {
-                    margin-left: 2cqw;
-                    margin-top: 1cqw;
+                    padding-left: 3cqw;
+                    padding-top: 1cqw;
                     font-size: 3cqw;
                     gap: 1cqw;
                 }

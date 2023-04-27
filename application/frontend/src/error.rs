@@ -2,13 +2,13 @@
 #[derive(thiserror::Error, Debug)]
 pub enum AppFrontError {
     /// Fetch-APIに関するエラー
-    #[error("FetchError: {0}")]
+    #[error("AppFrontError::FetchError: {0}")]
     FetchError(String),
     /// Serdeのシリアライズ・デシリアライズに関するエラー
-    #[error("SerdeError: {0}")]
+    #[error("AppFrontError::SerdeError: {0}")]
     SerdeError(String),
     /// サーバー側から送られてくるエラー
-    #[error(transparent)]
+    #[error("AppFrontError::CommonError: {0}")]
     CommonError(#[from] common::AppCommonError),
 }
 

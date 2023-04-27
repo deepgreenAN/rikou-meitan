@@ -79,7 +79,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
             label_component: cx.render(rsx!{
                 div { class: "label-container",
                     div { class:"label-main", "エピソード内容"}
-                    div { class:"label-detail", "リンク・リスト・太字・斜体などのhtmlも使えます"}
+                    div { class:"label-detail", "リンク・リスト・太字・斜体などのhtmlも使えます。a要素はrel=\"noopener noreferrer\"を付けてください。"}
                 }
             }),
             required: true,

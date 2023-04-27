@@ -29,6 +29,11 @@
             }
         }
 
+        svg {
+            -webkit-filter: drop-shadow(0.15rem 0.15rem 0.3rem var(--primary-color));
+                    filter: drop-shadow(0.15rem 0.15rem 0.3rem var(--primary-color));
+        }
+
         #title-logo {
             color: var(--primary-color);
             display: flex;

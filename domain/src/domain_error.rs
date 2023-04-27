@@ -2,13 +2,13 @@
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum DomainError {
     /// コンストラクト時などでドメインロジックと入力が矛盾する場合のエラー．
-    #[error("DomainLogicError: Inconsistent with domain logic. {0}")]
+    #[error("DomainError::DomainLogicError: {0}")]
     DomainLogicError(String),
     /// プリミティブな型などからドメイン固有型へのパースの際のロジックのエラー．serdeのデシリアライズなどで起こる
-    #[error("DomainParseError: Could not parse as domain specific type.{0}")]
+    #[error("DomainError::DomainParseError: {0}")]
     DomainParseError(String),
     /// 外部クレートの対応する型との変換のエラー．
-    #[error("DomainConvertExternalError: Conversion between domain-specific and external types failed. {0}")]
+    #[error("DomainError::DomainConvertExternalError: {0}")]
     DomainConvertExternalError(String),
 }
 
@@ -17,10 +17,10 @@ pub enum DomainError {
 
 pub enum GenericParseError {
     /// UUIDのパースに関するエラー
-    #[error(transparent)]
+    #[error("GenericParseError::ParseUuidError: {0}")]
     ParseUuidError(#[from] uuid::Error),
     /// NaiveDateのパースに関するエラー
-    #[error(transparent)]
+    #[error("GenericParseError::ParseDateError: {0}")]
     ParseDateError(#[from] chrono::ParseError),
 }
 

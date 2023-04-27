@@ -3,31 +3,31 @@ use serde::{Deserialize, Serialize};
 /// サーバーサイドのエラーをフロントエンドに伝えるためのエラー．
 #[derive(thiserror::Error, Debug, Serialize, Deserialize, Clone)]
 pub enum AppCommonError {
-    #[error("{0}")]
+    #[error("AppCommonError::DomainError: {0}")]
     DomainError(String),
 
-    #[error("{0}")]
+    #[error("AppCommonError::DBConnectionError: {0}")]
     DBConnectionError(String),
 
-    #[error("{0}")]
+    #[error("AppCommonError::OtherSQLError: {0}")]
     OtherSQLXError(String),
 
-    #[error("{0}")]
+    #[error("AppCommonError::DBDecodeError: {0}")]
     DBDecodeError(String),
 
-    #[error("ConflictError:tried to insert duplicated row")]
+    #[error("AppCommonError::ConflictError: tried to insert duplicated row")]
     ConflictError,
 
-    #[error("NoRecordError: not existing row accessed")]
+    #[error("AppCommonError::NoRecordError: not existing row accessed")]
     NoRecordError,
 
-    #[error("JsonRejectionError: {0}")]
+    #[error("AppCommonError::JsonRejectionError: {0}")]
     JsonRejectionError(String),
 
-    #[error("QueryStringRejectionError: {0}")]
+    #[error("AppCommonError::QueryStringRejectionError: {0}")]
     QueryStringRejectionError(String),
 
-    #[error("PathRejectionError: {0}")]
+    #[error("AppCommonError::PathRejectionError: {0}")]
     PathRejectionError(String),
 }
 

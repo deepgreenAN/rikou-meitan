@@ -61,7 +61,7 @@
 
         @media screen and (max-width: static_var.$smartphone_size) {
             & {
-                width: 90%;
+                width: 100%;
             }
         }
 
@@ -73,16 +73,37 @@
             p {
                 font-size: 1.4rem;
                 line-height: 3.4rem;
+
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    & {
+                        font-size: 2rem;
+                        line-height: 5rem;
+                    }
+                }
             }
 
             h2 {
                 font-size: 2.5rem;
+
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    & {
+                        font-size: 4rem;
+                        margin-left: 1.5rem;
+                    }
+                }
             }
 
             .toc-content-caption {
                 margin-top: 0.5rem;
                 font-size: 1.5rem;
                 margin-bottom: 2rem;
+
+                @media screen and (max-width: static_var.$smartphone_size) {
+                    & {
+                        font-size: 2.5rem;
+                        margin-left: 2rem;
+                    }
+                }
             }
 
             a {
@@ -97,6 +118,13 @@
     }
 
     #orikou-desc {
+        #orikou-desc-string {
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    margin: 0 1rem 0 1rem;
+                }
+            }
+        }
         #orikou-desc-movie-container-outer {
             margin-top: 2rem;
             margin-bottom: 2rem;
@@ -120,16 +148,34 @@
         margin-top: 1rem;
         margin-bottom: 0.5rem;
         width: 100%;
-        height: 3rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+
+        .more-button {
+            height: 3rem;
+            font-size: 1.5rem;
+            width: 95%;
+
+            border-radius: 2rem;
+            border-width: 2px;
+            border-color: var(--primary-color);
+            border: solid;
+
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    height: 5rem;
+                    font-size: 3rem;
+                    
+                    border-radius: 3rem;
+                    border-width: 4px;
+                }
+            }
+
+            display: grid;
+            place-items: center;
+        }
+
+        display: grid;
+        place-items: center;
         background-color: transparent;
-        border-color: var(--primary-color);
-        border-width: 2px;
-        border: solid;
-        border-radius: 2rem;
-        font-size: 1.5rem;
     }
 
 }

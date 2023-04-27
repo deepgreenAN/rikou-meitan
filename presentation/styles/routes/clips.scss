@@ -1,9 +1,17 @@
+@use "../static_var.scss";
+
 #clips-container {
     width: 90%;
     max-width: 2000px;
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            width: 100%;
+        }
+    }
     
     #clips-title-container {
         display: flex;

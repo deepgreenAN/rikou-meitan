@@ -4,22 +4,22 @@ use domain::DomainError;
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum InfraError {
     /// ドメインエラーから生成されたエラー
-    #[error(transparent)]
+    #[error("InfraError::DomainError: {0}")]
     DomainError(#[from] DomainError),
     /// データベースのコネクションに関するエラー．
-    #[error("DBConnectionError:{0}")]
+    #[error("InfraError::DBConnectionError: {0}")]
     DBConnectionError(String),
     /// その他のsqlxに関するエラー
-    #[error("OtherSQLXError:{0}")]
+    #[error("InfraError::OtherSQLXError: {0}")]
     OtherSQLXError(String),
     /// データベースのドメイン固有型へのデコードエラー．
-    #[error("DecodeError:{0}")]
+    #[error("InfraError::DecodeError: {0}")]
     DBDecodeError(String),
     /// データの保存時に既にテータが存在する場合のエラー．テストでのみ起こると想定
-    #[error("ConflictError: duplicated row inserted")]
+    #[error("InfraError::ConflictError: duplicated row inserted")]
     ConflictError,
     /// 編集・削除を行うときにデータが存在しない場合のエラー．テストでのみ起こると想定
-    #[error("NoRecordError: Removed row accessed")]
+    #[error("InfraError::NoRecordError: Removed row accessed")]
     NoRecordError,
 }
 
@@ -72,7 +72,7 @@ impl From<sqlx::Error> for InfraError {
             sqlx::Error::Migrate(err) => {
                 InfraError::OtherSQLXError(format!("{}", sqlx::Error::Migrate(err)))
             }
-            _ => InfraError::OtherSQLXError("Undefined Error".to_string()),
+            e @ _ => InfraError::OtherSQLXError(format!("Undefined Error: {}", e)),
         }
     }
 }

@@ -106,7 +106,7 @@ pub fn HomePage(cx: Scope) -> Element {
                 TocContent{
                     id: "orikou-desc",
                     title: "おりコウとは",
-                    div { dangerous_inner_html: "{orikou_desc_str}"}
+                    div { id: "orikou-desc-string", dangerous_inner_html: "{orikou_desc_str}"}
                     div { id: "orikou-desc-movie-container-outer",
                         div { id: "orikou-desc-movie-container-inner",
                             Player{id:"orikou-desc-movie-player", video_id:"B7OPlsdBuVc", range:None}

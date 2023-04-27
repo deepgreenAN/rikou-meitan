@@ -10,15 +10,17 @@ pub struct MoreButtonProps {
 
 pub fn MoreButton(cx: Scope<MoreButtonProps>) -> Element {
     cx.render(rsx! {
-        Link {
-            class: "more-button-container"
-            to: "{cx.props.to}",
-            onclick: move |_|{
-                let mut option = ScrollToOptions::new();
-                option.top(0.0);
-                gloo_utils::window().scroll_to_with_scroll_to_options(&option);
-            },
-            "もっと見る"
+        div { class: "more-button-container",
+            Link {
+                class: "more-button"
+                to: "{cx.props.to}",
+                onclick: move |_|{
+                    let mut option = ScrollToOptions::new();
+                    option.top(0.0);
+                    gloo_utils::window().scroll_to_with_scroll_to_options(&option);
+                },
+                "もっと見る"
+            }
         }
     })
 }
