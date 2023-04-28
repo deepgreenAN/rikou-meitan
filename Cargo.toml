@@ -30,3 +30,4 @@ shuttle-axum = "0.14.0"
 shuttle-runtime = "0.14.0"
 shuttle-shared-db = { version = "0.14.0", features = ["postgres", "sqlx"]}
 shuttle-static-folder = "0.14.0"
+shuttle-secrets = "0.14.0"

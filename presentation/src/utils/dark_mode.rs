@@ -43,7 +43,7 @@ pub fn set_dark_mode(is_dark_mode: bool) {
     }
 }
 
-pub fn use_dark_mode(cx: Scope) {
+pub fn use_dark_mode<T>(cx: Scope<'_, T>) {
     let setter_dark_mode = fermi::use_set(cx, crate::IS_DARK_MODE);
 
     use_effect(cx, (), {

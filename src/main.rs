@@ -1,16 +1,17 @@
-use presentation::App;
+use presentation::{App, AppProps};
 
 use axum::{extract::State, http::Response, response::IntoResponse};
 use dioxus::prelude::*;
 use shuttle_axum::ShuttleAxum;
 use shuttle_runtime::CustomError as ShuttleCustomError;
+use shuttle_secrets::SecretStore;
 use sqlx::postgres::PgPool;
 use std::convert::Infallible;
 use std::path::PathBuf;
 
 /// dioxusアプリケーションのレンダリングを行う
-fn render() -> String {
-    let mut vdom = VirtualDom::new(App);
+fn render(props: AppProps) -> String {
+    let mut vdom = VirtualDom::new_with_props(App, props);
     let _ = vdom.rebuild();
 
     // dioxus_ssr::pre_render(&vdom)
@@ -35,6 +36,7 @@ async fn main_server(
     )]
     pool: PgPool,
     #[shuttle_static_folder::StaticFolder(folder = "dist_ssr")] static_folder: PathBuf,
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
 ) -> ShuttleAxum {
     use domain::video::{Kirinuki, Original};
 
@@ -57,7 +59,14 @@ async fn main_server(
         .await
         .map_err(|e| ShuttleCustomError::msg(format!("Migration error. {e}")))?;
 
-    // // Htmlの作成・ディレクトリサーバー
+    // Secretsの読み込み
+    let admin_password = secret_store
+        .get("admin_password")
+        .ok_or(ShuttleCustomError::msg(format!(
+            "Cannot get admin_password from Secrets.toml."
+        )))?;
+
+    // Htmlの作成・ディレクトリサーバー
 
     let index_html_text = include_str!("../dist_ssr/index.html");
 
@@ -74,7 +83,7 @@ async fn main_server(
     </html>
             "#,
         base_html,
-        render()
+        render(AppProps { admin_password })
     );
 
     let serve_dir = ServeDir::new(static_folder)

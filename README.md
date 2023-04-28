@@ -26,19 +26,16 @@
 ## Run
 ### データベースの起動・マイグレーション
 ```
-nu ../postgre_start.nu
+nu postgre_start.nu
 ```
 ```
 sqlx database create
 sqlx migrate run
-cd ..
 ```
 
 ### フロントエンドのコンパイル
 ```
-cd presentation
-trunk build trunk_index_ssr.html --release --dist dist_ssr
-cd ..
+nu build_dist.nu
 ```
 
 ### ローカルでサーバーをビルド

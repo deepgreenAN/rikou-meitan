@@ -1,7 +1,6 @@
-#[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use presentation::App;
+    use presentation::{App, AppProps};
 
     use axum::{extract::State, http::Response, response::IntoResponse};
     use std::convert::Infallible;
@@ -9,8 +8,8 @@ async fn main() {
     use dioxus::prelude::*;
 
     /// dioxusアプリケーションのレンダリングを行う
-    fn render() -> String {
-        let mut vdom = VirtualDom::new(App);
+    fn render(props: AppProps) -> String {
+        let mut vdom = VirtualDom::new_with_props(App, props);
         let _ = vdom.rebuild();
 
         // dioxus_ssr::pre_render(&vdom)
@@ -31,7 +30,9 @@ async fn main() {
     </html>
             "#,
             base_html,
-            render()
+            render(AppProps {
+                admin_password: "password".to_string()
+            })
         );
 
         let response: Response<String> = Response::builder()
@@ -234,7 +235,9 @@ async fn main() {
 </html>
         "#,
         base_html,
-        render()
+        render(AppProps {
+            admin_password: "password".to_string()
+        })
     );
     let serve_dir = ServeDir::new(dist_path)
         .append_index_html_on_directories(false)
@@ -265,9 +268,4 @@ async fn main() {
         .serve(app_router.into_make_service())
         .await
         .unwrap();
-}
-
-#[cfg(not(feature = "ssr"))]
-fn main() {
-    println!("--features ssr を指定して下さい");
 }

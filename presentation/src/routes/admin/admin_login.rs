@@ -1,3 +1,5 @@
+use crate::AdminPassword;
+
 use dioxus::prelude::*;
 use std::cell::Cell;
 use std::rc::Rc;
@@ -9,13 +11,17 @@ pub struct AdminLoginProps<'a> {
 
 pub fn AdminLogin<'a>(cx: Scope<'a, AdminLoginProps<'a>>) -> Element {
     let value_state = cx.use_hook(|| Rc::new(Cell::new("".to_string())));
-    let correct_value = "5556-orikou";
+    let correct_value = use_shared_state::<AdminPassword>(cx)
+        .expect("Cannot get ShareState: AdminPassword")
+        .read()
+        .0
+        .clone();
 
     let submit_password = {
         to_owned![value_state];
         move |_| {
             let value = value_state.take();
-            if value.as_str() == correct_value {
+            if value == correct_value {
                 cx.props.on_cancel.call(());
             }
         }

@@ -34,10 +34,21 @@ pub const ACTIVE_PLAYER_NUMBER: usize = 3;
 pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
     |_| VecDeque::with_capacity(ACTIVE_PLAYER_NUMBER);
 
+// アドミン用のパスワード
+pub struct AdminPassword(pub String);
+
+/// メインのアプリケーションの引数
+#[derive(Props, PartialEq)]
+pub struct AppProps {
+    pub admin_password: String,
+}
+
 /// メインのアプリケーション．
-pub fn App(cx: Scope) -> Element {
+pub fn App(cx: Scope<AppProps>) -> Element {
     use_init_atom_root(cx);
     utils::use_dark_mode(cx);
+
+    use_shared_state_provider(cx, || AdminPassword(cx.props.admin_password.clone()));
 
     let admin = cfg!(feature = "develop");
 

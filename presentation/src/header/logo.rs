@@ -8,7 +8,7 @@ pub fn TitleLogo(cx: Scope) -> Element {
     use_effect(cx, (), {
         to_owned![title_logo_class];
         |_| async move {
-            let is_active = 0.2 > thread_rng().gen::<f64>();
+            let is_active = (1.0 / 20.0) > thread_rng().gen::<f64>();
             let class = if is_active { "active" } else { "inactive" };
             title_logo_class.set(class.to_string());
         }

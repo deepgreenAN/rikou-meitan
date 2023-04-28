@@ -1,6 +1,5 @@
-#[cfg(feature = "ssr")]
 fn main() {
-    use presentation::App;
+    use presentation::{App, AppProps};
 
     use dioxus::prelude::*;
     use std::io::Write;
@@ -14,7 +13,12 @@ fn main() {
 
     let (base_html, _) = index_html_text.split_once("<body>").unwrap();
 
-    let mut vdom = VirtualDom::new(App);
+    let mut vdom = VirtualDom::new_with_props(
+        App,
+        AppProps {
+            admin_password: "some password".to_string(),
+        },
+    );
     let _ = vdom.rebuild();
 
     let html_content = format!(
@@ -33,9 +37,4 @@ fn main() {
 
     let mut file = std::fs::File::create("rendered.html").unwrap();
     file.write_all(html_content.as_bytes()).unwrap();
-}
-
-#[cfg(not(feature = "ssr"))]
-fn main() {
-    println!("--features ssr を指定して下さい");
 }
