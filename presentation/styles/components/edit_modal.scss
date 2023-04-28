@@ -19,8 +19,7 @@
         gap: 1rem;
 
         .edit-input-container {
-            width: calc(0.6 * 100vw);
-            min-width: 50rem;
+            width: calc(0.75 * 100vw);
             min-height: calc(0.4 * 100vh);
             @media  screen and (max-width: static_var.$smartphone_size) {
                 width: calc(0.9 * 100vw);
@@ -72,8 +71,7 @@
         }
 
         .edit-preview-container {
-            min-width: 50rem;
-            width: calc(0.6 * 100vw);
+            width: calc(0.75 * 100vw);
             min-height: calc(0.4 * 100vh);
             @media  screen and (max-width: static_var.$smartphone_size) {
                 width: calc(0.9 * 100vw);

@@ -1372,7 +1372,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('presentation-594e56870953a1c6_bg.wasm', import.meta.url);
+        input = new URL('presentation-4b61c9e0400fbffa_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
