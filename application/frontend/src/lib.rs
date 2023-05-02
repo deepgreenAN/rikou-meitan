@@ -6,16 +6,22 @@ pub mod utils;
 pub use error::AppFrontError;
 
 use config::CONFIG;
-use gloo_net::http::RequestMode;
+use once_cell::sync::OnceCell;
 
-pub const API_BASE_URL: &str = if cfg!(test) || cfg!(feature = "test_api") {
-    CONFIG.test_api_domain
-} else {
-    CONFIG.api_domain
-};
+pub(crate) static API_BASE_URL: OnceCell<String> = OnceCell::new();
 
-pub const CORS_MODE: RequestMode = if cfg!(test) || cfg!(feature = "test_api") {
-    RequestMode::Cors
-} else {
-    RequestMode::SameOrigin
-};
+pub(crate) fn api_base_url() -> String {
+    if cfg!(test) || cfg!(feature = "test_api") {
+        CONFIG.test_api_domain.to_string()
+    } else {
+        #[cfg(target_arch = "wasm32")]
+        let origin = gloo_utils::window()
+            .location()
+            .origin()
+            .expect("Cannot get origin string.");
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let origin = "".to_string(); // おそらく失敗する
+        format!("{}{}", origin, CONFIG.api_domain)
+    }
+}

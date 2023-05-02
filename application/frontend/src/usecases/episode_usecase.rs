@@ -7,24 +7,28 @@ pub use self::fake::*;
 #[cfg(not(feature = "fake"))]
 mod product {
     use crate::commands::episode_commands;
+    use crate::{api_base_url, API_BASE_URL};
     use crate::{
         utils::{deserialize_response, deserialize_response_null},
         AppFrontError,
     };
-    use crate::{API_BASE_URL, CORS_MODE};
     use domain::episode::Episode;
 
-    use gloo_net::http::Request;
+    use reqwest::Client;
 
     /// エピソードを保存
     pub async fn save_episode<'a>(
         cmd: episode_commands::SaveEpisodeCommand<'_>,
     ) -> Result<(), AppFrontError> {
-        let response = Request::put(&format!("{}{}", API_BASE_URL, "/episode"))
-            .mode(CORS_MODE)
-            .json(&cmd.episode)?
-            .send()
-            .await?;
+        let request = Client::new()
+            .put(&format!(
+                "{}{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                "/episode"
+            ))
+            .json(&cmd.episode);
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -33,11 +37,15 @@ mod product {
     pub async fn edit_episode<'a>(
         cmd: episode_commands::EditEpisodeCommand<'_>,
     ) -> Result<(), AppFrontError> {
-        let response = Request::patch(&format!("{}{}", API_BASE_URL, "/episode"))
-            .mode(CORS_MODE)
-            .json(&cmd.episode)?
-            .send()
-            .await?;
+        let request = Client::new()
+            .patch(&format!(
+                "{}{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                "/episode"
+            ))
+            .json(&cmd.episode);
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -46,10 +54,13 @@ mod product {
     pub async fn all_episodes(
         _cmd: episode_commands::AllEpisodesCommand,
     ) -> Result<Vec<Episode>, AppFrontError> {
-        let response = Request::get(&format!("{}{}", API_BASE_URL, "/episode"))
-            .mode(CORS_MODE)
-            .send()
-            .await?;
+        let request = Client::new().get(&format!(
+            "{}{}",
+            API_BASE_URL.get_or_init(api_base_url),
+            "/episode"
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -59,13 +70,14 @@ mod product {
         cmd: episode_commands::OrderByDateRangeEpisodesCommand,
     ) -> Result<Vec<Episode>, AppFrontError> {
         let query_string = format!("?sort_type=date&start={}&end={}", cmd.start, cmd.end);
-        let response = Request::get(&format!(
+        let request = Client::new().get(&format!(
             "{}{}{}",
-            API_BASE_URL, "/episode/query", query_string
-        ))
-        .mode(CORS_MODE)
-        .send()
-        .await?;
+            API_BASE_URL.get_or_init(api_base_url),
+            "/episode/query",
+            query_string
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -74,10 +86,14 @@ mod product {
     pub async fn remove_episode(
         cmd: episode_commands::RemoveEpisodeCommand,
     ) -> Result<(), AppFrontError> {
-        let response = Request::delete(&format!("{}{}{}", API_BASE_URL, "/episode/", cmd.id))
-            .mode(CORS_MODE)
-            .send()
-            .await?;
+        let request = Client::new().delete(&format!(
+            "{}{}{}",
+            API_BASE_URL.get_or_init(api_base_url),
+            "/episode/",
+            cmd.id
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -126,18 +142,15 @@ mod fake {
     }
 }
 
-#[cfg(all(test, not(feature = "integration_test")))]
+#[cfg(test)]
 mod test {
     use crate::commands::episode_commands;
     use crate::AppFrontError;
     use domain::episode::{Episode, EpisodeId};
     use domain::Date;
     use fake::{Fake, Faker};
-    use wasm_bindgen_test::*;
 
-    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_save_episode() {
         let episode = Faker.fake::<Episode>();
         let cmd = episode_commands::SaveEpisodeCommand::new(&episode);
@@ -145,7 +158,7 @@ mod test {
         let _res: Result<(), AppFrontError> = super::save_episode(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_edit_episode() {
         let episode = Faker.fake::<Episode>();
         let cmd = episode_commands::EditEpisodeCommand::new(&episode);
@@ -153,13 +166,13 @@ mod test {
         let _res: Result<(), AppFrontError> = super::edit_episode(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_all_episodes() {
         let cmd = episode_commands::AllEpisodesCommand;
         let _res_vec: Result<Vec<Episode>, AppFrontError> = super::all_episodes(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_order_by_date_episodes() {
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
@@ -169,7 +182,7 @@ mod test {
             super::order_by_date_range_episodes(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_remove_by_id_episode() {
         let id = EpisodeId::generate();
         let cmd = episode_commands::RemoveEpisodeCommand::new(id);

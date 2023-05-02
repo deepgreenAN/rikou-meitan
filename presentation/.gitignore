@@ -5,3 +5,4 @@ dist_ssr
 dist_spa
 /Cargo.lock
 /.vscode
+.hintrc

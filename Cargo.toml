@@ -8,7 +8,13 @@ publish = false
 
 
 [workspace]
-members = ["application/serverside","application/common","domain","infrastructure","config"]  # プレゼンテーション層はtargetに含めない
+members = [
+    "application/serverside",
+    "application/common",
+    "domain",
+    "infrastructure",
+    "config"
+]  # プレゼンテーション層はtargetに含めない
 exclude = ["presentation", "application/frontend", "application/integration_test"]
 
 

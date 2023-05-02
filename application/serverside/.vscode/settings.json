@@ -1,9 +1,11 @@
 {
     "cSpell.words": [
+        "dioxus",
         "Inmemory",
         "Kirinuki",
         "kirinukis",
-        "serverside"
+        "serverside",
+        "vdom"
     ],
     "rust-analyzer.cargo.features": [
         // "inmemory"

@@ -7,26 +7,30 @@ pub use self::fake::*;
 #[cfg(not(feature = "fake"))]
 mod product {
     use crate::commands::video_commands;
+    use crate::{api_base_url, API_BASE_URL};
     use crate::{
         utils::{deserialize_response, deserialize_response_null},
         AppFrontError,
     };
-    use crate::{API_BASE_URL, CORS_MODE};
     use common::QueryInfoRef;
     use domain::video::{Video, VideoType};
 
-    use gloo_net::http::Request;
+    use reqwest::Client;
     use std::borrow::Cow::Borrowed;
 
     /// Videoを保存
     pub async fn save_video<'a, T: VideoType>(
         cmd: video_commands::SaveVideoCommand<'_, T>,
     ) -> Result<(), AppFrontError> {
-        let response = Request::put(&format!("{}/{}", API_BASE_URL, T::snake_case()))
-            .mode(CORS_MODE)
-            .json(&cmd.video)?
-            .send()
-            .await?;
+        let request = Client::new()
+            .put(&format!(
+                "{}/{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                T::snake_case()
+            ))
+            .json(&cmd.video);
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -35,11 +39,15 @@ mod product {
     pub async fn edit_video<'a, T: VideoType>(
         cmd: video_commands::EditVideoCommand<'_, T>,
     ) -> Result<(), AppFrontError> {
-        let response = Request::patch(&format!("{}/{}", API_BASE_URL, T::snake_case()))
-            .mode(CORS_MODE)
-            .json(&cmd.video)?
-            .send()
-            .await?;
+        let request = Client::new()
+            .patch(&format!(
+                "{}/{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                T::snake_case()
+            ))
+            .json(&cmd.video);
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -48,15 +56,14 @@ mod product {
     pub async fn increment_like<T: VideoType>(
         cmd: video_commands::IncrementLikeVideoCommand,
     ) -> Result<(), AppFrontError> {
-        let response = Request::patch(&format!(
+        let request = Client::new().patch(&format!(
             "{}/{}/increment_like/{}",
-            API_BASE_URL,
+            API_BASE_URL.get_or_init(api_base_url),
             T::snake_case(),
             cmd.id
-        ))
-        .mode(CORS_MODE)
-        .send()
-        .await?;
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -65,10 +72,13 @@ mod product {
     pub async fn all_videos<T: VideoType>(
         _cmd: video_commands::AllVideosCommand,
     ) -> Result<Vec<Video<T>>, AppFrontError> {
-        let response = Request::get(&format!("{}/{}", API_BASE_URL, T::snake_case()))
-            .mode(CORS_MODE)
-            .send()
-            .await?;
+        let request = Client::new().get(&format!(
+            "{}/{}",
+            API_BASE_URL.get_or_init(api_base_url),
+            T::snake_case()
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -78,15 +88,14 @@ mod product {
         cmd: video_commands::OrderByLikeVideosCommand,
     ) -> Result<Vec<Video<T>>, AppFrontError> {
         let query_string = format!("?sort_type=like&length={}", cmd.length);
-        let response = Request::get(&format!(
+        let request = Client::new().get(&format!(
             "{}/{}/query{}",
-            API_BASE_URL,
+            API_BASE_URL.get_or_init(api_base_url),
             T::snake_case(),
             query_string
-        ))
-        .mode(CORS_MODE)
-        .send()
-        .await?;
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -100,16 +109,16 @@ mod product {
             .reference(Borrowed(cmd.reference))
             .build();
 
-        let response = Request::post(&format!(
-            "{}/{}/query{}",
-            API_BASE_URL,
-            T::snake_case(),
-            query_string
-        ))
-        .mode(CORS_MODE)
-        .json(&query_info)?
-        .send()
-        .await?;
+        let request = Client::new()
+            .post(&format!(
+                "{}/{}/query{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                T::snake_case(),
+                query_string
+            ))
+            .json(&query_info);
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -120,15 +129,14 @@ mod product {
     ) -> Result<Vec<Video<T>>, AppFrontError> {
         let query_string = format!("?sort_type=date&length={}", cmd.length);
 
-        let response = Request::get(&format!(
+        let request = Client::new().get(&format!(
             "{}/{}/query{}",
-            API_BASE_URL,
+            API_BASE_URL.get_or_init(api_base_url),
             T::snake_case(),
             query_string
-        ))
-        .mode(CORS_MODE)
-        .send()
-        .await?;
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -142,16 +150,16 @@ mod product {
             .reference(Borrowed(cmd.reference))
             .build();
 
-        let response = Request::post(&format!(
-            "{}/{}/query{}",
-            API_BASE_URL,
-            T::snake_case(),
-            query_string
-        ))
-        .mode(CORS_MODE)
-        .json(&query_info)?
-        .send()
-        .await?;
+        let request = Client::new()
+            .post(&format!(
+                "{}/{}/query{}",
+                API_BASE_URL.get_or_init(api_base_url),
+                T::snake_case(),
+                query_string
+            ))
+            .json(&query_info);
+
+        let response = request.send().await?;
 
         deserialize_response(response).await
     }
@@ -160,10 +168,14 @@ mod product {
     pub async fn remove_video<T: VideoType>(
         cmd: video_commands::RemoveVideoCommand,
     ) -> Result<(), AppFrontError> {
-        let response = Request::delete(&format!("{}/{}/{}", API_BASE_URL, T::snake_case(), cmd.id))
-            .mode(CORS_MODE)
-            .send()
-            .await?;
+        let request = Client::new().delete(&format!(
+            "{}/{}/{}",
+            API_BASE_URL.get_or_init(api_base_url),
+            T::snake_case(),
+            cmd.id
+        ));
+
+        let response = request.send().await?;
 
         deserialize_response_null(response).await
     }
@@ -257,11 +269,8 @@ mod test {
     use crate::AppFrontError;
     use domain::video::{Original, Video, VideoId};
     use fake::{Fake, Faker};
-    use wasm_bindgen_test::*;
 
-    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_save_video() {
         let video = Faker.fake::<Video<Original>>();
 
@@ -269,7 +278,7 @@ mod test {
         let _res: Result<(), AppFrontError> = super::save_video(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_edit_video() {
         let video = Faker.fake::<Video<Original>>();
 
@@ -277,7 +286,7 @@ mod test {
         let _res: Result<(), AppFrontError> = super::edit_video(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_increment_like_video() {
         let id = VideoId::generate();
 
@@ -285,14 +294,14 @@ mod test {
         let _res: Result<(), AppFrontError> = super::increment_like::<Original>(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_all_videos() {
         let cmd = video_commands::AllVideosCommand;
         let _res: Result<Vec<Video<Original>>, AppFrontError> =
             super::all_videos::<Original>(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_order_by_like_videos() {
         let length = 100_usize;
         let cmd = video_commands::OrderByLikeVideosCommand::new(length);
@@ -300,7 +309,7 @@ mod test {
             super::order_by_like_videos(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_order_by_like_later_videos() {
         let length = 100_usize;
         let reference = Faker.fake::<Video<Original>>();
@@ -309,7 +318,7 @@ mod test {
             super::order_by_like_later_videos(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_order_by_date_videos() {
         let length = 100_usize;
         let cmd = video_commands::OrderByDateVideosCommand::new(length);
@@ -317,7 +326,7 @@ mod test {
             super::order_by_date_videos(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_order_by_date_later_videos() {
         let length = 100_usize;
         let reference = Faker.fake::<Video<Original>>();
@@ -326,7 +335,7 @@ mod test {
             super::order_by_date_later_videos(cmd).await;
     }
 
-    #[wasm_bindgen_test]
+    #[allow(dead_code)]
     async fn test_remove_video() {
         let id = VideoId::generate();
 

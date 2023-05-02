@@ -12,13 +12,14 @@ pub enum AppFrontError {
     CommonError(#[from] common::AppCommonError),
 }
 
-impl From<gloo_net::Error> for AppFrontError {
-    fn from(value: gloo_net::Error) -> Self {
-        match value {
-            e @ gloo_net::Error::JsError(_) | e @ gloo_net::Error::GlooError(_) => {
-                Self::FetchError(format!("{e}"))
-            }
-            e @ gloo_net::Error::SerdeError(_) => Self::SerdeError(format!("{e}")),
+impl From<reqwest::Error> for AppFrontError {
+    fn from(value: reqwest::Error) -> Self {
+        // jsonのデコードに関するエラー
+        if value.is_decode() {
+            AppFrontError::SerdeError(format!("{value}"))
+        } else {
+            // その他のエラー
+            AppFrontError::FetchError(format!("{value}"))
         }
     }
 }

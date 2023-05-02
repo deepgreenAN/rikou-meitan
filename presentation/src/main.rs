@@ -19,7 +19,7 @@ fn main() {
     dioxus_web::launch_with_props(
         App,
         AppProps {
-            admin_password: admin_password,
+            admin_password: get_admin_password(include_str!("../../Secrets.toml")),
         },
         Config::new().with_default_panic_hook(true),
     );
