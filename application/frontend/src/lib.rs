@@ -5,12 +5,16 @@ pub mod utils;
 
 pub use error::AppFrontError;
 
-use config::CONFIG;
+#[cfg(not(feature = "fake"))]
 use once_cell::sync::OnceCell;
 
+#[cfg(not(feature = "fake"))]
 pub(crate) static API_BASE_URL: OnceCell<String> = OnceCell::new();
 
+#[cfg(not(feature = "fake"))]
 pub(crate) fn api_base_url() -> String {
+    use config::CONFIG;
+
     if cfg!(test) || cfg!(feature = "test_api") {
         CONFIG.test_api_domain.to_string()
     } else {

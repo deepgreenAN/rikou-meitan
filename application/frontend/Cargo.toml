@@ -11,14 +11,12 @@ crate-type = ["cdylib", "rlib"]
 [features]
 test_api = []
 fake = ["domain/fake", "dep:fake"]
-integration_test = []
 
 [dependencies]
 config = { path = "../../config"}
 domain = { path = "../../domain"}
 common = { path = "../common"}
 reqwest = { version = "^0.11", features = ["json"] }
-indexmap = "^1.9"
 thiserror = "^1.0"
 serde = "^1.0"
 derive-new = "^0.5"
@@ -27,6 +25,7 @@ once_cell = "^1.17"
 # optional dependencies
 fake = { version = "^2.5", optional = true}
 
+# wasm32のみ
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 gloo-utils = "^0.1"
 web-sys = { version = "^0.3", features = ["Window", "Location"]}
@@ -36,4 +35,7 @@ web-sys = { version = "^0.3", features = ["Window", "Location"]}
 domain = { path = "../../domain", features = ["fake"]}
 fake = "^2.5"
 rand = "0.8.5"
+wiremock = "^0.5"
+tokio = {version = "^1.28", features = ["test-util", "macros"]}
+pretty_assertions = "^1.3"
 # wasm-bindgen-test = "^0.3.34"
