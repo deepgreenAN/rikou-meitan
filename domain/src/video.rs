@@ -71,9 +71,9 @@ impl FromStr for Original {
         if s == stringify!(Original) {
             Ok(Original)
         } else {
-            Err(DomainError::DomainParseError(
-                "Invalid string for 'Original' video type".to_string(),
-            ))
+            Err(DomainError::DomainParseError(format!(
+                "Invalid string for Original video type: \"{s}\""
+            )))
         }
     }
 }
@@ -117,9 +117,9 @@ impl FromStr for Kirinuki {
         if s == stringify!(Kirinuki) {
             Ok(Kirinuki)
         } else {
-            Err(DomainError::DomainParseError(
-                "Invalid string for Kirinuki video type".to_string(),
-            ))
+            Err(DomainError::DomainParseError(format!(
+                "Invalid string for Kirinuki video type: \"{s}\""
+            )))
         }
     }
 }

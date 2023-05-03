@@ -401,7 +401,7 @@ where
                                         cx.spawn(async move {
                                             let res = {
                                                 let cmd = video_commands::IncrementLikeVideoCommand::new(id);
-                                                video_usecase::increment_like::<T>(cmd).await
+                                                video_usecase::increment_like_video::<T>(cmd).await
                                             };
 
                                             match res {

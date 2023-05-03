@@ -1,88 +1,82 @@
-// use assert_matches::assert_matches;
-// use domain::episode::{Episode, EpisodeId};
-// use domain::Date;
-// use frontend::commands::episode_commands;
-// use frontend::usecases::episode_usecase;
-// use frontend::AppCommonError;
-// use pretty_assertions::assert_eq;
-// use wasm_bindgen_test::*;
+use domain::episode::{Episode, EpisodeId};
+use domain::Date;
+use frontend::commands::episode_commands;
+use frontend::usecases::episode_usecase;
+use frontend::AppFrontError;
 
-// wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+use fake::{Fake, Faker};
+use pretty_assertions::assert_eq;
+use rand::{seq::SliceRandom, thread_rng, Rng};
+use tokio::runtime::Handle;
 
-// #[wasm_bindgen_test]
-// async fn test_sequence() {
-//     let mut episodes = vec![
-//         Episode::new((2022, 12, 6), "Episode Content 1".to_string()).unwrap(),
-//         Episode::new((2022, 12, 7), "Episode Content 2".to_string()).unwrap(),
-//         Episode::new((2022, 12, 8), "Episode Content 3".to_string()).unwrap(),
-//         Episode::new((2022, 12, 9), "Episode Content 4".to_string()).unwrap(),
-//     ];
+mod utils;
+use utils::use_sync_mutex;
 
-//     // save_episode
-//     for episode in episodes.iter().cloned() {
-//         let cmd = episode_commands::SaveEpisodeCommand::new(episode);
-//         let res = episode_usecase::save_episode(cmd).await;
-//         assert_matches!(res, Ok(_));
-//     }
+async fn all_save(episodes: &[Episode]) -> Result<(), AppFrontError> {
+    for episode in episodes.iter() {
+        let cmd = episode_commands::SaveEpisodeCommand::new(episode);
+        episode_usecase::save_episode(cmd).await?
+    }
+    Ok(())
+}
 
-//     // all_episodes
-//     let cmd = episode_commands::AllEpisodeCommand;
-//     let mut res_vec = episode_usecase::all_episodes(cmd).await.unwrap();
-//     res_vec.sort_by_key(|episode| episode.id());
+async fn all_remove() -> Result<(), AppFrontError> {
+    let all_episodes = {
+        let cmd = episode_commands::AllEpisodesCommand;
+        episode_usecase::all_episodes(cmd).await?
+    };
 
-//     let mut sorted_episodes = episodes.clone();
-//     sorted_episodes.sort_by_key(|episode| episode.id());
-//     assert_eq!(res_vec, sorted_episodes);
+    for episode in all_episodes.into_iter() {
+        let cmd = episode_commands::RemoveEpisodeCommand::new(episode.id());
+        episode_usecase::remove_episode(cmd).await?
+    }
+    Ok(())
+}
 
-//     // edit_episode
-//     let mut edited_episode = episodes[1].clone();
-//     edited_episode
-//         .edit_content("Another Episode content".to_string())
-//         .unwrap();
-//     episodes[1] = edited_episode.clone();
+#[test]
+fn test_edit_episode_sequence() {
+    // let _m = use_sync_mutex();
 
-//     let cmd = episode_commands::EditEpisodeCommand::new(edited_episode);
-//     let res = episode_usecase::edit_episode(cmd).await;
-//     assert_matches!(res, Ok(_));
+    futures::executor::block_on(async move {
+        let episode = Faker.fake::<Episode>();
+        let res = {
+            let cmd = episode_commands::SaveEpisodeCommand::new(&episode);
+            episode_usecase::save_episode(cmd).await
+        };
 
-//     let another_episode =
-//         Episode::new((2022, 12, 9), "Another Episode Content".to_string()).unwrap();
-//     let cmd = episode_commands::EditEpisodeCommand::new(another_episode);
-//     let res = episode_usecase::edit_episode(cmd).await;
-//     assert_matches!(res, Err(AppCommonError::NoRecordError));
+        // assert!(matches!(res, Ok(_)), "{}", res.unwrap_err());
 
-//     // order_by_date_range_episodes
-//     let start = Date::from_ymd(2022, 12, 6).unwrap();
-//     let end = Date::from_ymd(2022, 12, 8).unwrap();
-//     let cmd = episode_commands::OrderByDateRangeEpisodeCommand::new(start, end);
-//     let res_vec = episode_usecase::order_by_date_range_episodes(cmd)
-//         .await
-//         .unwrap();
+        // let mut episodes = (0..10).map(|_| Faker.fake::<Episode>()).collect::<Vec<_>>();
 
-//     let mut ordered_episodes = episodes.clone();
-//     ordered_episodes.sort_by_key(|episode| episode.date());
-//     let ordered_episodes = ordered_episodes
-//         .into_iter()
-//         .filter(|episode| start <= episode.date() && episode.date() < end)
-//         .collect::<Vec<_>>();
+        // all_save(&episodes).await;
 
-//     assert_eq!(res_vec, ordered_episodes);
+        // // 変更するエピソードのインデックス
+        // let mut edit_indices = (0..episodes.len()).collect::<Vec<_>>();
+        // edit_indices.shuffle(&mut thread_rng());
+        // let edit_number = 5;
 
-//     // remove_by_id_episode
-//     let removed_episode = episodes.remove(1);
-//     let cmd = episode_commands::RemoveByIdEpisodeCommand::new(removed_episode.id());
-//     let res = episode_usecase::remove_by_id_episode(cmd).await;
-//     assert_matches!(res, Ok(_));
+        // // episodesの一部を変更．
+        // for i in edit_indices.into_iter().take(edit_number) {
+        //     let episode = episodes.get_mut(i).unwrap();
+        //     let new_episode = Faker.fake::<Episode>();
 
-//     let cmd = episode_commands::AllEpisodeCommand;
-//     let mut res_vec = episode_usecase::all_episodes(cmd).await.unwrap();
-//     res_vec.sort_by_key(|episode| episode.id());
+        //     episode.assign(new_episode);
 
-//     let mut sorted_episodes = episodes.clone();
-//     sorted_episodes.sort_by_key(|episode| episode.id());
-//     assert_eq!(res_vec, sorted_episodes);
+        //     let cmd = episode_commands::EditEpisodeCommand::new(episode);
+        //     episode_usecase::edit_episode(cmd).await.unwrap();
+        // }
 
-//     let cmd = episode_commands::RemoveByIdEpisodeCommand::new(EpisodeId::generate());
-//     let res = episode_usecase::remove_by_id_episode(cmd).await;
-//     assert_matches!(res, Err(AppCommonError::NoRecordError));
-// }
+        // // 取得したものと比較
+        // let mut res = {
+        //     let cmd = episode_commands::AllEpisodesCommand;
+        //     episode_usecase::all_episodes(cmd).await.unwrap()
+        // };
+
+        // res.sort_by_key(|episode| episode.id());
+        // episodes.sort_by_key(|episode| episode.id());
+
+        // assert_eq!(res, episodes);
+
+        // all_remove().await.unwrap();
+    });
+}

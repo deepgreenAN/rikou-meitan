@@ -6,7 +6,7 @@ pub use self::fake::*;
 
 #[cfg(not(feature = "fake"))]
 mod product {
-    pub mod product_inner {
+    pub(crate) mod product_inner {
         /// テストするためにurlを引数とする関数を定義するモジュール
         use crate::commands::video_commands;
         use crate::{

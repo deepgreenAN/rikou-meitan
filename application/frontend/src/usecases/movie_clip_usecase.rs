@@ -7,7 +7,7 @@ pub use self::fake::*;
 #[cfg(not(feature = "fake"))]
 mod product {
 
-    pub mod product_inner {
+    pub(crate) mod product_inner {
         use crate::commands::movie_clip_commands;
         use crate::{
             utils::{deserialize_response, deserialize_response_null},

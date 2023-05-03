@@ -149,7 +149,7 @@ pub fn HomePage(cx: Scope) -> Element {
                                                 cx.spawn(async move {
                                                     let res = {
                                                         let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
-                                                        movie_clip_usecase::increment_like(cmd).await
+                                                        movie_clip_usecase::increment_like_movie_clip(cmd).await
                                                     };
 
                                                     match res {
@@ -195,7 +195,7 @@ pub fn HomePage(cx: Scope) -> Element {
                                                 cx.spawn(async move {
                                                     let res = {
                                                         let cmd = video_commands::IncrementLikeVideoCommand::new(id);
-                                                        video_usecase::increment_like::<Original>(cmd).await
+                                                        video_usecase::increment_like_video::<Original>(cmd).await
                                                     };
 
                                                     match res {
@@ -241,7 +241,7 @@ pub fn HomePage(cx: Scope) -> Element {
                                                 cx.spawn(async move {
                                                     let res = {
                                                         let cmd = video_commands::IncrementLikeVideoCommand::new(id);
-                                                        video_usecase::increment_like::<Kirinuki>(cmd).await
+                                                        video_usecase::increment_like_video::<Kirinuki>(cmd).await
                                                     };
 
                                                     match res {

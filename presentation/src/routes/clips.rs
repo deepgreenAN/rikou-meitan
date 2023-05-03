@@ -391,7 +391,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                                         cx.spawn(async move {
                                             let res = {
                                                 let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(id);
-                                                movie_clip_usecase::increment_like(cmd).await
+                                                movie_clip_usecase::increment_like_movie_clip(cmd).await
                                             };
 
                                             match res {

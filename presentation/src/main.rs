@@ -15,7 +15,7 @@ fn get_admin_password(toml_str: &str) -> String {
 
 #[cfg(not(feature = "ssr"))]
 fn main() {
-    wasm_logger::init(wasm_logger::Config::default());
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
     dioxus_web::launch_with_props(
         App,
         AppProps {
@@ -30,7 +30,7 @@ fn main() {
     // use dioxus::prelude::*;
     use wasm_bindgen::UnwrapThrowExt;
 
-    wasm_logger::init(wasm_logger::Config::default());
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
 
     log::info!("リハイドレーションを開始");
 
