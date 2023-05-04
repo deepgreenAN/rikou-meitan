@@ -11,11 +11,12 @@ publish = false
 members = [
     "application/serverside",
     "application/common",
+    "application/integration_test",
     "domain",
     "infrastructure",
     "config"
 ]  # プレゼンテーション層はtargetに含めない
-exclude = ["presentation", "application/frontend", "application/integration_test"]
+exclude = ["presentation", "application/frontend"]
 
 
 [dependencies]

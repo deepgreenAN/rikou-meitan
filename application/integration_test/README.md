@@ -1,8 +1,14 @@
-## テスト
-```
-cargo run --bin test_server --features server
+# 結合テスト
+
+## APIのテストサーバーを起動
+
+```shell
+cd ../serverside
+cargo run --example test_api_server --features inmemory
 ```
 
-```
-wasm-pack test --chrome --headless
+## テスト
+
+```shell
+cargo test
 ```

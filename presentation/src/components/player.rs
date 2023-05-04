@@ -68,21 +68,28 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
 
             let target_element = gloo_utils::document().query_selector(&player_container_selector).unwrap_throw().unwrap_throw();
 
-            let handler = IntersectionObserverHandler::new(move |entries, _|{
-                let first_entry = entries.first().unwrap_throw();
-                if first_entry.is_intersecting() {
-                    // ターゲットがビューポートに入ってきたとき
-                    Timeout::new(500, {
-                        to_owned![thumbnail_url, video_id];
-                        move || {
-                            thumbnail_url.set(Some(
-                                format!("https://img.youtube.com/vi/{video_id}/sddefault.jpg"),
-                            ))
-                        }
-                    }).forget();
-                } else if let Some(player) = &*player_state.current(){
-                    // ターゲットがビューポートから出たとき
-                    player.pause();
+            let handler = IntersectionObserverHandler::new({
+                to_owned![intersecting_handler];
+                move |entries, _|{
+                    let first_entry = entries.first().unwrap_throw();
+                    if first_entry.is_intersecting() {
+                        // ターゲットがビューポートに入ってきたとき
+                        Timeout::new(500, {
+                            to_owned![thumbnail_url, video_id, intersecting_handler];
+                            move || {
+                                // サムネイルのurlをセット
+                                thumbnail_url.set(Some(
+                                    format!("https://img.youtube.com/vi/{video_id}/sddefault.jpg"),
+                                ));
+
+                                // もう不要なintersecting_handlerを初期化
+                                intersecting_handler.set(None);
+                            }
+                        }).forget();
+                    } else if let Some(player) = &*player_state.current(){
+                        // ターゲットがビューポートから出たとき
+                        player.pause();
+                    }
                 }
             }).unwrap_throw();
 
