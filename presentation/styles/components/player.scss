@@ -12,6 +12,10 @@ $aspect_ratio: calc(16/9);
         width: 100%;
         aspect-ratio: $aspect_ratio;
         position: relative;
+
+        // 以下はプレーヤーについて
+        --plyr-control-icon-size: 30px;
+
         .player-wrapper {
             position: absolute;
             top: 15%;

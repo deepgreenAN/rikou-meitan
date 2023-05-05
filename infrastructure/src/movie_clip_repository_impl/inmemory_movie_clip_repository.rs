@@ -30,8 +30,11 @@ impl InMemoryMovieClipRepository {
 impl MovieClipRepository for InMemoryMovieClipRepository {
     type Error = InfraError;
     async fn save(&self, clip: MovieClip) -> Result<(), InfraError> {
-        self.map.lock().unwrap().insert(clip.id().to_uuid(), clip);
-        Ok(())
+        let old_clip = self.map.lock().unwrap().insert(clip.id().to_uuid(), clip);
+        match old_clip {
+            Some(_) => Err(InfraError::ConflictError),
+            None => Ok(()),
+        }
     }
 
     async fn edit(&self, clip: MovieClip) -> Result<(), InfraError> {

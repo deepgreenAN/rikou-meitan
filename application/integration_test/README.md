@@ -4,7 +4,7 @@
 
 ```shell
 cd ../serverside
-cargo run --example test_api_server --features inmemory
+cargo run --example api_test_server --features inmemory
 ```
 
 ## テスト

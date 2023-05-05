@@ -30,11 +30,15 @@ impl InMemoryEpisodeRepository {
 impl EpisodeRepository for InMemoryEpisodeRepository {
     type Error = InfraError;
     async fn save(&self, episode: Episode) -> Result<(), InfraError> {
-        self.map
+        let old_episode = self
+            .map
             .lock()
             .unwrap()
             .insert(episode.id().to_uuid(), episode);
-        Ok(())
+        match old_episode {
+            Some(_) => Err(InfraError::ConflictError),
+            None => Ok(()),
+        }
     }
     async fn edit(&self, episode: Episode) -> Result<(), InfraError> {
         match self.map.lock().unwrap().entry(episode.id().to_uuid()) {

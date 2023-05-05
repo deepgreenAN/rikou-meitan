@@ -4,7 +4,7 @@ use crate::components::{IntersectionBottom, MovieCard, MovieContainer, Quiz, Vid
 use crate::utils::use_overlay;
 use domain::video::{Video, VideoType};
 use edit_video::EditVideo;
-use frontend::{commands::video_commands, usecases::video_usecase};
+use frontend::{commands::video_commands, usecases::video_usecase, AppFrontError, AppCommonError};
 use crate::utils::{get_liked_ids, push_liked_id};
 
 use dioxus::prelude::*;
@@ -194,6 +194,7 @@ where
             let new_video = new_video.clone();
             videos_ref.with_mut(|videos| {
                 if let Some(videos) = videos.as_mut() {
+                    log::info!("Add video: {:?}", new_video);
                     videos.push(new_video);
                 }
             });
@@ -209,11 +210,12 @@ where
                 };
 
                 if let Err(e) = res {
-                    log::error!("{} Removed video: {:?}", e, new_video);
+                    log::error!("{}", e);
 
                     // new_videoを削除
                     videos_ref.with_mut(|videos_opt| {
                         if let Some(videos) = videos_opt.as_mut() {
+                            log::info!("Remove video: {:?}", new_video);
                             videos.retain(|video| video.id() != new_video.id());
                         }
                     });
@@ -237,6 +239,7 @@ where
                         .find(|video| video.id() == modified_video.id())
                         .expect("Modify for not exists video");
                     // 古いデータを新しいデータに更新。
+                    log::info!("Video: {:?}, modify into video: {:?}", found_video, modified_video);
                     old_video = Some(std::mem::replace(found_video, modified_video));
                 }
             });
@@ -253,20 +256,34 @@ where
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{} Roll backed video: {:?}", e, modified_video);
+                    log::error!("{}", e);
 
-                    if let Some(old_video) = old_video {
+                    // 更新した動画をロールバック(エラーがNoRecordの場合は削除)
+                    if matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        // NoRecordエラーの場合更新した動画を削除．
                         videos_ref.with_mut(|videos_opt| {
                             if let Some(videos) = videos_opt.as_mut() {
-                                let found_video = videos
-                                    .iter_mut()
-                                    .find(|video| video.id() == old_video.id())
-                                    .expect("Cannot found video.");
-
-                                // 更新したエラーをロールバック
-                                *found_video = old_video;
+                                log::info!("Remove video: {:?}", modified_video);
+                                videos.retain(|video| video.id() != modified_video.id());
                             }
                         });
+
+                    } else {
+                        // その他のエラーのとき変更した動画をロールバック．
+                        if let Some(old_video) = old_video {
+                            videos_ref.with_mut(|videos_opt| {
+                                if let Some(videos) = videos_opt.as_mut() {
+                                    let found_video = videos
+                                        .iter_mut()
+                                        .find(|video| video.id() == old_video.id())
+                                        .expect("Cannot found video.");
+    
+                                    // ロールバック
+                                    log::info!("Roll backed video: {:?}", modified_video);
+                                    *found_video = old_video;
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -297,29 +314,32 @@ where
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{} Re-pushed video: {:?}", e, video_for_remove);
+                    log::error!("{}", e);
 
-                    // 削除した要素を再び挿入してソート
-                    videos_ref.with_mut(|videos_opt| {
-                        if let Some(videos) = videos_opt.as_mut() {
-                            videos.push(video_for_remove);
-
-                            match *sort_type_state.current() {
-                                SortType::Date => {
-                                    // dateを降順・idを昇順にソート
-                                    videos.sort_by(|x, y| {
-                                        y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id()))
-                                    });
-                                }
-                                SortType::Like => {
-                                    // likeを降順・idを昇順にソート
-                                    videos.sort_by(|x, y| {
-                                        y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id()))
-                                    });
+                    // 削除した要素を再び挿入してソート(NoRecordエラーで無い場合)
+                    if !matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        videos_ref.with_mut(|videos_opt| {
+                            if let Some(videos) = videos_opt.as_mut() {
+                                log::info!("Re-pushed video: {:?}", video_for_remove);
+                                videos.push(video_for_remove);
+    
+                                match *sort_type_state.current() {
+                                    SortType::Date => {
+                                        // dateを降順・idを昇順にソート
+                                        videos.sort_by(|x, y| {
+                                            y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id()))
+                                        });
+                                    }
+                                    SortType::Like => {
+                                        // likeを降順・idを昇順にソート
+                                        videos.sort_by(|x, y| {
+                                            y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id()))
+                                        });
+                                    }
                                 }
                             }
-                        }
-                    })
+                        });
+                    }
                 }
             }
         });

@@ -5,7 +5,7 @@ use crate::utils::{use_overlay, get_liked_ids, push_liked_id};
 use domain::movie_clip::MovieClip;
 use edit_clip::EditMovieClip;
 
-use frontend::{commands::movie_clip_commands, usecases::movie_clip_usecase};
+use frontend::{commands::movie_clip_commands, usecases::movie_clip_usecase, AppCommonError, AppFrontError};
 
 use dioxus::prelude::*;
 use gloo_intersection::IntersectionObserverHandler;
@@ -178,6 +178,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
             let new_movie_clip = new_movie_clip.clone();
             movie_clips_ref.with_mut(|movie_clips|{
                 if let Some(movie_clips) = movie_clips.as_mut() {
+                    log::info!("Add movie_clip: {:?}", new_movie_clip);
                     movie_clips.push(new_movie_clip);
                 }
             });
@@ -194,11 +195,12 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{} Removed movie_clip: {:?}", e, new_movie_clip);
+                    log::error!("{}", e);
 
                     // new_movie_clipを削除
                     movie_clips_ref.with_mut(|movie_clips|{
                         if let Some(movie_clips) = movie_clips.as_mut() {
+                            log::info!("Removed movie_clip: {:?}", new_movie_clip);
                             movie_clips.retain(|clip|{clip.id() != new_movie_clip.id()});
                         }
                     })
@@ -220,6 +222,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                 if let Some(movie_clips) = movie_clips_opt.as_mut() {
                     let found_movie_clip = movie_clips.iter_mut().find(|movie_clip|{movie_clip.id() == modified_movie_clip.id()}).expect("Cannot find modified_movie_clip");
                     // 古いデータを新しいデータに更新
+                    log::info!("Movie_clip: {:?}, modify into {:?}", found_movie_clip, modified_movie_clip);
                     old_movie_clip = Some(std::mem::replace(found_movie_clip, modified_movie_clip));
                 }
             });
@@ -236,17 +239,29 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{}. Roll backed movie_clip: {:?}", e, old_movie_clip);
+                    log::error!("{}", e);
 
-                    if let Some(old_movie_clip) = old_movie_clip {
-                        movie_clips_ref.with_mut(|movie_clips_opt|{
-                            if let Some(movie_clips) = movie_clips_opt {
-                                let found_movie_clip = movie_clips.iter_mut().find(|movie_clip|{movie_clip.id() == old_movie_clip.id()}).expect("Cannot find old_movie_clip");
-
-                                // 更新したデータをロールバック
-                                *found_movie_clip = old_movie_clip;
+                    // 更新したデータをロールバック(NoRecordエラーの場合は削除)
+                    if matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        // NoRecordエラーの場合に削除
+                        movie_clips_ref.with_mut(|movie_clips|{
+                            if let Some(movie_clips) = movie_clips.as_mut() {
+                                log::info!("Removed movie_clip: {:?}", modified_movie_clip);
+                                movie_clips.retain(|clip|{clip.id() != modified_movie_clip.id()});
                             }
-                        });
+                        })
+                    } else {
+                        if let Some(old_movie_clip) = old_movie_clip {
+                            movie_clips_ref.with_mut(|movie_clips_opt|{
+                                if let Some(movie_clips) = movie_clips_opt {
+                                    let found_movie_clip = movie_clips.iter_mut().find(|movie_clip|{movie_clip.id() == old_movie_clip.id()}).expect("Cannot find old_movie_clip");
+
+                                    log::info!("Roll backed movie_clip: {:?}", old_movie_clip);
+                                    // 更新したデータをロールバック
+                                    *found_movie_clip = old_movie_clip;
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -262,6 +277,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
         {
             movie_clips_ref.with_mut(|movie_clips|{
                 if let Some(movie_clips) = movie_clips.as_mut() {
+                    log::info!("Remove movie_clip: {:?}", clip_for_remove);
                     movie_clips.retain(|movie_clip|{
                         movie_clip.id() != clip_for_remove.id()
                     });
@@ -280,34 +296,37 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{} Re-pushed movie_clip: {:?}", e, clip_for_remove);
+                    log::error!("{}", e);
 
                     // 削除した要素を再び挿入してソート
-                    movie_clips_ref.with_mut(|movie_clips_opt|{
-                        if let Some(movie_clips) = movie_clips_opt.as_mut() {
-                            movie_clips.push(clip_for_remove);
-
-                            match *sort_type_state.current() {
-                                SortType::CreateDate => {
-                                    // create_dateを降順・idを昇順にソート
-                                    movie_clips.sort_by(|x, y|{
-                                        y.create_date().cmp(&x.create_date()).then_with(||{
-                                            x.id().cmp(&y.id())
-                                        })
-                                    });
-                                },
-                                SortType::Like => {
-                                    // likeを降順・idを昇順にソート
-                                    movie_clips.sort_by(|x, y|{
-                                        y.like().cmp(&x.like()).then_with(||{
-                                            x.id().cmp(&y.id())
-                                        })
-                                    });
+                    if !matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        movie_clips_ref.with_mut(|movie_clips_opt|{
+                            if let Some(movie_clips) = movie_clips_opt.as_mut() {
+                                log::info!("Re-pushed movie_clip: {:?}", clip_for_remove);
+                                movie_clips.push(clip_for_remove);
+    
+                                match *sort_type_state.current() {
+                                    SortType::CreateDate => {
+                                        // create_dateを降順・idを昇順にソート
+                                        movie_clips.sort_by(|x, y|{
+                                            y.create_date().cmp(&x.create_date()).then_with(||{
+                                                x.id().cmp(&y.id())
+                                            })
+                                        });
+                                    },
+                                    SortType::Like => {
+                                        // likeを降順・idを昇順にソート
+                                        movie_clips.sort_by(|x, y|{
+                                            y.like().cmp(&x.like()).then_with(||{
+                                                x.id().cmp(&y.id())
+                                            })
+                                        });
+                                    }
                                 }
+                                
                             }
-                            
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });

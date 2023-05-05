@@ -3,6 +3,7 @@ mod error;
 pub mod usecases;
 pub mod utils;
 
+pub use common::AppCommonError;
 pub use error::AppFrontError;
 
 #[cfg(not(feature = "fake"))]

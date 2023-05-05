@@ -59,14 +59,12 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
 
     // 初期化
     use_effect(cx, (), {
-        to_owned![thumbnail_url, intersecting_handler, player_state];
+        to_owned![thumbnail_url, intersecting_handler, player_container_id, intersecting_handler];
         let video_id = cx.props.video_id.clone();
-        let mut player_container_selector = "#".to_string();
-        player_container_selector.push_str(&player_container_id);
-
+        let player_container_id = player_container_id.clone();
         |_| async move {
 
-            let target_element = gloo_utils::document().query_selector(&player_container_selector).unwrap_throw().unwrap_throw();
+            let target_element = gloo_utils::document().get_element_by_id(&player_container_id).unwrap_throw();
 
             let handler = IntersectionObserverHandler::new({
                 to_owned![intersecting_handler];
@@ -82,13 +80,10 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                     format!("https://img.youtube.com/vi/{video_id}/sddefault.jpg"),
                                 ));
 
-                                // もう不要なintersecting_handlerを初期化
+                                // もう不要であるため交差オブザーバーを削除
                                 intersecting_handler.set(None);
                             }
                         }).forget();
-                    } else if let Some(player) = &*player_state.current(){
-                        // ターゲットがビューポートから出たとき
-                        player.pause();
                     }
                 }
             }).unwrap_throw();
@@ -106,11 +101,14 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
             player_state, 
             onplay_event_listener, 
             setter_playing_player_id,
-            active_player_ids_state
+            active_player_ids_state,
+            intersecting_handler
         ];
         let mut selector = "#".to_string();
         let id = cx.props.id.clone();
         selector.push_str(&id);
+
+        let player_container_id = player_container_id.clone();
 
         let youtube_options = YoutubeOptions {
             start: cx.props.range.as_ref().map(|range|{range.start().to_u32()}),
@@ -118,9 +116,19 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
             ..Default::default()
         };
 
+        let settings = vec![
+            "captions".to_string(), "quality".to_string(), "speed".to_string()
+        ];
+
         |is_active| async move {
             if *is_active.current() {
-                let player_options = PlyrOptions::builder().youtube(youtube_options).build();
+                // プレーヤー関連
+
+                let player_options = PlyrOptions::builder()
+                .settings(settings)
+                .youtube(youtube_options)
+                .autoplay(true)
+                .build();
 
                 let player = Plyr::new_with_options(&selector, &player_options);
                 let onplay_handler = PlyrStandardEventListener::new(
@@ -149,20 +157,42 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                         }
                     }
                 });
+
+                // 交差オブザーバー関連
+                let target_element = gloo_utils::document().get_element_by_id(&player_container_id).unwrap_throw();
+
+                let handler = IntersectionObserverHandler::new({
+                    move |entries, _|{
+                        let first_entry = entries.first().unwrap_throw();
+                        if !first_entry.is_intersecting() {
+                            // ターゲットがビューポートから出たとき
+                            if let Some(player) = player_state.current().as_ref(){
+                                player.pause();
+                            }
+                        }
+                    }
+                }).unwrap_throw();
+    
+                // オブザーブ
+                handler.observe(&target_element);
+    
+                intersecting_handler.set(Some(handler));
             }
         }
     });
 
     // アクティプリストに入っていない場合の処理
     use_effect(cx, active_player_ids,{
-        to_owned![is_active, player_state, onplay_event_listener];
+        to_owned![is_active, player_state, onplay_event_listener, intersecting_handler];
         let player_id = cx.props.id.clone(); 
         |active_player_ids| 
             async move{
                 if *is_active.current() && !active_player_ids.iter().any(|id|{id==&player_id}) && player_state.current().is_some(){
+                    // プレーヤーの削除
                     is_active.set(false);
                     player_state.set(None);
                     onplay_event_listener.set(None);
+                    intersecting_handler.set(None);
                 }
         }
     });

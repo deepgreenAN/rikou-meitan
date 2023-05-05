@@ -4,7 +4,9 @@ use crate::components::{AccordionEpisodes, AddButton, Quiz};
 use crate::utils::use_overlay;
 use domain::{episode::Episode, Date};
 use edit_episode::EditEpisode;
-use frontend::{commands::episode_commands, usecases::episode_usecase};
+use frontend::{
+    commands::episode_commands, usecases::episode_usecase, AppCommonError, AppFrontError,
+};
 
 use dioxus::prelude::*;
 
@@ -126,6 +128,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
             let new_episode = new_episode.clone();
             episodes_ref.with_mut(|episodes| {
                 if let Some(episodes) = episodes.as_mut() {
+                    log::info!("Add episode: {:?}", new_episode);
                     episodes.push(new_episode);
                     episodes.sort_by_key(|episode| episode.date());
                 }
@@ -142,11 +145,12 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                 };
 
                 if let Err(e) = res {
-                    log::error!("{} Removed movie_clip: {:?}", e, new_episode);
+                    log::error!("{}", e);
 
                     // new_movie_clipを削除
                     episodes_ref.with_mut(|episodes_opt| {
                         if let Some(episodes) = episodes_opt.as_mut() {
+                            log::info!("Remove episode: {:?}", new_episode);
                             episodes.retain(|episode| episode.id() != new_episode.id());
                         }
                     })
@@ -170,6 +174,11 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                         .find(|episode| episode.id() == modified_episode.id())
                         .expect("Cannot find modified episode");
 
+                    log::info!(
+                        "Episode: {:?}, modify to: {:?}",
+                        found_episode,
+                        modified_episode
+                    );
                     old_episode = Some(std::mem::replace(found_episode, modified_episode));
                 }
             });
@@ -186,20 +195,33 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{}, Roll backed episode: {:?}", e, old_episode);
+                    log::error!("{}", e);
 
-                    // 更新したデータをロールバック
-                    if let Some(old_episode) = old_episode {
+                    // 更新したデータをロールバック(NoRecordエラーの場合は削除)
+                    if matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        // NoRecordエラーの場合に削除
                         episodes_ref.with_mut(|episodes_opt| {
                             if let Some(episodes) = episodes_opt.as_mut() {
-                                let found_episode = episodes
-                                    .iter_mut()
-                                    .find(|episode| episode.id() == old_episode.id())
-                                    .expect("Cannot find old episode");
-
-                                *found_episode = old_episode;
+                                log::info!("Remove episode: {:?}", modified_episode);
+                                episodes.retain(|episode| episode.id() != modified_episode.id());
                             }
-                        });
+                        })
+                    } else {
+                        // その他のエラーの場合にデータをロールバック
+
+                        if let Some(old_episode) = old_episode {
+                            episodes_ref.with_mut(|episodes_opt| {
+                                if let Some(episodes) = episodes_opt.as_mut() {
+                                    let found_episode = episodes
+                                        .iter_mut()
+                                        .find(|episode| episode.id() == old_episode.id())
+                                        .expect("Cannot find old episode");
+
+                                    log::info!("Roll back episode: {:?}", old_episode);
+                                    *found_episode = old_episode;
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -212,6 +234,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         {
             episodes_ref.with_mut(|episodes| {
                 if let Some(episodes) = episodes.as_mut() {
+                    log::info!("Remove episode: {:?}", episode_for_remove);
                     episodes.retain(|episode| episode.id() != episode_for_remove.id());
                 }
             })
@@ -228,18 +251,21 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
 
                 // レスポンスがエラーの場合
                 if let Err(e) = res {
-                    log::error!("{}. Re-pushed episode: {:?}", e, episode_for_remove);
+                    log::error!("{}", e);
 
-                    // 削除したデータを再び挿入・ソート
-                    episodes_ref.with_mut(|episodes_opt| {
-                        if let Some(episodes) = episodes_opt {
-                            episodes.push(episode_for_remove);
+                    // 削除したデータを再び挿入・ソート(NoRecordエラーでない場合)
+                    if !matches!(e, AppFrontError::CommonError(AppCommonError::NoRecordError)) {
+                        episodes_ref.with_mut(|episodes_opt| {
+                            if let Some(episodes) = episodes_opt {
+                                log::info!("Re-pushed episode: {:?}", episode_for_remove);
+                                episodes.push(episode_for_remove);
 
-                            episodes.sort_by(|x, y| {
-                                x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id()))
-                            });
-                        }
-                    });
+                                episodes.sort_by(|x, y| {
+                                    x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id()))
+                                });
+                            }
+                        });
+                    }
                 }
             }
         });

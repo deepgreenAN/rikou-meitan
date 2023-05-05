@@ -29,9 +29,9 @@ impl<T: VideoType> InMemoryVideoRepository<T> {
 impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
     type Error = InfraError;
     async fn save(&self, video: Video<T>) -> Result<(), InfraError> {
-        let exists = self.map.lock().unwrap().insert(video.id().to_uuid(), video);
+        let old_video = self.map.lock().unwrap().insert(video.id().to_uuid(), video);
 
-        match exists {
+        match old_video {
             Some(_) => Err(InfraError::ConflictError),
             None => Ok(()),
         }
