@@ -3,8 +3,7 @@ use crate::ACTIVE_PLAYER_IDS;
 use crate::ACTIVE_PLAYER_NUMBER;
 use domain::movie_clip::SecondRange;
 
-// const ORIGIN: &str = "https://plyr.io";
-const ORIGIN: &str = "http://localhost:8080";
+const ORIGIN: &str = "https://rikou-meitan.shuttleapp.rs";
 
 use dioxus::prelude::*;
 use fermi::{use_read, use_set, use_atom_state};
@@ -113,19 +112,15 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
         let youtube_options = YoutubeOptions {
             start: cx.props.range.as_ref().map(|range|{range.start().to_u32()}),
             end: cx.props.range.as_ref().map(|range|{range.end().to_u32()}),
+            autoplay: Some(1),
             ..Default::default()
         };
-
-        let settings = vec![
-            "captions".to_string(), "quality".to_string(), "speed".to_string()
-        ];
 
         |is_active| async move {
             if *is_active.current() {
                 // プレーヤー関連
 
                 let player_options = PlyrOptions::builder()
-                .settings(settings)
                 .youtube(youtube_options)
                 .autoplay(true)
                 .build();
