@@ -2,6 +2,7 @@ use presentation::{App, AppProps};
 
 use dioxus_web::Config;
 use toml::Table;
+use wasm_bindgen::UnwrapThrowExt;
 
 fn get_admin_password(toml_str: &str) -> String {
     let table = toml_str.parse::<Table>().expect("Cannot Read Secrets.toml");
@@ -15,7 +16,7 @@ fn get_admin_password(toml_str: &str) -> String {
 
 #[cfg(not(feature = "ssr"))]
 fn main() {
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
+    console_log::init_with_level(log::Level::Info).unwrap_throw();
     dioxus_web::launch_with_props(
         App,
         AppProps {
@@ -28,9 +29,8 @@ fn main() {
 #[cfg(feature = "ssr")]
 fn main() {
     // use dioxus::prelude::*;
-    use wasm_bindgen::UnwrapThrowExt;
 
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
+    console_log::init_with_level(log::Level::Info).unwrap_throw();
 
     log::info!("リハイドレーションを開始");
 

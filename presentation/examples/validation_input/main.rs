@@ -20,6 +20,7 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    wasm_logger::init(wasm_logger::Config::default());
+    use wasm_bindgen::UnwrapThrowExt;
+    console_log::init_with_level(log::Level::Info).unwrap_throw();
     dioxus_web::launch(App);
 }
