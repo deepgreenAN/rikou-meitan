@@ -7,6 +7,7 @@ use mockall::mock;
 
 mock! {
     /// VideoRepositoryのモックリポジトリ
+    #[derive(Debug, Clone)]
     pub VideoOriginalRepository{}
 
     #[async_trait]

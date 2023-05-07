@@ -25,10 +25,13 @@ use axum::{
     extract::{Json, Path, Query, State},
 };
 
+use tracing_attributes::instrument;
+
 use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::Arc;
 
+#[instrument(skip(episode_repo), err(Display))]
 pub async fn save_episode(
     State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
     episode_res: Result<Json<Episode>, JsonRejection>,
@@ -39,6 +42,7 @@ pub async fn save_episode(
     Ok(())
 }
 
+#[instrument(skip(episode_repo), err(Display))]
 pub async fn edit_episode(
     State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
     episode_res: Result<Json<Episode>, JsonRejection>,
@@ -49,6 +53,7 @@ pub async fn edit_episode(
     Ok(())
 }
 
+#[instrument(skip(episode_repo), err(Display))]
 pub async fn all_episodes(
     State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
 ) -> Result<Json<Vec<Episode>>, AppCommonError> {
@@ -57,7 +62,7 @@ pub async fn all_episodes(
     Ok(Json(episodes))
 }
 
-#[derive(Deserialize, strum_macros::EnumString)]
+#[derive(Deserialize, strum_macros::EnumString, Debug)]
 #[serde(try_from = "String")]
 #[strum(serialize_all = "snake_case")]
 pub enum SortType {
@@ -72,7 +77,7 @@ impl TryFrom<String> for SortType {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct EpisodeQuery {
     /// クエリのstart日時
     start: Option<Date>,
@@ -82,6 +87,7 @@ pub struct EpisodeQuery {
     sort_type: SortType,
 }
 
+#[instrument(skip(episode_repo), err(Display))]
 pub async fn get_episodes_with_query(
     query_res: Result<Query<EpisodeQuery>, QueryRejection>,
     State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,
@@ -101,6 +107,7 @@ pub async fn get_episodes_with_query(
     }
 }
 
+#[instrument(skip(episode_repo), err(Display))]
 pub async fn remove_episode(
     id: Result<Path<EpisodeId>, PathRejection>,
     State(episode_repo): State<Arc<EpisodeRepositoryImpl>>,

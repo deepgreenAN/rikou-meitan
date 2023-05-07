@@ -195,6 +195,7 @@ DELETE FROM movie_clips WHERE id = $1 RETURNING *
 // MovieClipPgDBRepository
 
 /// MovieClipのPostgresqlのリポジトリ
+#[derive(Debug, Clone)]
 pub struct MovieClipPgDBRepository {
     pool: PgPool,
 }

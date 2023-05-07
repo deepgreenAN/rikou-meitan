@@ -13,7 +13,7 @@ use uuid::Uuid;
 // # InMemoryMovieClipRepository
 
 /// 即席のMovieClipリポジトリ
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct InMemoryMovieClipRepository {
     map: Arc<Mutex<HashMap<Uuid, MovieClip>>>,
 }

@@ -76,6 +76,8 @@ UPDATE episodes SET "date" = $1, content = $2 WHERE id = $3 RETURNING *
 // #EpisodePgDBRepository
 
 /// EpisodeのPostgresqlリポジトリ
+
+#[derive(Debug, Clone)]
 pub struct EpisodePgDBRepository {
     pool: PgPool,
 }
@@ -251,7 +253,7 @@ mod test {
 
         // データベースから得られた結果をDateが同じ場合のみidでソート
         let mut episodes_res =
-        episode_sql_runner::order_by_date_range(&mut transaction, start, end).await?;
+            episode_sql_runner::order_by_date_range(&mut transaction, start, end).await?;
         episodes_res.sort_by(|x, y| {
             if let Ordering::Equal = x.date().cmp(&y.date()) {
                 x.id().cmp(&y.id())

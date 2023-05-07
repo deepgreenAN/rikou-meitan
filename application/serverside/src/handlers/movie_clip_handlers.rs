@@ -27,7 +27,9 @@ use axum::{
 use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::Arc;
+use tracing_attributes::instrument;
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn save_movie_clip(
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
     movie_clip_res: Result<Json<MovieClip>, JsonRejection>,
@@ -39,6 +41,7 @@ pub async fn save_movie_clip(
     Ok(())
 }
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn edit_movie_clip(
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
     movie_clip_res: Result<Json<MovieClip>, JsonRejection>,
@@ -51,6 +54,7 @@ pub async fn edit_movie_clip(
     Ok(())
 }
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn increment_like_movie_clip(
     id: Result<Path<MovieClipId>, PathRejection>,
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
@@ -61,6 +65,7 @@ pub async fn increment_like_movie_clip(
     Ok(())
 }
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn all_movie_clips(
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
 ) -> Result<Json<Vec<MovieClip>>, AppCommonError> {
@@ -69,7 +74,7 @@ pub async fn all_movie_clips(
     Ok(Json(movie_clips))
 }
 
-#[derive(Deserialize, strum_macros::EnumString)]
+#[derive(Deserialize, strum_macros::EnumString, Debug)]
 #[serde(try_from = "String")]
 #[strum(serialize_all = "snake_case")]
 pub enum SortType {
@@ -84,7 +89,7 @@ impl TryFrom<String> for SortType {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct MovieClipQuery {
     sort_type: SortType,
     length: Option<usize>,
@@ -92,6 +97,7 @@ pub struct MovieClipQuery {
     end: Option<Date>,
 }
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn get_movie_clips_with_query(
     query_res: Result<Query<MovieClipQuery>, QueryRejection>,
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,
@@ -171,6 +177,7 @@ pub async fn get_movie_clips_with_query(
     }
 }
 
+#[instrument(skip(movie_clip_repo), err(Display))]
 pub async fn remove_movie_clip(
     id: Result<Path<MovieClipId>, PathRejection>,
     State(movie_clip_repo): State<Arc<MovieClipRepositoryImpl>>,

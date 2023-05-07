@@ -8,6 +8,7 @@ use mockall::mock;
 
 mock! {
     /// EpisodeRepositoryトレイトのモック
+    #[derive(Debug, Clone)]
     pub EpisodeRepository {}
 
     #[async_trait]

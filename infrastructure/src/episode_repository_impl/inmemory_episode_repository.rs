@@ -13,7 +13,7 @@ use uuid::Uuid;
 // # MockEpisodeRepository
 
 /// 即席のEpisodeリポジトリ
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct InMemoryEpisodeRepository {
     map: Arc<Mutex<HashMap<Uuid, Episode>>>,
 }

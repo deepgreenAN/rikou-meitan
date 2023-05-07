@@ -8,6 +8,7 @@ use mockall::mock;
 
 mock! {
     /// MovieClipのモックリポジトリ
+    #[derive(Debug, Clone)]
     pub MovieClipRepository {}
 
     #[async_trait]

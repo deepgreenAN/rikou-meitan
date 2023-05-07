@@ -12,7 +12,7 @@ use uuid::Uuid;
 // # InmemoryVideoRepository
 
 /// 即席のVideoRepository
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct InMemoryVideoRepository<T: VideoType> {
     map: Arc<Mutex<HashMap<Uuid, Video<T>>>>,
 }

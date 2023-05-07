@@ -26,7 +26,9 @@ use axum::{
 use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::Arc;
+use tracing_attributes::instrument;
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn save_video<T: VideoType + 'static>(
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
     video_res: Result<Json<Video<T>>, JsonRejection>,
@@ -37,6 +39,7 @@ pub async fn save_video<T: VideoType + 'static>(
     Ok(())
 }
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn edit_video<T: VideoType + 'static>(
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
     video_res: Result<Json<Video<T>>, JsonRejection>,
@@ -47,6 +50,7 @@ pub async fn edit_video<T: VideoType + 'static>(
     Ok(())
 }
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn increment_like_video<T: VideoType + 'static>(
     id: Result<Path<VideoId>, PathRejection>,
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
@@ -57,6 +61,7 @@ pub async fn increment_like_video<T: VideoType + 'static>(
     Ok(())
 }
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn all_videos<T: VideoType + 'static>(
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
 ) -> Result<Json<Vec<Video<T>>>, AppCommonError> {
@@ -65,7 +70,7 @@ pub async fn all_videos<T: VideoType + 'static>(
     Ok(Json(videos))
 }
 
-#[derive(Deserialize, strum_macros::EnumString)]
+#[derive(Deserialize, strum_macros::EnumString, Debug)]
 #[serde(try_from = "String")]
 #[strum(serialize_all = "snake_case")]
 pub enum SortType {
@@ -80,12 +85,13 @@ impl TryFrom<String> for SortType {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct VideoQuery {
     sort_type: SortType,
     length: Option<usize>,
 }
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn get_videos_with_query<T: VideoType + 'static>(
     path_query_res: Result<Query<VideoQuery>, QueryRejection>,
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,
@@ -147,6 +153,7 @@ pub async fn get_videos_with_query<T: VideoType + 'static>(
     }
 }
 
+#[instrument(skip(video_repo), err(Display))]
 pub async fn remove_video<T: VideoType + 'static>(
     id: Result<Path<VideoId>, PathRejection>,
     State(video_repo): State<Arc<VideoRepositoryImpl<T>>>,

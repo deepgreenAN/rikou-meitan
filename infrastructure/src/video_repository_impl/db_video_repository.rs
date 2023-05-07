@@ -194,6 +194,7 @@ DELETE FROM videos WHERE id = $1 RETURNING *
 // VideoPgDbRepository
 
 /// VideoのPostgreSQLのリポジトリ
+#[derive(Debug, Clone)]
 pub struct VideoPgDbRepository<T: VideoType> {
     pool: PgPool,
     video_type: PhantomData<T>,
