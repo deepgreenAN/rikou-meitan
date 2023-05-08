@@ -28,7 +28,7 @@ fn main() {
 
 #[cfg(feature = "ssr")]
 fn main() {
-    // use dioxus::prelude::*;
+    use dioxus::prelude::*;
 
     console_log::init_with_level(log::Level::Info).unwrap_throw();
 
@@ -36,35 +36,25 @@ fn main() {
 
     // admin_passwordの取得
     let admin_password = get_admin_password(include_str!("../../Secrets.toml"));
+    let app_props = AppProps {
+        admin_password: admin_password,
+    };
 
-    // let mut dom = VirtualDom::new(App);
-    // let _ = dom.rebuild();
+    let mut dom = VirtualDom::new_with_props(App, app_props.clone());
+    let _ = dom.rebuild();
 
-    // let pre = dioxus_ssr::pre_render(&dom);
-
-    // // プリレンダリングされた内容をmainの内部htmlに挿入
-    // gloo_utils::document()
-    //     .get_element_by_id("main")
-    //     .unwrap_throw()
-    //     .set_inner_html(&pre);
-
-    // // リハイドレーション
-    // dioxus_web::launch_cfg(
-    //     App,
-    //     Config::new().with_default_panic_hook(true).hydrate(true),
-    // );
+    let pre = dioxus_ssr::pre_render(&dom);
 
     // プリレンダリングされた内容をmainの内部htmlに挿入
     gloo_utils::document()
         .get_element_by_id("main")
         .unwrap_throw()
-        .set_inner_html("");
+        .set_inner_html(&pre);
 
+    // リハイドレーション
     dioxus_web::launch_with_props(
         App,
-        AppProps {
-            admin_password: admin_password,
-        },
-        Config::new().with_default_panic_hook(true),
+        app_props,
+        Config::new().with_default_panic_hook(true).hydrate(true),
     );
 }

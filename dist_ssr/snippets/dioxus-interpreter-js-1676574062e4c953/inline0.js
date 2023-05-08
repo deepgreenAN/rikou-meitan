@@ -1,4 +1,5 @@
-let m,p,ls,lss,sp,d,t,c,s,sl,op,i,e,z,bubbles,value,event_name,ns,len,tmpl_id,field,many,root,n,ptr,index,text,id;const evt = [];const ns_cache = [];const attr = [];
+let m,p,ls,d,t,op,i,e,z,metaflags;
+            
     class ListenerMap {
         constructor(root) {
             // bubbling events can listen at the root element
@@ -102,6 +103,7 @@ let m,p,ls,lss,sp,d,t,c,s,sl,op,i,e,z,bubbles,value,event_name,ns,len,tmpl_id,fi
     const listeners = new ListenerMap();
     let nodes = [];
     let stack = [];
+    let root;
     const templates = {};
     let node, els, end, ptr_end, k;
     export function save_template(nodes, tmpl_id) {
@@ -151,8 +153,97 @@ let m,p,ls,lss,sp,d,t,c,s,sl,op,i,e,z,bubbles,value,event_name,ns,len,tmpl_id,fi
         selected: true,
         truespeed: true,
       };
-    export function create(r){d=r;c=new TextDecoder('utf-8',{fatal:true})}export function update_memory(r){m=new DataView(r.buffer)}export function set_buffer(b){m=new DataView(b)}export function run(){t=m.getUint8(d,true);if(t&1){ls=m.getUint32(d+1,true)}p=ls;if(t&2){lss=m.getUint32(d+5,true)}if(t&4){sl=m.getUint32(d+9,true);if(t&8){sp=lss;s="";e=sp+(sl/4|0)*4;while(sp<e){t=m.getUint32(sp,true);s+=String.fromCharCode(t&255,(t&65280)>>8,(t&16711680)>>16,t>>24);sp+=4}while(sp<lss+sl){s+=String.fromCharCode(m.getUint8(sp++));}}else{s=c.decode(new DataView(m.buffer,lss,sl))}sp=0}for(;;){op=m.getUint32(p,true);p+=4;z=0;while(z++<4){switch(op&255){case 0:{AppendChildren(root, stack.length-1);}break;case 1:{stack.push(nodes[m.getUint32(p,true)]);}p+=4;break;case 2:id=m.getUint32(p,true);p += 4;{AppendChildren(id, m.getUint32(p,true));}p+=4;break;case 3:{stack.pop();}break;case 4:id=m.getUint32(p,true);p += 4;{root = nodes[id]; els = stack.splice(stack.length-m.getUint32(p,true)); if (root.listening) { listeners.removeAllNonBubbling(root); } root.replaceWith(...els);}p+=4;break;case 5:id=m.getUint32(p,true);p += 4;{nodes[id].after(...stack.splice(stack.length-m.getUint32(p,true)));}p+=4;break;case 6:id=m.getUint32(p,true);p += 4;{nodes[id].before(...stack.splice(stack.length-m.getUint32(p,true)));}p+=4;break;case 7:{node = nodes[m.getUint32(p,true)]; if (node !== undefined) { if (node.listening) { listeners.removeAllNonBubbling(node); } node.remove(); }}p+=4;break;case 8:{stack.push(document.createTextNode(s.substring(sp,sp+=m.getUint32(p,true))));}p+=4;break;case 9:text=s.substring(sp,sp+=m.getUint32(p,true));p += 4;{node = document.createTextNode(text); nodes[m.getUint32(p,true)] = node; stack.push(node);}p+=4;break;case 10:{node = document.createElement('pre'); node.hidden = true; stack.push(node); nodes[m.getUint32(p,true)] = node;}p+=4;break;case 11:id=m.getUint32(p,true);p += 4;i=m.getUint32(p,true);if((i&128)!=0){event_name=s.substring(sp,sp+=(i>>>8)&255);evt[i&127]=event_name;}else{event_name=evt[i&127];}node = nodes[id]; if(node.listening){node.listening += 1;}else{node.listening = 1;} node.setAttribute('data-dioxus-id', `${id}`); listeners.create(event_name, node, (i>>>16)&255);p+=3;break;case 12:i=m.getUint32(p,true);p += 3;if((i&128)!=0){event_name=s.substring(sp,sp+=(i>>>8)&255);evt[i&127]=event_name;}else{event_name=evt[i&127];}bubbles=(i>>>16)&255;{node = nodes[m.getUint32(p,true)]; node.listening -= 1; node.removeAttribute('data-dioxus-id'); listeners.remove(node, event_name, bubbles);}p+=4;break;case 13:id=m.getUint32(p,true);p += 4;{nodes[id].textContent = s.substring(sp,sp+=m.getUint32(p,true));}p+=4;break;case 14:i=m.getUint32(p,true);p += 4;if((i&128)!=0){ns=s.substring(sp,sp+=(i>>>8)&255);ns_cache[i&127]=ns;}else{ns=ns_cache[i&127];}if((i&8388608)!=0){field=s.substring(sp,sp+=i>>>24);attr[(i>>>16)&127]=field;}else{field=attr[(i>>>16)&127];}id=m.getUint32(p,true);p += 4;{node = nodes[id]; SetAttributeInner(node, field, s.substring(sp,sp+=m.getUint32(p,true)), ns);}p+=4;break;case 15:i=m.getUint32(p,true);p += 4;if((i&128)!=0){ns=s.substring(sp,sp+=(i>>>8)&255);ns_cache[i&127]=ns;}else{ns=ns_cache[i&127];}if((i&8388608)!=0){field=s.substring(sp,sp+=i>>>24);attr[(i>>>16)&127]=field;}else{field=attr[(i>>>16)&127];}{name = field;
-        node = nodes[m.getUint32(p,true)];
+    let s,lsp,sp,sl; let c = new TextDecoder();const evt = [];
+                    let evt_tmp1, evt_tmp2;
+                    function get_evt() {
+                        evt_tmp2 = u8buf[u8bufp++];
+                        if(evt_tmp2 & 128){
+                            evt_tmp1=s.substring(sp,sp+=u8buf[u8bufp++]);
+                            evt[evt_tmp2&4294967167]=evt_tmp1;
+                            return evt_tmp1;
+                        }
+                        else{
+                            return evt[evt_tmp2&4294967167];
+                        }
+                    }const attr = [];
+                    let attr_tmp1, attr_tmp2;
+                    function get_attr() {
+                        attr_tmp2 = u8buf[u8bufp++];
+                        if(attr_tmp2 & 128){
+                            attr_tmp1=s.substring(sp,sp+=u8buf[u8bufp++]);
+                            attr[attr_tmp2&4294967167]=attr_tmp1;
+                            return attr_tmp1;
+                        }
+                        else{
+                            return attr[attr_tmp2&4294967167];
+                        }
+                    }let u8buf,u8bufp;const ns_cache = [];
+                    let ns_cache_tmp1, ns_cache_tmp2;
+                    function get_ns_cache() {
+                        ns_cache_tmp2 = u8buf[u8bufp++];
+                        if(ns_cache_tmp2 & 128){
+                            ns_cache_tmp1=s.substring(sp,sp+=u8buf[u8bufp++]);
+                            ns_cache[ns_cache_tmp2&4294967167]=ns_cache_tmp1;
+                            return ns_cache_tmp1;
+                        }
+                        else{
+                            return ns_cache[ns_cache_tmp2&4294967167];
+                        }
+                    }let u32buf,u32bufp;
+            let field,ptr,len,event_name,bubbles,id,ns,value;
+            export function create(r){
+                d=r;
+            }
+            export function update_memory(b){
+                m=new DataView(b.buffer)
+            }
+            export function run(){
+                metaflags=m.getUint32(d,true);
+                if((metaflags>>>12)&1){
+                    ls=m.getUint32(d+12*4,true);
+                }
+                p=ls;
+                if (metaflags&1){
+                lsp = m.getUint32(d+1*4,true);
+            }
+            if ((metaflags>>>2)&1) {
+                sl = m.getUint32(d+2*4,true);
+                if ((metaflags>>>1)&1) {
+                    sp = lsp;
+                    s = "";
+                    e = sp + ((sl / 4) | 0) * 4;
+                    while (sp < e) {
+                        t = m.getUint32(sp, true);
+                        s += String.fromCharCode(
+                            t & 255,
+                            (t & 65280) >> 8,
+                            (t & 16711680) >> 16,
+                            t >> 24
+                        );
+                        sp += 4;
+                    }
+                    while (sp < lsp + sl) {
+                        s += String.fromCharCode(m.getUint8(sp++));
+                    }
+                } else {
+                    s = c.decode(new DataView(m.buffer, lsp, sl));
+                }
+            }
+            sp=0;if ((metaflags>>>5)&1){
+                u8buf=new Uint8Array(m.buffer,m.getUint32(d+5*4,true))
+            }
+            u8bufp=0;if ((metaflags>>>3)&1){
+                u32buf=new Uint32Array(m.buffer,m.getUint32(d+3*4,true))
+            }
+            u32bufp=0;
+                for(;;){
+                    op=m.getUint32(p,true);
+                    p+=4;
+                    z=0;
+                    while(z++<4){
+                        switch(op&255){
+                            case 0:{AppendChildren(root, stack.length-1);}break;case 1:{stack.push(nodes[u32buf[u32bufp++]]);}break;case 2:{AppendChildren(u32buf[u32bufp++], u32buf[u32bufp++]);}break;case 3:{stack.pop();}break;case 4:{root = nodes[u32buf[u32bufp++]]; els = stack.splice(stack.length-u32buf[u32bufp++]); if (root.listening) { listeners.removeAllNonBubbling(root); } root.replaceWith(...els);}break;case 5:{nodes[u32buf[u32bufp++]].after(...stack.splice(stack.length-u32buf[u32bufp++]));}break;case 6:{nodes[u32buf[u32bufp++]].before(...stack.splice(stack.length-u32buf[u32bufp++]));}break;case 7:{node = nodes[u32buf[u32bufp++]]; if (node !== undefined) { if (node.listening) { listeners.removeAllNonBubbling(node); } node.remove(); }}break;case 8:{stack.push(document.createTextNode(s.substring(sp,sp+=u32buf[u32bufp++])));}break;case 9:{node = document.createTextNode(s.substring(sp,sp+=u32buf[u32bufp++])); nodes[u32buf[u32bufp++]] = node; stack.push(node);}break;case 10:{node = document.createElement('pre'); node.hidden = true; stack.push(node); nodes[u32buf[u32bufp++]] = node;}break;case 11:event_name=get_evt();id=u32buf[u32bufp++];bubbles=u8buf[u8bufp++];node = nodes[id]; if(node.listening){node.listening += 1;}else{node.listening = 1;} node.setAttribute('data-dioxus-id', `${id}`); listeners.create(event_name, node, bubbles);break;case 12:{node = nodes[u32buf[u32bufp++]]; node.listening -= 1; node.removeAttribute('data-dioxus-id'); listeners.remove(node, get_evt(), u8buf[u8bufp++]);}break;case 13:{nodes[u32buf[u32bufp++]].textContent = s.substring(sp,sp+=u32buf[u32bufp++]);}break;case 14:{node = nodes[u32buf[u32bufp++]]; SetAttributeInner(node, get_attr(), s.substring(sp,sp+=u32buf[u32bufp++]), get_ns_cache());}break;case 15:id=u32buf[u32bufp++];field=get_attr();ns=get_ns_cache();{name = field;
+        node = nodes[id];
         if (ns == "style") {
             node.style.removeProperty(name);
         } else if (ns !== null && ns !== undefined && ns !== "") {
@@ -167,7 +258,7 @@ let m,p,ls,lss,sp,d,t,c,s,sl,op,i,e,z,bubbles,value,event_name,ns,len,tmpl_id,fi
             node.innerHTML = "";
         } else {
             node.removeAttribute(name);
-        }}p+=4;break;case 16:len=m.getUint8(p,true);p += 1;ptr=m.getUint32(p,true);p += 4;{nodes[m.getUint32(p,true)] = LoadChild(ptr, len);}p+=4;break;case 17:len=m.getUint8(p,true);p += 1;value=s.substring(sp,sp+=m.getUint32(p,true));p += 4;ptr=m.getUint32(p,true);p += 4;{
+        }}break;case 16:{nodes[u32buf[u32bufp++]] = LoadChild(u32buf[u32bufp++], u8buf[u8bufp++]);}break;case 17:ptr=u32buf[u32bufp++];len=u8buf[u8bufp++];value=s.substring(sp,sp+=u32buf[u32bufp++]);id=u32buf[u32bufp++];{
             node = LoadChild(ptr, len);
             if (node.nodeType == Node.TEXT_NODE) {
                 node.textContent = value;
@@ -176,5 +267,10 @@ let m,p,ls,lss,sp,d,t,c,s,sl,op,i,e,z,bubbles,value,event_name,ns,len,tmpl_id,fi
                 node.replaceWith(text);
                 node = text;
             }
-            nodes[m.getUint32(p,true)] = node;
-        }p+=4;break;case 18:len=m.getUint8(p,true);p += 1;ptr=m.getUint32(p,true);p += 4;{els = stack.splice(stack.length - m.getUint32(p,true)); node = LoadChild(ptr, len); node.replaceWith(...els);}p+=4;break;case 19:tmpl_id=m.getUint32(p,true);p += 4;index=m.getUint32(p,true);p += 4;{node = templates[tmpl_id][index].cloneNode(true); nodes[m.getUint32(p,true)] = node; stack.push(node);}p+=4;break;case 20:return true;}op>>>=8;}}}
+            nodes[id] = node;
+        }break;case 18:{els = stack.splice(stack.length - u32buf[u32bufp++]); node = LoadChild(u32buf[u32bufp++], u8buf[u8bufp++]); node.replaceWith(...els);}break;case 19:{node = templates[u32buf[u32bufp++]][u32buf[u32bufp++]].cloneNode(true); nodes[u32buf[u32bufp++]] = node; stack.push(node);}break;case 20:return true;
+                        }
+                        op>>>=8;
+                    }
+                }
+            }

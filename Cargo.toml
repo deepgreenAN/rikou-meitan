@@ -27,11 +27,10 @@ presentation = { path = "./presentation"}
 serverside = { path = "./application/serverside"}
 axum = "0.6.16"
 tokio = "1.27.0"
-tower-http = { version = "0.3.*", features = ["fs"]}
-tower = { version = "^0.4", features = ["full"]}
+tower-http = { version = "0.4.0", features = ["fs"]}
 sqlx = { version = "0.6.*", features = ["postgres", "runtime-tokio-native-tls"] }
-dioxus-ssr = "^0.3.0"
-dioxus = "^0.3.2"
+dioxus-ssr = { git = "https://github.com/DioxusLabs/dioxus" }
+dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
 futures = "^0.3"
 shuttle-axum = "0.14.0"
 shuttle-runtime = "0.14.0"

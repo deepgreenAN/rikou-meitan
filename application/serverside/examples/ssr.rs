@@ -66,8 +66,15 @@ async fn main() {
         routing::{delete, get, get_service, patch, put},
         Router,
     };
-    use tower::ServiceExt;
     use tower_http::services::ServeDir;
+
+    use tracing_subscriber::fmt::format::FmtSpan;
+
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 
     #[cfg(not(feature = "inmemory"))]
     let pool = async {
@@ -81,6 +88,8 @@ async fn main() {
             .unwrap()
     }
     .await;
+
+    tracing::info!("get db pool.");
 
     // episode_repo
     #[cfg(feature = "inmemory")]
@@ -241,11 +250,7 @@ async fn main() {
     );
     let serve_dir = ServeDir::new(dist_path)
         .append_index_html_on_directories(false)
-        .fallback(
-            get(serve_text)
-                .with_state(full_html)
-                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
-        );
+        .fallback(get(serve_text).with_state(full_html));
 
     // アプリルーター
     let app_router: Router<()> = Router::new()

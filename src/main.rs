@@ -50,7 +50,6 @@ async fn main_server(
         Router,
     };
 
-    use tower::ServiceExt;
     use tower_http::services::ServeDir;
 
     // データベースのマイグレーション．
@@ -88,11 +87,7 @@ async fn main_server(
 
     let serve_dir = ServeDir::new(static_folder)
         .append_index_html_on_directories(false)
-        .fallback(
-            get(serve_text)
-                .with_state(full_html)
-                .map_err(|err| -> std::io::Error { match err {} }), // よくわからん
-        );
+        .fallback(get(serve_text).with_state(full_html));
 
     // EpisodeについてのAPI
     let episode_repo =

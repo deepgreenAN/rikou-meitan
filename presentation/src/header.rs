@@ -45,11 +45,13 @@ pub fn Header(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div { id:"header-container",
-            div { id: "header-left", TitleLogo{} }
-            div { id: "header-right",
-                ModeChangeButton{}
-                HamburgerButton{
-                    onclick: open_hidden_menu
+            div { id: "header-static-container",
+                div { id: "header-left", TitleLogo{} }
+                div { id: "header-right",
+                    ModeChangeButton{}
+                    HamburgerButton{
+                        onclick: open_hidden_menu
+                    }
                 }
             }
             // 以下はabsolute

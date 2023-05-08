@@ -35,11 +35,11 @@ web-sys = { version = "^0.3", features = [
     "FileReader"
 ] }
 js-sys = "^0.3"
-dioxus = "^0.3.2"
-dioxus-web = { version = "^0.3.1", features = ["hydrate"]}
-dioxus-router = "^0.3.0"
-dioxus-ssr = "^0.3.0"
-fermi = "0.3.0"
+dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
+dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", features = ["hydrate"]}
+dioxus-router = { git = "https://github.com/DioxusLabs/dioxus" }
+dioxus-ssr = { git = "https://github.com/DioxusLabs/dioxus" }
+fermi = { git = "https://github.com/DioxusLabs/dioxus" }
 gloo-events = "^0.1"
 gloo-utils = "^0.1"
 gloo-timers = "^0.2"

@@ -24,11 +24,11 @@ fn main() {
     let html_content = format!(
         r#"
 {}
-    <body>
-        <div id="main">
+<body>
+    <div id="main">
 {}
-        </div>
-    </body>
+    </div>
+</body>
 </html>
         "#,
         base_html,

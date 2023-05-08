@@ -38,7 +38,7 @@ pub static ACTIVE_PLAYER_IDS: Atom<VecDeque<String>> =
 pub struct AdminPassword(pub String);
 
 /// メインのアプリケーションの引数
-#[derive(Props, PartialEq)]
+#[derive(Props, PartialEq, Clone)]
 pub struct AppProps {
     pub admin_password: String,
 }

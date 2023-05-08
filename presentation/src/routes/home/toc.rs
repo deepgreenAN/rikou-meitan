@@ -35,6 +35,10 @@ pub fn TocContent<'a>(cx: Scope<'a, TocContentProps<'a>>) -> Element {
     })
 }
 
+fn remove_comment(s: &str) -> String {
+    s.replace("<!--#-->", "")
+}
+
 pub fn Toc(cx: Scope) -> Element {
     let toc_content_elements = use_state(cx, Vec::<WebSysElement>::new);
     let visible_map = cx.use_hook(|| Rc::new(RefCell::new(IndexMap::<String, bool>::new())));
@@ -103,7 +107,9 @@ pub fn Toc(cx: Scope) -> Element {
                     }
                 }
 
-                let title_str = element.query_selector("h2").unwrap_throw().unwrap_throw().inner_html();
+                let title_str = remove_comment(
+                    &element.query_selector("h2").unwrap_throw().unwrap_throw().inner_html()
+                );
 
                 let mut scroll_options = ScrollIntoViewOptions::new();
                 scroll_options.behavior(ScrollBehavior::Smooth);
