@@ -1,19 +1,16 @@
 #background-container {
     position: absolute;
     width: 100%;
-    min-height: 150vh;
+    min-height: 100vh;
     // -ms-scroll-chaining: none;
     // overscroll-behavior: none;
     // heightは子要素に依存
-    z-index: -4;
-    display: flex;
-    flex-direction: column;
 
     #background-grad {
         position: absolute;
         width: 100%;
         height: 100%;
-        z-index: -3;
+        z-index: -2;
 
         &.background-grad-dark {
             background: linear-gradient(45deg, #373000, #210007);
@@ -31,7 +28,7 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        z-index: -2;
+        z-index: -1;
         background-repeat: repeat;
 
 
@@ -46,16 +43,4 @@
         }
 
     }
-
-    // #background-svg {
-    //     position: absolute;
-    //     width: 100%;
-    //     z-index: -2;
-    //     background-color: transparent;
-
-    //     svg {
-    //         width: 100%;
-    //     }
-    // }
-
 }

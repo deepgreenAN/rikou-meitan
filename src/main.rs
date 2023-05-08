@@ -14,8 +14,8 @@ fn render(props: AppProps) -> String {
     let mut vdom = VirtualDom::new_with_props(App, props);
     let _ = vdom.rebuild();
 
-    // dioxus_ssr::pre_render(&vdom)
-    dioxus_ssr::render(&vdom)
+    dioxus_ssr::pre_render(&vdom)
+    // dioxus_ssr::render(&vdom)
 }
 
 /// 状態文字列のサーブ

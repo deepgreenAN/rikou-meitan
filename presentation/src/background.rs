@@ -17,14 +17,6 @@ pub fn Background<'a>(cx: Scope<'a, BackgroundProps<'a>>) -> Element {
     cx.render(rsx! {
         div { id: "background-container",
             div { id: "background-grad", class: "{background_grad_class}"},
-            div { id: "background-svg",
-                // svg {
-                //     view_box: "0 0 100 100",
-                //     defs {
-                //         circle {cx: "50", cy: "50", r: "30", style: "fill:black;"}
-                //     }
-                // }
-            },
             div { id: "background-pattern", class: "{background_pattern_class}"},
             &cx.props.children
         }

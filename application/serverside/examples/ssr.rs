@@ -12,8 +12,8 @@ async fn main() {
         let mut vdom = VirtualDom::new_with_props(App, props);
         let _ = vdom.rebuild();
 
-        // dioxus_ssr::pre_render(&vdom)
-        dioxus_ssr::render(&vdom)
+        dioxus_ssr::pre_render(&vdom)
+        // dioxus_ssr::render(&vdom)
     }
 
     /// レンダリングと文字列のサーブ
@@ -21,13 +21,13 @@ async fn main() {
     async fn render_and_serve(State(base_html): State<String>) -> impl IntoResponse {
         let full_html = format!(
             r#"
-    {}
-        <body>
-            <div id="main">
-    {}
-            </div>
-        </body>
-    </html>
+{}
+<body>
+<div id="main">
+{}
+</div>
+</body>
+</html>
             "#,
             base_html,
             render(AppProps {
