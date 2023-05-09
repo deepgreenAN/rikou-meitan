@@ -203,14 +203,12 @@ mod test {
         Router,
     };
     use fake::{Fake, Faker};
-    use once_cell::sync::Lazy;
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
+    use serial_test::serial;
     use std::borrow::Cow;
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
     use tower::{Service, ServiceExt};
-
-    static MTX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
     #[fixture]
     fn router() -> Router {
@@ -239,12 +237,10 @@ mod test {
             .collect::<Vec<_>>()
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_save_movie_clip(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let movie_clip = Faker.fake::<MovieClip>();
 
         {
@@ -298,12 +294,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_edit_movie_clip(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let movie_clip = Faker.fake::<MovieClip>();
 
         {
@@ -357,12 +351,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_increment_like_movie_clip(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let movie_clip_id = MovieClipId::generate();
 
         {
@@ -408,12 +400,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_all_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let mock_ctx = mock_movie_clip_usecases::all_movie_clips_context();
         mock_ctx
             .expect::<MockMovieClipRepository>()
@@ -435,12 +425,10 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_order_by_like_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let length = 100_usize;
 
         let mock_ctx = mock_movie_clip_usecases::order_by_like_movie_clips_context();
@@ -465,12 +453,10 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_order_by_like_later_movie_clips(mut router: Router, movie_clips: Vec<MovieClip>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
 
@@ -504,15 +490,13 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_order_by_crate_date_range_movie_clips(
         mut router: Router,
         movie_clips: Vec<MovieClip>,
     ) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 
@@ -540,15 +524,13 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_order_by_create_date_movie_clips(
         mut router: Router,
         movie_clips: Vec<MovieClip>,
     ) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let length = 100_usize;
 
         let mock_ctx = mock_movie_clip_usecases::order_by_create_date_movie_clips_context();
@@ -575,15 +557,13 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_order_by_create_date_later_movie_clips(
         mut router: Router,
         movie_clips: Vec<MovieClip>,
     ) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let reference = Faker.fake::<MovieClip>();
         let length = 100_usize;
 
@@ -619,12 +599,10 @@ mod test {
         assert_eq!(res_vec, movie_clips);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_movie_clip")]
     async fn test_remove_movie_clip(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let movie_clip_id = MovieClipId::generate();
 
         {

@@ -12,12 +12,35 @@ async fn main() {
         routing::{delete, get, patch, put},
         Router,
     };
+    use toml::Table;
+    use tracing_subscriber::fmt::format::FmtSpan;
+
+    // Tracing
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+
+    // Secrets.toml
+    let secret_str = include_str!("../../../Secrets.toml");
+    let secret_table = secret_str
+        .parse::<Table>()
+        .expect("Cannot Read Secrets.toml");
 
     #[cfg(not(feature = "inmemory"))]
     let pool = async {
         use sqlx::postgres::PgPoolOptions;
 
-        let database_url = std::env::var("DATABASE_URL").unwrap();
+        let db_pass = secret_table
+            .get("db_password")
+            .expect("Cannot Get db_password from Secrets.toml")
+            .as_str()
+            .expect("db_password is invalid type.")
+            .to_string();
+
+        let database_url = format!("postgres://postgres:{}@localhost/rikou_meitan", db_pass);
+
         PgPoolOptions::new()
             .idle_timeout(std::time::Duration::from_secs(1))
             .connect(&database_url)

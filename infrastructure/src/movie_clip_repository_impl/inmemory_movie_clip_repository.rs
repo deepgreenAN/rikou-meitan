@@ -147,6 +147,9 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
 #[cfg(test)]
 mod test {
     use super::InMemoryMovieClipRepository;
+    use crate::movie_clip_repository_impl::assert_movie_clip::{
+        clips_assert_eq, clips_assert_eq_with_sort_by_key_and_filter,
+    };
     use crate::InfraError;
     use domain::MovieClipRepository;
     use domain::{
@@ -155,10 +158,9 @@ mod test {
     };
 
     use fake::{Fake, Faker};
-    use pretty_assertions::assert_eq;
-    use rand::{distributions::Distribution, seq::SliceRandom};
+    use rand::seq::SliceRandom;
+    use rand::{thread_rng, Rng};
     use rstest::{fixture, rstest};
-    use std::cmp::Ordering;
 
     #[fixture]
     fn movie_clips() -> Result<Vec<MovieClip>, InfraError> {
@@ -181,11 +183,8 @@ mod test {
         }
 
         let mut clips_res = repo.all().await?;
-        clips_res.sort_by_key(|clip| clip.id());
+        clips_assert_eq(&mut clips_res, &mut clips);
 
-        clips.sort_by_key(|clip| clip.id());
-
-        assert_eq!(clips, clips_res);
         Ok(())
     }
 
@@ -212,11 +211,7 @@ mod test {
         }
 
         let mut clips_res = repo.all().await?;
-        clips_res.sort_by_key(|clip| clip.id());
-
-        clips.sort_by_key(|clip| clip.id());
-
-        assert_eq!(clips, clips_res);
+        clips_assert_eq(&mut clips_res, &mut clips);
         Ok(())
     }
 
@@ -241,11 +236,7 @@ mod test {
         }
 
         let mut clips_res = repo.all().await?;
-        clips_res.sort_by_key(|clip| clip.id());
-
-        clips.sort_by_key(|clip| clip.id());
-
-        assert_eq!(clips, clips_res);
+        clips_assert_eq(&mut clips_res, &mut clips);
 
         Ok(())
     }
@@ -265,13 +256,16 @@ mod test {
 
         let length = clips.len() / 2;
 
-        // 参照元をlike(降順), idの順でソート
-        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let clips = clips.into_iter().take(length).collect::<Vec<_>>();
+        let mut clips_res = repo.order_by_like(length).await?;
 
-        let clips_res = repo.order_by_like(length).await?;
-
-        assert_eq!(clips, clips_res);
+        // 参照元をlike(降順), idの順でソートして比較
+        clips_assert_eq_with_sort_by_key_and_filter(
+            &mut clips_res,
+            &mut clips,
+            |x, y| y.like().cmp(&x.like()),
+            Option::<fn(&MovieClip) -> bool>::None,
+            Some(length),
+        );
 
         Ok(())
     }
@@ -293,25 +287,23 @@ mod test {
 
         // referenceとなるclipを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = thread_rng().gen_range(0..length);
             clips[reference_index].clone()
         };
 
-        // 参照元をlike(降順), idの順でソート・フィルタリング
-        clips.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let clips = clips
-            .into_iter()
-            .filter(|clip| {
+        let mut clips_res = repo.order_by_like_later(&reference, length).await?;
+
+        // 参照元をlike(降順), idの順でソート・フィルタリングして比較
+        clips_assert_eq_with_sort_by_key_and_filter(
+            &mut clips_res,
+            &mut clips,
+            |x, y| y.like().cmp(&x.like()),
+            Some(|clip: &MovieClip| {
                 reference.like() > clip.like()
                     || (reference.like() == clip.like() && reference.id() < clip.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let clips_res = repo.order_by_like_later(&reference, length).await?;
-
-        assert_eq!(clips, clips_res);
+            }),
+            Some(length),
+        );
 
         Ok(())
     }
@@ -332,25 +324,16 @@ mod test {
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 
-        // 参照元をcreate_date, idでソート・範囲をフィルタリング
-        clips.sort_by(|x, y| {
-            x.create_date()
-                .cmp(&y.create_date())
-                .then_with(|| x.id().cmp(&y.id()))
-        });
-        clips.retain(|clip| start <= clip.create_date() && clip.create_date() < end);
-
-        // 得られた結果をcreate_dataが同じ場合のみidでソート
         let mut clips_res = repo.order_by_create_date_range(start, end).await?;
-        clips_res.sort_by(|x, y| {
-            if let Ordering::Equal = x.create_date().cmp(&y.create_date()) {
-                x.id().cmp(&y.id())
-            } else {
-                Ordering::Equal
-            }
-        });
 
-        assert_eq!(clips, clips_res);
+        // 参照元をcreate_dateでソート・範囲をフィルタリング
+        clips_assert_eq_with_sort_by_key_and_filter(
+            &mut clips_res,
+            &mut clips,
+            |x, y| x.create_date().cmp(&y.create_date()),
+            Some(|clip: &MovieClip| start <= clip.create_date() && clip.create_date() < end),
+            None,
+        );
 
         Ok(())
     }
@@ -370,17 +353,16 @@ mod test {
 
         let length = clips.len() / 2;
 
-        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
-        clips.sort_by(|x, y| {
-            y.create_date()
-                .cmp(&x.create_date())
-                .then_with(|| x.id().cmp(&y.id()))
-        });
-        let clips = clips.into_iter().take(length).collect::<Vec<_>>();
+        let mut clips_res = repo.order_by_create_date(length).await?;
 
-        let clips_res = repo.order_by_create_date(length).await?;
-
-        assert_eq!(clips, clips_res);
+        // 参照元をcreate_date(降順)でソート・範囲をフィルタリング
+        clips_assert_eq_with_sort_by_key_and_filter(
+            &mut clips_res,
+            &mut clips,
+            |x, y| y.create_date().cmp(&x.create_date()),
+            Option::<fn(&MovieClip) -> bool>::None,
+            Some(length),
+        );
 
         Ok(())
     }
@@ -402,29 +384,23 @@ mod test {
 
         // referenceとなるclipを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = thread_rng().gen_range(0..length);
             clips[reference_index].clone()
         };
 
-        // 参照元をcreate_date(降順), idでソート・範囲をフィルタリング
-        clips.sort_by(|x, y| {
-            y.create_date()
-                .cmp(&x.create_date())
-                .then_with(|| x.id().cmp(&y.id()))
-        });
-        let clips = clips
-            .into_iter()
-            .filter(|clip| {
+        let mut clips_res = repo.order_by_create_date_later(&reference, length).await?;
+
+        // 参照元をcreate_date(降順)でソート・範囲をフィルタリング
+        clips_assert_eq_with_sort_by_key_and_filter(
+            &mut clips_res,
+            &mut clips,
+            |x, y| y.create_date().cmp(&x.create_date()),
+            Some(|clip: &MovieClip| {
                 clip.create_date() < reference.create_date()
                     || (reference.create_date() == clip.create_date() && clip.id() > reference.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let clips_res = repo.order_by_create_date_later(&reference, length).await?;
-
-        assert_eq!(clips, clips_res);
+            }),
+            Some(length),
+        );
 
         Ok(())
     }
@@ -434,7 +410,7 @@ mod test {
     async fn test_movie_clip_save_and_remove_and_all(
         movie_clips: Result<Vec<MovieClip>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut clips = movie_clips?;
+        let clips = movie_clips?;
 
         let repo = InMemoryMovieClipRepository::new();
 
@@ -443,24 +419,28 @@ mod test {
         }
 
         // clipsの一部を削除
-        let mut clips_len = clips.len();
-        let remove_number = clips_len / 10;
-        for _ in 0..remove_number {
-            let remove_index = rand::distributions::Uniform::from(0_usize..clips_len)
-                .sample(&mut rand::thread_rng());
-            let removed_clip = clips.remove(remove_index);
-            repo.remove(removed_clip.id()).await?;
+        let remove_indices = (0..clips.len()).collect::<Vec<usize>>();
+        let remove_indices = remove_indices.into_iter().take(20).collect::<Vec<_>>();
 
-            // clips_lenを一つ減らす
-            clips_len -= 1;
+        let removed_clips = clips
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, clip)| remove_indices.contains(&i).then_some(clip))
+            .collect::<Vec<_>>();
+        let mut rest_clips = clips
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, clip)| (!remove_indices.contains(&i)).then_some(clip))
+            .collect::<Vec<_>>();
+
+        for clip in removed_clips.into_iter() {
+            repo.remove(clip.id()).await?
         }
 
-        let mut rest_clips = repo.all().await?;
-        rest_clips.sort_by_key(|clip| clip.id());
-
-        clips.sort_by_key(|clip| clip.id());
-
-        assert_eq!(clips, rest_clips);
+        let mut clips_res = repo.all().await?;
+        clips_assert_eq(&mut clips_res, &mut rest_clips);
 
         Ok(())
     }

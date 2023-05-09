@@ -270,12 +270,15 @@ impl<T: VideoType> VideoRepository<T> for VideoPgDbRepository<T> {
 #[cfg(test)]
 mod test {
     use super::video_sql_runner;
+    use crate::video_repository_impl::assert_video::{
+        videos_assert_eq, videos_assert_eq_with_sort_by_key_and_filter,
+    };
     use crate::InfraError;
     use domain::video::{Kirinuki, Original, Video};
 
     use fake::{Fake, Faker};
-    use pretty_assertions::assert_eq;
-    use rand::{distributions::Distribution, seq::SliceRandom};
+    use rand::seq::SliceRandom;
+    use rand::Rng;
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
     use std::time::Duration;
@@ -325,12 +328,9 @@ mod test {
             video_sql_runner::save(&mut transaction, kirinuki).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = video_sql_runner::all::<Original>(&mut transaction).await?;
-        originals_res.sort_by_key(|original| original.id());
 
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         // ロールバック
         transaction.rollback().await?;
@@ -366,12 +366,8 @@ mod test {
             video_sql_runner::edit(&mut transaction, edited_original.clone()).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = video_sql_runner::all::<Original>(&mut transaction).await?;
-        originals_res.sort_by_key(|original| original.id());
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         // ロールバック
         transaction.rollback().await?;
@@ -411,12 +407,9 @@ mod test {
             .await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = video_sql_runner::all::<Original>(&mut transaction).await?;
-        originals_res.sort_by_key(|original| original.id());
 
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         // ロールバック
         transaction.rollback().await?;
@@ -447,13 +440,16 @@ mod test {
 
         let length = originals.len() / 2;
 
+        let mut originals_res = video_sql_runner::order_by_like(&mut transaction, length).await?;
+
         // originalsをlike(降順)・idの順に並べる．length分フィルタリング．
-        originals.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals.into_iter().take(length).collect::<Vec<_>>();
-
-        let originals_res = video_sql_runner::order_by_like(&mut transaction, length).await?;
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.like().cmp(&x.like()),
+            Option::<fn(&Video<Original>) -> bool>::None,
+            Some(length),
+        );
 
         // ロールバック
         transaction.rollback().await?;
@@ -486,26 +482,24 @@ mod test {
 
         // referenceとなるvideoを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = rand::thread_rng().gen_range(0..length);
             originals[reference_index].clone()
         };
 
-        // originalsをlike(降順)・idの順に並べ，フィルタリング
-        originals.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals
-            .into_iter()
-            .filter(|original| {
-                original.like() < reference.like()
-                    || (original.like() == reference.like() && original.id() > reference.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let originals_res =
+        let mut originals_res =
             video_sql_runner::order_by_like_later(&mut transaction, &reference, length).await?;
 
-        assert_eq!(originals, originals_res);
+        // originalsをlike(降順)・idの順に並べ，フィルタリングして比較
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.like().cmp(&x.like()),
+            Some(|original: &Video<Original>| {
+                original.like() < reference.like()
+                    || (original.like() == reference.like() && original.id() > reference.id())
+            }),
+            Some(length),
+        );
 
         // ロールバック
         transaction.rollback().await?;
@@ -536,13 +530,16 @@ mod test {
 
         let length = originals.len() / 2;
 
+        let mut originals_res = video_sql_runner::order_by_date(&mut transaction, length).await?;
+
         // originalsをdate(降順)・idの順に並べる．length分フィルタリング．
-        originals.sort_by(|x, y| y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals.into_iter().take(length).collect::<Vec<_>>();
-
-        let originals_res = video_sql_runner::order_by_date(&mut transaction, length).await?;
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.date().cmp(&x.date()),
+            Option::<fn(&Video<Original>) -> bool>::None,
+            Some(length),
+        );
 
         // ロールバック
         transaction.rollback().await?;
@@ -575,26 +572,24 @@ mod test {
 
         // referenceとなるvideoを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = rand::thread_rng().gen_range(0..length);
             originals[reference_index].clone()
         };
 
-        // originalsをdate(降順)・idの順に並べ，フィルタリング
-        originals.sort_by(|x, y| y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals
-            .into_iter()
-            .filter(|original| {
-                original.date() < reference.date()
-                    || (original.date() == reference.date() && original.id() > reference.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let originals_res =
+        let mut originals_res =
             video_sql_runner::order_by_date_later(&mut transaction, &reference, length).await?;
 
-        assert_eq!(originals, originals_res);
+        // originalsをdate(降順)・idの順に並べ，フィルタリング
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.date().cmp(&x.date()),
+            Some(|original: &Video<Original>| {
+                original.date() < reference.date()
+                    || (original.date() == reference.date() && original.id() > reference.id())
+            }),
+            Some(length),
+        );
 
         // ロールバック
         transaction.rollback().await?;
@@ -610,7 +605,7 @@ mod test {
         kirinuki_videos: Result<Vec<Video<Kirinuki>>, InfraError>,
         #[future] pool: Result<PgPool, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut originals = original_videos?;
+        let originals = original_videos?;
         let kirinukis = kirinuki_videos?;
 
         let pool = pool.await?;
@@ -624,24 +619,28 @@ mod test {
         }
 
         // originalsの一部を削除
-        let mut originals_len = originals.len();
-        let remove_number = originals_len / 10;
-        for _ in 0..remove_number {
-            let remove_index = rand::distributions::Uniform::from(0_usize..originals_len)
-                .sample(&mut rand::thread_rng());
-            let removed_original = originals.remove(remove_index);
-            video_sql_runner::remove(&mut transaction, removed_original.id()).await?;
+        let remove_indices = (0..originals.len()).collect::<Vec<usize>>();
+        let remove_indices = remove_indices.into_iter().take(20).collect::<Vec<_>>();
 
-            // originals_lenを一つ減らす
-            originals_len -= 1;
+        let removed_originals = originals
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, original)| remove_indices.contains(&i).then_some(original))
+            .collect::<Vec<_>>();
+        let mut rest_originals = originals
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, original)| (!remove_indices.contains(&i)).then_some(original))
+            .collect::<Vec<_>>();
+
+        for original in removed_originals.into_iter() {
+            video_sql_runner::remove(&mut transaction, original.id()).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = video_sql_runner::all::<Original>(&mut transaction).await?;
-        originals_res.sort_by_key(|original| original.id());
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut rest_originals);
 
         // ロールバック
         transaction.rollback().await?;

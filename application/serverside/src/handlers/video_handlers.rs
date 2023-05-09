@@ -166,7 +166,6 @@ pub async fn remove_video<T: VideoType + 'static>(
 
 #[cfg(test)]
 mod test {
-    use crate::handlers::global::MTX;
     use crate::usecases::mock_video_usecases;
     use common::{AppCommonError, QueryInfoRef};
     use domain::video::{Original, Video, VideoId};
@@ -181,6 +180,7 @@ mod test {
     use fake::{Fake, Faker};
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
+    use serial_test::serial;
     use std::borrow::Cow;
     use std::sync::Arc;
     use tower::{Service, ServiceExt};
@@ -215,12 +215,10 @@ mod test {
             .collect::<Vec<_>>()
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_save_video(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let video = Faker.fake::<Video<Original>>();
 
         {
@@ -274,12 +272,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_edit_video(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let video = Faker.fake::<Video<Original>>();
 
         {
@@ -333,12 +329,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_increment_like_video(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let video_id = VideoId::generate();
 
         {
@@ -384,12 +378,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_all_movie_clips(mut router: Router, videos: Vec<Video<Original>>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let mock_ctx = mock_video_usecases::all_videos_context();
         mock_ctx
             .expect::<InMemoryVideoRepository<Original>, Original>()
@@ -411,12 +403,10 @@ mod test {
         assert_eq!(res_vec, videos);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_order_by_like_videos(mut router: Router, videos: Vec<Video<Original>>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let length = 100_usize;
 
         let mock_ctx = mock_video_usecases::order_by_like_videos_context();
@@ -441,12 +431,10 @@ mod test {
         assert_eq!(res_vec, videos);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_order_by_like_later_videos(mut router: Router, videos: Vec<Video<Original>>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let reference = Faker.fake::<Video<Original>>();
         let length = 100_usize;
 
@@ -480,12 +468,10 @@ mod test {
         assert_eq!(res_vec, videos);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_order_by_date_videos(mut router: Router, videos: Vec<Video<Original>>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let length = 100_usize;
 
         let mock_ctx = mock_video_usecases::order_by_date_videos_context();
@@ -510,12 +496,10 @@ mod test {
         assert_eq!(res_vec, videos);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_order_by_date_later_videos(mut router: Router, videos: Vec<Video<Original>>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let reference = Faker.fake::<Video<Original>>();
         let length = 100_usize;
 
@@ -549,12 +533,10 @@ mod test {
         assert_eq!(res_vec, videos);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_video")]
     async fn test_remove_video(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let video_id = VideoId::generate();
 
         {

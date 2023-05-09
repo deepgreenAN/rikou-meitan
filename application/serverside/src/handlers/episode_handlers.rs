@@ -136,13 +136,10 @@ mod test {
     use std::sync::Arc;
 
     use fake::{Fake, Faker};
-    use once_cell::sync::Lazy;
     use pretty_assertions::{assert_eq, assert_ne};
     use rstest::{fixture, rstest};
-    use std::sync::Mutex;
+    use serial_test::serial;
     use tower::{Service, ServiceExt};
-
-    static MTX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
     #[fixture]
     fn router() -> Router {
@@ -167,12 +164,10 @@ mod test {
             .collect::<Vec<_>>()
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_episode")]
     async fn test_save_episode(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let episode = Faker.fake::<Episode>();
 
         {
@@ -224,12 +219,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_episode")]
     async fn test_edit_episode(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let episode = Faker.fake::<Episode>();
 
         {
@@ -281,12 +274,10 @@ mod test {
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_episode")]
     async fn test_all_episodes(mut router: Router, episodes: Vec<Episode>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let mock_ctx = mock_episode_usecases::all_episodes_context();
         mock_ctx
             .expect::<MockEpisodeRepository>()
@@ -307,12 +298,10 @@ mod test {
         assert_eq!(res_vec, episodes);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_episode")]
     async fn test_order_by_date_episodes(mut router: Router, episodes: Vec<Episode>) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 
@@ -339,12 +328,10 @@ mod test {
         assert_eq!(res_vec, episodes);
     }
 
-    #[allow(clippy::await_holding_lock)]
     #[rstest]
     #[tokio::test]
+    #[serial("mock_episode")]
     async fn test_remove_by_id_episode(mut router: Router) {
-        let _m = MTX.lock().unwrap_or_else(|p_err| p_err.into_inner());
-
         let episode_id = EpisodeId::generate();
 
         {

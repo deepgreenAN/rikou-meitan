@@ -32,7 +32,7 @@ async fn serve_text(State(full_html): State<String>) -> impl IntoResponse {
 #[shuttle_runtime::main]
 async fn main_server(
     #[shuttle_shared_db::Postgres(
-        local_uri = "postgres://postgres:{secrets.PASSWORD}@localhost/rikou_meitan"
+        local_uri = "postgres://postgres:{secrets.db_password}@localhost/rikou_meitan"
     )]
     pool: PgPool,
     #[shuttle_static_folder::StaticFolder(folder = "dist_ssr")] static_folder: PathBuf,

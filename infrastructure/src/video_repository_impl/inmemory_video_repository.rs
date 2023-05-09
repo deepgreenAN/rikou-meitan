@@ -122,13 +122,16 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
 #[cfg(test)]
 mod test {
     use super::InMemoryVideoRepository;
+    use crate::video_repository_impl::assert_video::{
+        videos_assert_eq, videos_assert_eq_with_sort_by_key_and_filter,
+    };
     use crate::InfraError;
     use domain::video::{Original, Video};
     use domain::VideoRepository;
 
     use fake::{Fake, Faker};
-    use pretty_assertions::assert_eq;
-    use rand::{distributions::Distribution, seq::SliceRandom};
+    use rand::seq::SliceRandom;
+    use rand::Rng;
     use rstest::{fixture, rstest};
 
     #[fixture]
@@ -151,12 +154,9 @@ mod test {
             repo.save(original).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = repo.all().await?;
-        originals_res.sort_by_key(|original| original.id());
 
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         Ok(())
     }
@@ -181,12 +181,8 @@ mod test {
             repo.edit(edited_original.clone()).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = repo.all().await?;
-        originals_res.sort_by_key(|original| original.id());
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         Ok(())
     }
@@ -211,12 +207,8 @@ mod test {
             repo.increment_like(incremented_original.id()).await?;
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = repo.all().await?;
-        originals_res.sort_by_key(|original| original.id());
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut originals);
 
         Ok(())
     }
@@ -236,13 +228,16 @@ mod test {
 
         let length = originals.len() / 2;
 
+        let mut originals_res = repo.order_by_like(length).await?;
+
         // originalsをlike(降順)・idの順に並べる．length分フィルタリング．
-        originals.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals.into_iter().take(length).collect::<Vec<_>>();
-
-        let originals_res = repo.order_by_like(length).await?;
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.like().cmp(&x.like()),
+            Option::<fn(&Video<Original>) -> bool>::None,
+            Some(length),
+        );
 
         Ok(())
     }
@@ -264,25 +259,23 @@ mod test {
 
         // referenceとなるvideoを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = rand::thread_rng().gen_range(0..length);
             originals[reference_index].clone()
         };
 
-        // originalsをlike(降順)・idの順に並べ，フィルタリング
-        originals.sort_by(|x, y| y.like().cmp(&x.like()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals
-            .into_iter()
-            .filter(|original| {
+        let mut originals_res = repo.order_by_like_later(&reference, length).await?;
+
+        // originalsをlike(降順)・idの順に並べ，フィルタリングして比較
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.like().cmp(&x.like()),
+            Some(|original: &Video<Original>| {
                 original.like() < reference.like()
                     || (original.like() == reference.like() && original.id() > reference.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let originals_res = repo.order_by_like_later(&reference, length).await?;
-
-        assert_eq!(originals, originals_res);
+            }),
+            Some(length),
+        );
 
         Ok(())
     }
@@ -302,13 +295,16 @@ mod test {
 
         let length = originals.len() / 2;
 
+        let mut originals_res = repo.order_by_date(length).await?;
+
         // originalsをdate(降順)・idの順に並べる．length分フィルタリング．
-        originals.sort_by(|x, y| y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals.into_iter().take(length).collect::<Vec<_>>();
-
-        let originals_res = repo.order_by_date(length).await?;
-
-        assert_eq!(originals, originals_res);
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.date().cmp(&x.date()),
+            Option::<fn(&Video<Original>) -> bool>::None,
+            Some(length),
+        );
 
         Ok(())
     }
@@ -330,25 +326,23 @@ mod test {
 
         // referenceとなるvideoを取得
         let reference = {
-            let reference_index =
-                rand::distributions::Uniform::from(0..length).sample(&mut rand::thread_rng());
+            let reference_index = rand::thread_rng().gen_range(0..length);
             originals[reference_index].clone()
         };
 
+        let mut originals_res = repo.order_by_date_later(&reference, length).await?;
+
         // originalsをdate(降順)・idの順に並べ，フィルタリング
-        originals.sort_by(|x, y| y.date().cmp(&x.date()).then_with(|| x.id().cmp(&y.id())));
-        let originals = originals
-            .into_iter()
-            .filter(|original| {
+        videos_assert_eq_with_sort_by_key_and_filter(
+            &mut originals_res,
+            &mut originals,
+            |x, y| y.date().cmp(&x.date()),
+            Some(|original: &Video<Original>| {
                 original.date() < reference.date()
                     || (original.date() == reference.date() && original.id() > reference.id())
-            })
-            .take(length)
-            .collect::<Vec<_>>();
-
-        let originals_res = repo.order_by_date_later(&reference, length).await?;
-
-        assert_eq!(originals, originals_res);
+            }),
+            Some(length),
+        );
 
         Ok(())
     }
@@ -358,7 +352,7 @@ mod test {
     async fn test_video_save_and_remove_and_all(
         original_videos: Result<Vec<Video<Original>>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut originals = original_videos?;
+        let originals = original_videos?;
 
         let repo = InMemoryVideoRepository::<Original>::new();
 
@@ -367,24 +361,29 @@ mod test {
         }
 
         // originalsの一部を削除
-        let mut originals_len = originals.len();
-        let remove_number = originals_len / 10;
-        for _ in 0..remove_number {
-            let remove_index = rand::distributions::Uniform::from(0_usize..originals_len)
-                .sample(&mut rand::thread_rng());
-            let removed_original = originals.remove(remove_index);
-            repo.remove(removed_original.id()).await?;
+        let remove_indices = (0..originals.len()).collect::<Vec<usize>>();
+        let remove_indices = remove_indices.into_iter().take(20).collect::<Vec<_>>();
 
-            // originals_lenを一つ減らす
-            originals_len -= 1;
+        let removed_originals = originals
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, original)| remove_indices.contains(&i).then_some(original))
+            .collect::<Vec<_>>();
+        let mut rest_originals = originals
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, original)| (!remove_indices.contains(&i)).then_some(original))
+            .collect::<Vec<_>>();
+
+        for original in removed_originals.into_iter() {
+            repo.remove(original.id()).await?
         }
 
-        originals.sort_by_key(|original| original.id());
-
         let mut originals_res = repo.all().await?;
-        originals_res.sort_by_key(|original| original.id());
 
-        assert_eq!(originals, originals_res);
+        videos_assert_eq(&mut originals_res, &mut rest_originals);
 
         Ok(())
     }

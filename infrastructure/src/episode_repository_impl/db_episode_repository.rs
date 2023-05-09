@@ -126,15 +126,17 @@ impl EpisodeRepository for EpisodePgDBRepository {
 #[cfg(test)]
 mod test {
     use super::episode_sql_runner;
+    use crate::episode_repository_impl::episode_assert::{
+        episodes_assert_eq, episodes_assert_eq_with_sort_by_key_and_filter,
+    };
     use crate::InfraError;
     use domain::{episode::Episode, Date};
 
     use fake::{Fake, Faker};
-    use pretty_assertions::assert_eq;
-    use rand::{distributions::Distribution, seq::SliceRandom};
+    use rand::seq::SliceRandom;
     use rstest::{fixture, rstest};
     use sqlx::postgres::{PgPool, PgPoolOptions};
-    use std::{cmp::Ordering, time::Duration};
+    use std::time::Duration;
 
     #[fixture]
     fn episodes() -> Result<Vec<Episode>, InfraError> {
@@ -172,12 +174,7 @@ mod test {
         }
 
         let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
-        // データベースからの取得結果をidでソート
-        episodes_res.sort_by_key(|episode| episode.id());
-        // 参照元をidでソート
-        episodes.sort_by_key(|episode| episode.id());
-
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq(&mut episodes_res, &mut episodes);
 
         // ロールバック
         transaction.rollback().await?;
@@ -213,13 +210,7 @@ mod test {
         }
 
         let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
-        // データベースの取得結果をidでソート
-        episodes_res.sort_by_key(|episode| episode.id());
-
-        // 参照元をidでソート
-        episodes.sort_by_key(|episode| episode.id());
-
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq(&mut episodes_res, &mut episodes);
 
         // ロールバック
         transaction.rollback().await?;
@@ -247,22 +238,16 @@ mod test {
         let start = Faker.fake::<Date>();
         let end = Faker.fake::<Date>();
 
-        // 参照元をDate, idの順でソート・フィルター
-        episodes.sort_by(|x, y| x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id())));
-        episodes.retain(|episode| start <= episode.date() && episode.date() < end);
-
         // データベースから得られた結果をDateが同じ場合のみidでソート
         let mut episodes_res =
             episode_sql_runner::order_by_date_range(&mut transaction, start, end).await?;
-        episodes_res.sort_by(|x, y| {
-            if let Ordering::Equal = x.date().cmp(&y.date()) {
-                x.id().cmp(&y.id())
-            } else {
-                Ordering::Equal
-            }
-        });
 
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq_with_sort_by_key_and_filter(
+            &mut episodes_res,
+            &mut episodes,
+            |x, y| x.date().cmp(&y.date()),
+            |episode| start <= episode.date() && episode.date() < end,
+        );
 
         // ロールバック
         transaction.rollback().await?;
@@ -277,7 +262,7 @@ mod test {
         episodes: Result<Vec<Episode>, InfraError>,
         #[future] pool: Result<PgPool, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut episodes = episodes?;
+        let episodes = episodes?;
         let pool = pool.await?;
 
         // トランザクションの開始
@@ -288,26 +273,28 @@ mod test {
         }
 
         // episodesの一部を削除
-        let mut episodes_len = episodes.len();
-        let remove_number = episodes_len / 10;
-        for _ in 0..remove_number {
-            let remove_index = rand::distributions::Uniform::from(0_usize..episodes_len)
-                .sample(&mut rand::thread_rng());
-            let removed_episode = episodes.remove(remove_index);
-            episode_sql_runner::remove(&mut transaction, removed_episode.id()).await?;
+        let remove_indices = (0..episodes.len()).collect::<Vec<usize>>();
+        let remove_indices = remove_indices.into_iter().take(20).collect::<Vec<_>>();
 
-            // episode_renを一つ減らす．
-            episodes_len -= 1;
+        let removed_episodes = episodes
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, episode)| remove_indices.contains(&i).then_some(episode))
+            .collect::<Vec<_>>();
+        let mut rest_episodes = episodes
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, episode)| (!remove_indices.contains(&i)).then_some(episode))
+            .collect::<Vec<_>>();
+
+        for episode in removed_episodes.into_iter() {
+            episode_sql_runner::remove(&mut transaction, episode.id()).await?;
         }
 
-        let mut rest_episodes = episode_sql_runner::all(&mut transaction).await?;
-        // データベースから得られた結果をidでソート
-        rest_episodes.sort_by_key(|episode| episode.id());
-
-        // 参照元をidでソート
-        episodes.sort_by_key(|episode| episode.id());
-
-        assert_eq!(episodes, rest_episodes);
+        let mut episodes_res = episode_sql_runner::all(&mut transaction).await?;
+        episodes_assert_eq(&mut episodes_res, &mut rest_episodes);
 
         // ロールバック
         transaction.rollback().await?;

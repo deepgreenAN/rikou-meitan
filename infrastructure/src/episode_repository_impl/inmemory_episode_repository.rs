@@ -84,15 +84,16 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
 #[cfg(test)]
 mod test {
     use super::InMemoryEpisodeRepository;
+    use crate::episode_repository_impl::episode_assert::{
+        episodes_assert_eq, episodes_assert_eq_with_sort_by_key_and_filter,
+    };
     use crate::InfraError;
     use domain::Date;
     use domain::{episode::Episode, EpisodeRepository};
 
     use fake::{Fake, Faker};
-    use pretty_assertions::assert_eq;
-    use rand::{distributions::Distribution, seq::SliceRandom};
+    use rand::seq::SliceRandom;
     use rstest::{fixture, rstest};
-    use std::cmp::Ordering;
 
     #[fixture]
     fn episodes() -> Result<Vec<Episode>, InfraError> {
@@ -114,12 +115,8 @@ mod test {
         }
 
         let mut episodes_res = repo.all().await?;
-        // 取得結果をidでソート
-        episodes_res.sort_by_key(|episode| episode.id());
-        // 参照元をidでソート
-        episodes.sort_by_key(|episode| episode.id());
 
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq(&mut episodes_res, &mut episodes);
         Ok(())
     }
 
@@ -144,12 +141,8 @@ mod test {
         }
 
         let mut episodes_res = repo.all().await?;
-        // 取得結果をidでソート
-        episodes_res.sort_by_key(|episode| episode.id());
-        // 参照元をidでソート
-        episodes.sort_by_key(|episode| episode.id());
 
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq(&mut episodes_res, &mut episodes);
         Ok(())
     }
 
@@ -165,24 +158,17 @@ mod test {
             repo.save(episode).await?;
         }
 
-        let start = Date::from_ymd(2022, 11, 19)?;
-        let end = Date::from_ymd(2022, 11, 22)?;
-
-        // 参照元をDate, idの順でソート・フィルター
-        episodes.sort_by(|x, y| x.date().cmp(&y.date()).then_with(|| x.id().cmp(&y.id())));
-        episodes.retain(|episode| start <= episode.date() && episode.date() < end);
+        let start = Date::from_ymd(1000, 1, 1)?;
+        let end = Date::from_ymd(2000, 1, 1)?;
 
         let mut episodes_res = repo.order_by_date_range(start, end).await?;
-        // データベースから得られた結果をDateが同じ場合のみidでソート
-        episodes_res.sort_by(|x, y| {
-            if let Ordering::Equal = x.date().cmp(&y.date()) {
-                x.id().cmp(&y.id())
-            } else {
-                Ordering::Equal
-            }
-        });
 
-        assert_eq!(episodes, episodes_res);
+        episodes_assert_eq_with_sort_by_key_and_filter(
+            &mut episodes_res,
+            &mut episodes,
+            |x, y| x.date().cmp(&y.date()),
+            |episode| start <= episode.date() && episode.date() < end,
+        );
         Ok(())
     }
 
@@ -191,7 +177,7 @@ mod test {
     async fn test_episode_save_and_remove(
         episodes: Result<Vec<Episode>, InfraError>,
     ) -> Result<(), InfraError> {
-        let mut episodes = episodes?;
+        let episodes = episodes?;
 
         let repo = InMemoryEpisodeRepository::new();
         for episode in episodes.iter().cloned() {
@@ -199,24 +185,29 @@ mod test {
         }
 
         // episodesの一部を削除
-        let mut episodes_len = episodes.len();
-        let remove_number = episodes_len / 10;
-        for _ in 0..remove_number {
-            let remove_index = rand::distributions::Uniform::from(0_usize..episodes_len)
-                .sample(&mut rand::thread_rng());
-            let removed_episode = episodes.remove(remove_index);
-            repo.remove(removed_episode.id()).await?;
+        let remove_indices = (0..episodes.len()).collect::<Vec<usize>>();
+        let remove_indices = remove_indices.into_iter().take(20).collect::<Vec<_>>();
 
-            // episode_renを一つ減らす．
-            episodes_len -= 1;
+        let removed_episodes = episodes
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, episode)| remove_indices.contains(&i).then_some(episode))
+            .collect::<Vec<_>>();
+        let mut rest_episodes = episodes
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, episode)| (!remove_indices.contains(&i)).then_some(episode))
+            .collect::<Vec<_>>();
+
+        for episode in removed_episodes.into_iter() {
+            repo.remove(episode.id()).await?
         }
 
-        let mut rest_episodes = repo.all().await?;
-        rest_episodes.sort_by_key(|episode| episode.id());
+        let mut episodes_res = repo.all().await?;
+        episodes_assert_eq(&mut episodes_res, &mut rest_episodes);
 
-        episodes.sort_by_key(|episode| episode.id());
-
-        assert_eq!(episodes, rest_episodes);
         Ok(())
     }
 
@@ -225,7 +216,7 @@ mod test {
     async fn test_episode_edit_no_exists() -> Result<(), InfraError> {
         let repo = InMemoryEpisodeRepository::new();
 
-        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let episode = Faker.fake::<Episode>();
 
         let res = repo.edit(episode).await;
         assert!(matches!(res, Err(InfraError::NoRecordError)));
@@ -238,7 +229,7 @@ mod test {
     async fn test_episode_remove_no_exists() -> Result<(), InfraError> {
         let repo = InMemoryEpisodeRepository::new();
 
-        let episode = Episode::new((2022, 11, 23), "Another Contents".to_string())?;
+        let episode = Faker.fake::<Episode>();
 
         let res = repo.remove(episode.id()).await;
         assert!(matches!(res, Err(InfraError::NoRecordError)));
