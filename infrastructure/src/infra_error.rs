@@ -26,53 +26,27 @@ pub enum InfraError {
 impl From<sqlx::Error> for InfraError {
     fn from(sqlx_error: sqlx::Error) -> Self {
         match sqlx_error {
-            sqlx::Error::Io(err) => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::Io(err)))
+            e @ sqlx::Error::Io(_)
+            | e @ sqlx::Error::PoolClosed
+            | e @ sqlx::Error::PoolTimedOut
+            | e @ sqlx::Error::Tls(_)
+            | e @ sqlx::Error::Protocol(_)
+            | e @ sqlx::Error::Database(_) => InfraError::DBConnectionError(format!("{e}")),
+
+            e @ sqlx::Error::Configuration(_)
+            | e @ sqlx::Error::RowNotFound
+            | e @ sqlx::Error::TypeNotFound { type_name: _ }
+            | e @ sqlx::Error::ColumnIndexOutOfBounds { index: _, len: _ }
+            | e @ sqlx::Error::ColumnNotFound(_)
+            | e @ sqlx::Error::ColumnDecode {
+                index: _,
+                source: _,
             }
-            sqlx::Error::PoolClosed => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::PoolClosed))
-            }
-            sqlx::Error::PoolTimedOut => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::PoolTimedOut))
-            }
-            sqlx::Error::Tls(err) => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::Tls(err)))
-            }
-            sqlx::Error::Protocol(err) => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::Protocol(err)))
-            }
-            sqlx::Error::Database(err) => {
-                InfraError::DBConnectionError(format!("{}", sqlx::Error::Database(err)))
-            }
-            sqlx::Error::Configuration(err) => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::Configuration(err)))
-            }
-            sqlx::Error::RowNotFound => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::RowNotFound))
-            }
-            sqlx::Error::TypeNotFound { type_name } => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::TypeNotFound { type_name }))
-            }
-            sqlx::Error::ColumnIndexOutOfBounds { index, len } => InfraError::OtherSQLXError(
-                format!("{}", sqlx::Error::ColumnIndexOutOfBounds { index, len }),
-            ),
-            sqlx::Error::ColumnNotFound(err) => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::ColumnNotFound(err)))
-            }
-            sqlx::Error::ColumnDecode { index, source } => InfraError::OtherSQLXError(format!(
-                "{}",
-                sqlx::Error::ColumnDecode { index, source }
-            )),
-            sqlx::Error::Decode(err) => {
-                InfraError::DBDecodeError(format!("{}", sqlx::Error::Decode(err)))
-            }
-            sqlx::Error::WorkerCrashed => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::WorkerCrashed))
-            }
-            sqlx::Error::Migrate(err) => {
-                InfraError::OtherSQLXError(format!("{}", sqlx::Error::Migrate(err)))
-            }
-            e @ _ => InfraError::OtherSQLXError(format!("Undefined Error: {}", e)),
+            | e @ sqlx::Error::WorkerCrashed
+            | e @ sqlx::Error::Migrate(_) => InfraError::OtherSQLXError(format!("{e}")),
+
+            e @ sqlx::Error::Decode(_) => InfraError::DBDecodeError(format!("{e}")),
+            e @ _ => InfraError::OtherSQLXError(format!("Undefined Error: {e}")),
         }
     }
 }

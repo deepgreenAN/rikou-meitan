@@ -1,11 +1,10 @@
 @use "../static_var.scss";
 
 .video-page-menu {
-    width: 100%;
     display: flex;
     align-items: center;
-    margin-bottom: 2rem;
-    margin-left: 2rem;
+    padding-bottom: 2rem;
+    padding-left: 2rem;
     
     .sort-select-container {
         border-radius: 0.3rem;
@@ -36,11 +35,11 @@
     }
 
     .add-button {
-        margin-left: 1.5rem;
+        padding-left: 1.5rem;
 
         @media screen and (max-width: static_var.$smartphone_size) {
             & {
-                margin-left: 2.5rem;
+                padding-left: 2.5rem;
             }
         }
     }

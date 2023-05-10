@@ -23,6 +23,15 @@ use dioxus_router::{Route, Router};
 use fermi::*;
 use std::collections::VecDeque;
 
+// グローバルアロケイター
+#[cfg(target_arch = "wasm32")]
+use lol_alloc::{FreeListAllocator, LockedAllocator};
+
+#[cfg(target_arch = "wasm32")]
+#[global_allocator]
+static ALLOCATOR: LockedAllocator<FreeListAllocator> =
+    LockedAllocator::new(FreeListAllocator::new());
+
 // ダークモード・ライトモードのフラッグ.
 pub static IS_DARK_MODE: Atom<bool> = |_| false;
 

@@ -74,7 +74,7 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                         rsx! {
                                             li {key: "{episode.id()}",
                                                 div { class: "episode-item-container",
-                                                    div {
+                                                    div { class: "episode-item-left",
                                                         span { class: "episode-date", format!("{year}/{month}/{day}")}
                                                         span { class: "episode-content", dangerous_inner_html: "{content}"}
                                                     }

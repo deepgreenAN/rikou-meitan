@@ -29,7 +29,11 @@ impl<T: VideoType> InMemoryVideoRepository<T> {
 impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
     type Error = InfraError;
     async fn save(&self, video: Video<T>) -> Result<(), InfraError> {
-        let old_video = self.map.lock().unwrap().insert(video.id().to_uuid(), video);
+        let old_video = self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .insert(video.id().to_uuid(), video);
 
         match old_video {
             Some(_) => Err(InfraError::ConflictError),
@@ -37,7 +41,12 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         }
     }
     async fn edit(&self, new_video: Video<T>) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(new_video.id().to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .entry(new_video.id().to_uuid())
+        {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 o.insert(new_video);
@@ -46,7 +55,12 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         }
     }
     async fn increment_like(&self, id: VideoId) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(id.to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .entry(id.to_uuid())
+        {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 o.get_mut().increment_like();
@@ -58,7 +72,7 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         let videos = self
             .map
             .lock()
-            .unwrap()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
             .values()
             .cloned()
             .collect::<Vec<_>>();
@@ -112,7 +126,12 @@ impl<T: VideoType> VideoRepository<T> for InMemoryVideoRepository<T> {
         Ok(clips)
     }
     async fn remove(&self, id: VideoId) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().remove(&id.to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .remove(&id.to_uuid())
+        {
             None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
         }

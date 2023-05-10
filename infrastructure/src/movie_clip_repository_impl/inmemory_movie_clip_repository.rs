@@ -30,7 +30,11 @@ impl InMemoryMovieClipRepository {
 impl MovieClipRepository for InMemoryMovieClipRepository {
     type Error = InfraError;
     async fn save(&self, clip: MovieClip) -> Result<(), InfraError> {
-        let old_clip = self.map.lock().unwrap().insert(clip.id().to_uuid(), clip);
+        let old_clip = self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .insert(clip.id().to_uuid(), clip);
         match old_clip {
             Some(_) => Err(InfraError::ConflictError),
             None => Ok(()),
@@ -38,7 +42,12 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
     }
 
     async fn edit(&self, clip: MovieClip) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(clip.id().to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .entry(clip.id().to_uuid())
+        {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 *o.get_mut() = clip;
@@ -47,7 +56,12 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         }
     }
     async fn increment_like(&self, id: MovieClipId) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(id.to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .entry(id.to_uuid())
+        {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 o.get_mut().increment_like();
@@ -60,7 +74,7 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
         let clips = self
             .map
             .lock()
-            .unwrap()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
             .values()
             .cloned()
             .collect::<Vec<MovieClip>>();
@@ -137,7 +151,12 @@ impl MovieClipRepository for InMemoryMovieClipRepository {
     }
 
     async fn remove(&self, id: MovieClipId) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().remove(&id.to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .remove(&id.to_uuid())
+        {
             None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
         }

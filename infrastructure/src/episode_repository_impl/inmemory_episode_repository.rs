@@ -33,7 +33,7 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
         let old_episode = self
             .map
             .lock()
-            .unwrap()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
             .insert(episode.id().to_uuid(), episode);
         match old_episode {
             Some(_) => Err(InfraError::ConflictError),
@@ -41,7 +41,12 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
         }
     }
     async fn edit(&self, episode: Episode) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().entry(episode.id().to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .entry(episode.id().to_uuid())
+        {
             Entry::Vacant(_) => Err(InfraError::NoRecordError),
             Entry::Occupied(mut o) => {
                 *o.get_mut() = episode;
@@ -53,7 +58,7 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
         let episodes = self
             .map
             .lock()
-            .unwrap()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
             .values()
             .cloned()
             .collect::<Vec<_>>();
@@ -74,7 +79,12 @@ impl EpisodeRepository for InMemoryEpisodeRepository {
         Ok(episodes)
     }
     async fn remove(&self, id: EpisodeId) -> Result<(), InfraError> {
-        match self.map.lock().unwrap().remove(&id.to_uuid()) {
+        match self
+            .map
+            .lock()
+            .map_err(|e| InfraError::OtherSQLXError(format!("Inmemory mutex error.{e}")))?
+            .remove(&id.to_uuid())
+        {
             None => Err(InfraError::NoRecordError),
             Some(_) => Ok(()),
         }
