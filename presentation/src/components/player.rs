@@ -7,7 +7,7 @@ const ORIGIN: &str = "https://rikou-meitan.shuttleapp.rs";
 
 use dioxus::prelude::*;
 use fermi::{use_read, use_set, use_atom_state};
-use gloo_timers::callback::Timeout;
+use gloo_timers::future::TimeoutFuture;
 use gloo_intersection::IntersectionObserverHandler;
 use plyr::{
     events::{PlyrStandardEventListener, PlyrStandardEventType},
@@ -72,10 +72,10 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                 move |entries, _|{
                     let first_entry = entries.first().unwrap_throw();
                     if first_entry.is_intersecting() {
-                        // ターゲットがビューポートに入ってきたとき
-                        Timeout::new(500, {
+                        wasm_bindgen_futures::spawn_local({
                             to_owned![thumbnail_url, video_id, intersecting_handler];
-                            move || {
+                            async move {
+                                TimeoutFuture::new(500).await;
                                 // サムネイルのurlをセット
                                 thumbnail_url.set(Some(
                                     format!("https://img.youtube.com/vi/{video_id}/sddefault.jpg"),
@@ -84,7 +84,7 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                 // もう不要であるため交差オブザーバーを削除
                                 intersecting_handler.set(None);
                             }
-                        }).forget();
+                        });
                     }
                 }
             }).unwrap_throw();
@@ -229,24 +229,37 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                     }                           
                                 }
                                 div { class: "player-wrapper",
-                                    prevent_default: "touchstart", // 動画のピンチズームを防ぐのに必要
+                                    prevent_default: "touchstart", // 動画のピンチズームを防ぐのに必要 <- 防げなかった
                                     onclick: move |_|{
                                         let now_time = chrono::Local::now().naive_utc();
 
                                         if let Some(player) = player_state.get() {
-                                            // すでにクリックされている場合とそうでない場合
-                                            if let Some(clicked_time) = first_clicked_time.get() {
-                                                // クリックの間隔が短い場合とそうで無い場合
-                                                if (now_time - clicked_time).num_milliseconds() < 800 {
-                                                    player.fullscreen().enter();
-                                                } else {
-                                                    player.toggle_play();
-                                                }
+                                            match first_clicked_time.get() {
+                                                // 既にクリックされている場合
+                                                Some(clicked_time) => {
+                                                    if (now_time - clicked_time).num_milliseconds() < 800 {
+                                                        // クリックした間隔が短い場合
+                                                        player.fullscreen().enter();
+                                                    } else {
+                                                        // クリックした間隔が長い場合
+                                                        player.toggle_play();
+                                                    }
 
-                                                first_clicked_time.set(None);
-                                            } else {
-                                                player.toggle_play();
-                                                first_clicked_time.set(Some(now_time));
+                                                    first_clicked_time.set(None); // 完全に初期化
+                                                },
+                                                // クリックされていない・未初期化の場合
+                                                None => {
+                                                    player.toggle_play();
+                                                    first_clicked_time.set(Some(now_time));
+    
+                                                    wasm_bindgen_futures::spawn_local({
+                                                        to_owned![first_clicked_time];
+                                                        async move {
+                                                            TimeoutFuture::new(800).await;
+                                                            first_clicked_time.set(None);  // 間隔が長いと初期化
+                                                        }
+                                                    });
+                                                }
                                             }
                                         }
                                     },
