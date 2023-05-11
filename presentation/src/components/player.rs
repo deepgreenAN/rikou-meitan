@@ -55,6 +55,8 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
     let player_container_id = format!("{}-player-container", &cx.props.id);
     let src_url = format!("https://www.youtube.com/embed/{}?origin={ORIGIN}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1", &cx.props.video_id);
 
+    let first_clicked_time = cx.use_hook(||{Rc::new(Cell::new(Option::<chrono::NaiveDateTime>::None))});
+
 
     // 初期化
     use_effect(cx, (), {
@@ -228,15 +230,30 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                 }
                                 div { class: "player-wrapper",
                                     onclick: move |_|{
+                                        let now_time = chrono::Local::now().naive_utc();
+
                                         if let Some(player) = player_state.get() {
-                                            player.toggle_play();
+                                            // すでにクリックされている場合と層でない場合
+                                            if let Some(clicked_time) = first_clicked_time.get() {
+                                                // クリックの間隔が短い場合とそうで無い場合
+                                                if (now_time - clicked_time).num_milliseconds() < 500 {
+                                                    player.fullscreen().enter();
+                                                } else {
+                                                    player.toggle_play();
+                                                }
+
+                                                first_clicked_time.set(None);
+                                            } else {
+                                                player.toggle_play();
+                                                first_clicked_time.set(Some(now_time));
+                                            }
                                         }
                                     },
-                                    ondblclick: move |_|{
-                                        if let Some(player) = player_state.get() {
-                                            player.fullscreen().enter();
-                                        }
-                                    },
+                                    // ondblclick: move |_|{
+                                    //     if let Some(player) = player_state.get() {
+                                    //         player.fullscreen().enter();
+                                    //     }
+                                    // },
                                 }
                             }
                         }
