@@ -1,6 +1,6 @@
 mod edit_video;
 
-use crate::components::{IntersectionBottom, MovieCard, MovieContainer, Quiz, VideoPageMenu};
+use crate::components::{IntersectionBottom, MovieCard, MovieContainer, Quiz, VideoPageMenu, Spinner};
 use crate::utils::use_overlay;
 use domain::video::{Video, VideoType};
 use edit_video::EditVideo;
@@ -442,6 +442,15 @@ where
                 })
             }
             IntersectionBottom{intersection_handler: intersection_handler.clone()}
+            is_load_continue.get().then(||{
+                rsx!{
+                    div {id: "videos-loading-container",
+                        div {id: "videos-loading-spinner",
+                            Spinner{}
+                        }
+                    }
+                }
+            })
         }
     })
 }

@@ -49,6 +49,15 @@
         width: 100%;
     }
 
+    #videos-loading-container {
+        width: 100%;
+        display: grid;
+        place-items: center;
+        #videos-loading-spinner {
+            width: 2rem;
+        }
+    }
+
     .edit-container {
         .edit-video-title {
             font-size: 1.2rem;

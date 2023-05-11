@@ -1,6 +1,6 @@
 mod edit_clip;
 
-use crate::components::{MovieCard, MovieContainer, IntersectionBottom, Quiz, VideoPageMenu};
+use crate::components::{MovieCard, MovieContainer, IntersectionBottom, Quiz, VideoPageMenu, Spinner};
 use crate::utils::{use_overlay, get_liked_ids, push_liked_id};
 use domain::movie_clip::MovieClip;
 use edit_clip::EditMovieClip;
@@ -432,6 +432,15 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
             }
             
             IntersectionBottom{intersection_handler: intersection_handler.clone()}
+            is_load_continue.get().then(||{
+                rsx!{
+                    div {id: "clips-loading-container",
+                        div {id: "clips-loading-spinner",
+                            Spinner{}
+                        }
+                    }
+                }
+            })
         }
     })
 }

@@ -49,6 +49,15 @@
         width: 100%;
     }
 
+    #clips-loading-container {
+        width: 100%;
+        display: grid;
+        place-items: center;
+        #clips-loading-spinner {
+            width: 2rem;
+        }
+    }
+
     .edit-container {
         .edit-clip-input-title {
             font-size: 1.2rem;
