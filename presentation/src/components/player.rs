@@ -229,14 +229,15 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                     }                           
                                 }
                                 div { class: "player-wrapper",
+                                    prevent_default: "touchstart", // 動画のピンチズームを防ぐのに必要
                                     onclick: move |_|{
                                         let now_time = chrono::Local::now().naive_utc();
 
                                         if let Some(player) = player_state.get() {
-                                            // すでにクリックされている場合と層でない場合
+                                            // すでにクリックされている場合とそうでない場合
                                             if let Some(clicked_time) = first_clicked_time.get() {
                                                 // クリックの間隔が短い場合とそうで無い場合
-                                                if (now_time - clicked_time).num_milliseconds() < 500 {
+                                                if (now_time - clicked_time).num_milliseconds() < 800 {
                                                     player.fullscreen().enter();
                                                 } else {
                                                     player.toggle_play();
