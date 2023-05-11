@@ -229,13 +229,14 @@ pub fn Player(cx: Scope<PlayerProps>) -> Element {
                                 div { class: "player-wrapper",
                                     onclick: move |_|{
                                         if let Some(player) = player_state.get() {
-                                            if player.playing() {
-                                                player.pause();
-                                            } else {
-                                                player.play();
-                                            }
+                                            player.toggle_play();
                                         }
-                                    }
+                                    },
+                                    ondblclick: move |_|{
+                                        if let Some(player) = player_state.get() {
+                                            player.fullscreen().enter();
+                                        }
+                                    },
                                 }
                             }
                         }

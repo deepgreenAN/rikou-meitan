@@ -3,16 +3,15 @@ use dioxus_router::Link;
 use rand::{thread_rng, Rng};
 
 pub fn TitleLogo(cx: Scope) -> Element {
-    let title_logo_class = use_state(cx, || "".to_string());
-
-    use_effect(cx, (), {
-        to_owned![title_logo_class];
-        |_| async move {
-            let is_active = (1.0 / 20.0) > thread_rng().gen::<f64>();
-            let class = if is_active { "active" } else { "inactive" };
-            title_logo_class.set(class.to_string());
+    let is_active = cx.use_hook(|| {
+        if cfg!(feature = "develop") {
+            0.5 > thread_rng().gen::<f64>()
+        } else {
+            (1.0 / 20.0) > thread_rng().gen::<f64>()
         }
     });
+
+    let title_logo_class = cx.use_hook(|| if *is_active { "active" } else { "inactive" });
 
     let bottle_svg = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -36,9 +35,11 @@ pub fn TitleLogo(cx: Scope) -> Element {
             div { id: "bottle-svg",
                 dangerous_inner_html: "{bottle_svg}"
             }
-            div { id: "double-heart-svg",
-                dangerous_inner_html: "{heart}"
-            }
+            is_active.then(||rsx!{
+                div { id: "double-heart-svg",
+                    dangerous_inner_html: "{heart}"
+                }
+            })
             div { id: "moon-svg",
                 dangerous_inner_html: "{moon_svg}"
             }
