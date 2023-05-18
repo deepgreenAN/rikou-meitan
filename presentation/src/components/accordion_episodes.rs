@@ -2,6 +2,7 @@ use crate::components::Spinner;
 use domain::episode::Episode;
 
 use dioxus::prelude::*;
+use std::rc::Rc;
 
 #[derive(Props)]
 pub struct AccordionEpisodesProps<'a> {
@@ -9,7 +10,7 @@ pub struct AccordionEpisodesProps<'a> {
     #[props(into)]
     title: String,
     /// エピソードのリスト
-    episodes: UseRef<Option<Vec<Episode>>>,
+    episodes: UseRef<Option<Vec<Rc<Episode>>>>,
     /// コンポーネント作成時にパネルを開くかどうか．
     initial_is_open: bool,
     /// アコーディオン機能を無効にするかどうか
@@ -20,7 +21,7 @@ pub struct AccordionEpisodesProps<'a> {
     /// アコーディオンを閉じたときの処理
     on_close: Option<EventHandler<'a>>,
     /// 編集ボタンが押されたときの処理
-    on_modify_click: Option<EventHandler<'a, Episode>>,
+    on_modify_click: Option<EventHandler<'a, Rc<Episode>>>,
 }
 
 pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Element {
@@ -70,7 +71,6 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                     episodes.iter().map(|episode|{
                                         let (year, month, day) = episode.date().to_ymd();
                                         let content = episode.content();
-                                        let episode = episode.clone();
                                         rsx! {
                                             li {key: "{episode.id()}",
                                                 div { class: "episode-item-container",
@@ -82,8 +82,11 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
                                                         rsx!{
                                                             div { class: "episode-item-right",
                                                                 button {class: "episode-modify-button",
-                                                                    onclick: move |_|{
-                                                                        on_modify_click.call(episode.clone());
+                                                                    onclick: {
+                                                                        let episode = episode.clone();
+                                                                        move |_|{
+                                                                            on_modify_click.call(episode.clone());
+                                                                        }
                                                                     }, 
                                                                     "編集"
                                                                 }

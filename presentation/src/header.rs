@@ -25,16 +25,14 @@ pub fn Header(cx: Scope) -> Element {
         is_hidden_menu_open.set(true);
         scroll_state.lock();
         overlay_state.activate().expect("Cannot Overlay activate");
-        overlay_state
-            .add_event_listener("click", {
-                to_owned![overlay_state, is_hidden_menu_open, scroll_state];
-                move |_| {
-                    is_hidden_menu_open.set(false);
-                    scroll_state.unlock();
-                    overlay_state.deactivate();
-                }
-            })
-            .expect("Overlay cannot added event listener");
+        overlay_state.add_event_listener("click", {
+            to_owned![overlay_state, is_hidden_menu_open, scroll_state];
+            move |_| {
+                is_hidden_menu_open.set(false);
+                scroll_state.unlock();
+                overlay_state.deactivate();
+            }
+        });
     };
 
     let close_hidden_menu = move |_| {

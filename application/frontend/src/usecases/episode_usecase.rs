@@ -228,7 +228,7 @@ mod test {
         use common::AppCommonError;
         use domain::episode::{Episode, EpisodeId};
         use domain::Date;
-        
+
         use fake::{Fake, Faker};
         use pretty_assertions::assert_eq;
         use wiremock::matchers::{body_json, method, path, query_param};

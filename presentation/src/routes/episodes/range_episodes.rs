@@ -9,9 +9,10 @@ use frontend::{
 };
 
 use dioxus::prelude::*;
+use std::rc::Rc;
 
 enum EditEpisodeOpen {
-    Modify(Episode),
+    Modify(Rc<Episode>),
     Add,
     Close,
 }
@@ -34,7 +35,7 @@ pub struct RangeEpisodesProps {
 
 pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     // エピソードのデータ
-    let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
+    let episodes_ref = use_ref(cx, || Option::<Vec<Rc<Episode>>>::None);
 
     // AddButton関連
     let edit_episode_open = use_state(cx, || EditEpisodeOpen::Close);
@@ -77,7 +78,12 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
 
                 match res {
                     Ok(episodes) => {
-                        episodes_ref.set(Some(episodes));
+                        episodes_ref.set(Some(
+                            episodes
+                                .into_iter()
+                                .map(|episode| Rc::new(episode))
+                                .collect::<Vec<_>>(),
+                        ));
                     }
                     Err(e) => {
                         log::error!("{}", e)
@@ -103,7 +109,12 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
 
                     match res {
                         Ok(episodes) => {
-                            episodes_ref.set(Some(episodes));
+                            episodes_ref.set(Some(
+                                episodes
+                                    .into_iter()
+                                    .map(|episode| Rc::new(episode))
+                                    .collect::<Vec<_>>(),
+                            ));
                         }
                         Err(e) => {
                             log::error!("{}", e)
@@ -123,6 +134,9 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     // 新しく追加するときの処理
     let add_submitted_episode = move |new_episode: Episode| {
         close_add_episode(());
+
+        let new_episode = Rc::new(new_episode);
+
         // データを新しく追加してソート
         {
             let new_episode = new_episode.clone();
@@ -162,7 +176,8 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     // 編集するときの処理
     let modify_submitted_episode = move |modified_episode: Episode| {
         close_add_episode(());
-        let mut old_episode = Option::<Episode>::None;
+        let modified_episode = Rc::new(modified_episode);
+        let mut old_episode = Option::<Rc<Episode>>::None;
 
         // modified_episodeを編集する
         {
@@ -179,7 +194,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
                         found_episode,
                         modified_episode
                     );
-                    old_episode = Some(std::mem::replace(found_episode, modified_episode));
+                    old_episode = Some(std::mem::replace(found_episode, modified_episode.clone()));
                 }
             });
         }
@@ -229,7 +244,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
     };
 
     // 削除するときの処理
-    let remove_episode = move |episode_for_remove: Episode| {
+    let remove_episode = move |episode_for_remove: Rc<Episode>| {
         close_add_episode(());
         {
             episodes_ref.with_mut(|episodes| {
@@ -275,7 +290,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         if cx.props.initial_is_open {
             rsx! {
                 AccordionEpisodes{
-                    title: cx.props.title.clone(),
+                    title: &cx.props.title,
                     episodes: episodes_ref.clone(),
                     initial_is_open: true,
                     on_open: on_accordion_open,
@@ -286,7 +301,7 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         } else {
             rsx! {
                 AccordionEpisodes{
-                    title: cx.props.title.clone(),
+                    title: &cx.props.title,
                     episodes: episodes_ref.clone(),
                     initial_is_open: false,
                     on_open: on_accordion_open,

@@ -15,7 +15,7 @@ use std::cell::Cell;
 use std::collections::HashSet;
 
 enum EditMovieClipOpen {
-    Modify(MovieClip),
+    Modify(Rc<MovieClip>),
     Add,
     Close,
 }
@@ -36,7 +36,7 @@ pub struct ClipsPageProps {
 }
 
 pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
-    let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
+    let movie_clips_ref = use_ref(cx, || Option::<Vec<Rc<MovieClip>>>::None);
     let is_load_continue = cx.use_hook(|| Rc::new(Cell::new(true)));
     let sort_type_state = use_state(cx, SortType::default);
     let init_liked_ids = use_state(cx, HashSet::<String>::new);
@@ -97,7 +97,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                         is_load_continue.set(false);
                     }
 
-                    movie_clips_ref.set(Some(new_movie_clips));
+                    movie_clips_ref.set(Some(new_movie_clips.into_iter().map(|clip|{Rc::new(clip)}).collect()));
                 },
                 Err(e) => log::error!("{}", e)
             }
@@ -151,7 +151,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
                                                     let is_not_contain = movie_clips_vec.iter().all(|clip|{clip.id() != new_movie_clip.id()});
 
                                                     if is_not_contain {
-                                                        movie_clips_vec.push(new_movie_clip);
+                                                        movie_clips_vec.push(Rc::new(new_movie_clip));
                                                     }
                                                 }
                                             }
@@ -172,6 +172,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
     // 新しく追加するときの処理
     let add_submitted_clip = move |new_movie_clip: MovieClip|{
         close_edit_movie_clip(());
+        let new_movie_clip = Rc::new(new_movie_clip);
 
         // new_movie_clipデータを末尾に挿入
         {
@@ -213,7 +214,8 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
     // 編集のときの処理
     let modify_submitted_clip = move |modified_movie_clip: MovieClip|{
         close_edit_movie_clip(());
-        let mut old_movie_clip = Option::<MovieClip>::None; // 古いデータ
+        let modified_movie_clip = Rc::new(modified_movie_clip);
+        let mut old_movie_clip = Option::<Rc<MovieClip>>::None; // 古いデータ
 
         // modified_movie_clipに更新
         {
@@ -270,7 +272,7 @@ pub fn ClipsPage(cx: Scope<ClipsPageProps>) -> Element {
     };
 
     // 削除のときの処理
-    let remove_clip = move |clip_for_remove: MovieClip|{
+    let remove_clip = move |clip_for_remove: Rc<MovieClip>|{
         close_edit_movie_clip(());
 
         // clip_for_removeの削除

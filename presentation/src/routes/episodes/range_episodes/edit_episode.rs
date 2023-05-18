@@ -5,6 +5,7 @@ use domain::{
 };
 
 use dioxus::prelude::*;
+use std::rc::Rc;
 
 #[derive(Clone, Default)]
 struct EpisodeForm {
@@ -30,13 +31,13 @@ impl TryFrom<EpisodeForm> for Episode {
 #[derive(Props)]
 pub struct EditEpisodeProps<'a> {
     /// 編集のベースとなるエピソード
-    base_episode: Option<Episode>,
+    base_episode: Option<Rc<Episode>>,
     /// 送信時の処理
     on_submit: EventHandler<'a, Episode>,
     /// キャンセル時の処理
     on_cancel: EventHandler<'a, ()>,
     // 削除時の処理
-    on_remove: Option<EventHandler<'a, Episode>>,
+    on_remove: Option<EventHandler<'a, Rc<Episode>>>,
 }
 
 pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
@@ -105,7 +106,7 @@ pub fn EditEpisode<'a>(cx: Scope<'a, EditEpisodeProps<'a>>) -> Element {
                     div { class: "edit-preview-bottom",
                         button { onclick: move |_|{
                             if let Some(base_episode) = cx.props.base_episode.as_ref() {
-                                let mut base_episode = base_episode.clone();
+                                let mut base_episode = Episode::clone(base_episode);
                                 base_episode.assign(episode.clone());
                                 cx.props.on_submit.call(base_episode);
                             } else {

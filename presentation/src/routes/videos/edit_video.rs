@@ -5,6 +5,7 @@ use domain::{
 };
 
 use dioxus::prelude::*;
+use std::rc::Rc;
 
 #[derive(Clone, Default)]
 struct VideoForm {
@@ -32,14 +33,13 @@ impl<T: VideoType> TryFrom<VideoForm> for Video<T> {
 #[derive(Props)]
 pub struct EditVideoProps<'a, T: VideoType> {
     /// 編集のベースとなるVideo．Someである場合に編集モードとなる．
-    #[props(!optional)]
-    base_video: Option<Video<T>>,
+    base_video: Option<Rc<Video<T>>>,
     /// 送信時の処理
     on_submit: EventHandler<'a, Video<T>>,
     /// キャンセル時の処理
     on_cancel: EventHandler<'a, ()>,
     /// 削除時の処理
-    on_remove: Option<EventHandler<'a, Video<T>>>,
+    on_remove: Option<EventHandler<'a, Rc<Video<T>>>>,
 }
 
 pub fn EditVideo<'a, T>(cx: Scope<'a, EditVideoProps<'a, T>>) -> Element
@@ -147,7 +147,7 @@ where
                     button {
                         onclick: move |_|{
                             if let Some(base_video) = cx.props.base_video.as_ref() {
-                                let mut base_video = base_video.clone();
+                                let mut base_video = Video::<T>::clone(base_video);
                                 base_video.assign(video.clone());
                                 cx.props.on_submit.call(base_video);
                             } else {

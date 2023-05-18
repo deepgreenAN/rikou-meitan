@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use strum_macros::{Display, EnumIter, EnumString};
 
 enum EditVideoOpen<T: VideoType> {
-    Modify(Video<T>),
+    Modify(Rc<Video<T>>),
     Add,
     Close,
 }
@@ -43,7 +43,7 @@ pub fn VideosPage<T>(cx: Scope<VideosPageProps<T>>) -> Element
 where
     T: VideoType + crate::utils::Caption + 'static,
 {
-    let videos_ref = use_ref(cx, || Option::<Vec<Video<T>>>::None);
+    let videos_ref = use_ref(cx, || Option::<Vec<Rc<Video<T>>>>::None);
     let is_load_continue = cx.use_hook(|| Rc::new(Cell::new(true)));
     let sort_type_state = use_state(cx, SortType::default);
     let init_liked_ids = use_state(cx, HashSet::<String>::new);
@@ -105,7 +105,7 @@ where
                         is_load_continue.set(false);
                     }
 
-                    videos_ref.set(Some(new_videos));
+                    videos_ref.set(Some(new_videos.into_iter().map(|video|{Rc::new(video)}).collect::<Vec<_>>()));
                 }
                 Err(e) => {
                     log::error!("{}", e);
@@ -166,7 +166,7 @@ where
                                                     .all(|video| video.id() != new_video.id());
 
                                                 if is_not_contain {
-                                                    videos.push(new_video);
+                                                    videos.push(Rc::new(new_video));
                                                 }
                                             }
                                         }
@@ -188,6 +188,7 @@ where
     // 新規追加の時の処理
     let add_video = move |new_video: Video<T>| {
         close_edit_video(());
+        let new_video = Rc::new(new_video);
 
         // new_videoを末尾に挿入
         {
@@ -227,7 +228,8 @@ where
     // 編集の時の処理
     let modify_video = move |modified_video: Video<T>| {
         close_edit_video(());
-        let mut old_video = Option::<Video<T>>::None;
+        let modified_video = Rc::new(modified_video);
+        let mut old_video = Option::<Rc<Video<T>>>::None;
 
         // modified_videoに更新
         {
@@ -291,7 +293,7 @@ where
     };
 
     // 削除の時の処理
-    let remove_video = move |video_for_remove: Video<T>| {
+    let remove_video = move |video_for_remove: Rc<Video<T>>| {
         close_edit_video(());
 
         {
@@ -367,7 +369,6 @@ where
                     EditVideo{
                         on_submit: add_video,
                         on_cancel: close_edit_video
-                        base_video: Option::<Video<T>>::None
                     }
                 },
                 EditVideoOpen::Modify(modified_video) => rsx!{
@@ -379,7 +380,7 @@ where
                                 EditVideo {
                                     on_submit: modify_video,
                                     on_cancel: close_edit_video,
-                                    base_video: Some(modified_video.clone()),
+                                    base_video: modified_video.clone(),
                                     on_remove: remove_video
                                 }
                             },
@@ -387,7 +388,7 @@ where
                                 EditVideo {
                                     on_submit: modify_video,
                                     on_cancel: close_edit_video,
-                                    base_video: Some(modified_video.clone()),
+                                    base_video: modified_video.clone(),
                                 }
                             }
                         }

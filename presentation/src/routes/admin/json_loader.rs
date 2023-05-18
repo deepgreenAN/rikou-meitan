@@ -48,7 +48,7 @@ where
                 let blob = Blob::new_with_str_sequence_and_options(
                     &Array::of1(&JsValue::from_str(
                         serde_json::to_string_pretty(&content)
-                            .expect("Json Serialize failed")
+                            .unwrap_throw()
                             .as_str(),
                     )),
                     &blob_option,

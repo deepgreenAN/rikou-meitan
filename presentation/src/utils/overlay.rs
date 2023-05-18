@@ -5,12 +5,14 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{Element, Event, HtmlElement};
+use web_sys::{Event, HtmlElement};
+
+const OVERLAY_PARENT_ID: &str = "background-container";
 
 /// オーバーレイを扱う状態
 #[derive(Clone, Debug)]
 pub struct OverlayElement {
-    element: Rc<RefCell<Option<Element>>>,
+    element: Rc<RefCell<Option<HtmlElement>>>,
     z_index: i32,
     event_listeners: Rc<RefCell<Vec<EventListener>>>,
 }
@@ -24,47 +26,37 @@ impl OverlayElement {
         }
     }
 
-    /// 状態のオーバーレイエレメントを取得
-    pub fn element(&self) -> Option<Element> {
-        // elementをクローンする．
-        self.element.replace_with(|element| element.clone())
-    }
     /// オーバーレイをアクティブ化する
     pub fn activate(&self) -> Result<(), JsValue> {
-        let has_element = { self.element.borrow().is_some() }; // RefCellの再帰を防ぐ
+        let mut element_mut = self.element.borrow_mut();
 
-        if !has_element {
-            let element = gloo_utils::document().create_element("div")?;
-            element.set_class_name("overlay");
-            let element_style = element.clone().unchecked_into::<HtmlElement>().style();
-            element_style.set_property("z-index", &format!("{}", self.z_index))?; // z-indexを設定
+        if element_mut.is_none() {
+            let new_element = gloo_utils::document()
+                .create_element("div")?
+                .unchecked_into::<HtmlElement>();
+            new_element.set_class_name("overlay");
+            let new_element_style = new_element.style();
+            new_element_style.set_property("z-index", &format!("{}", self.z_index))?; // z-indexを設定
             let parent = gloo_utils::document()
-                .query_selector("#background-container")?
+                .get_element_by_id(OVERLAY_PARENT_ID)
                 .ok_or(JsValue::from("Cannot get #background-container"))?;
 
-            parent.append_child(element.as_ref())?;
-            {
-                let _ = self.element.borrow_mut().insert(element);
-            }
+            parent.append_child(new_element.as_ref())?;
+
+            *element_mut = Some(new_element);
         }
 
         Ok(())
     }
-    /// オーバーレイにイベントリスナーを追加．アクティブ化してから利用する必要がある．
+    /// オーバーレイにイベントリスナーを追加．アクティブ化してから利用しないと意味がない
     pub fn add_event_listener<S: Into<Cow<'static, str>>, F: FnMut(&Event) + 'static>(
         &self,
         event_type: S,
         callback: F,
-    ) -> Result<(), JsValue> {
+    ) {
         if let Some(element) = self.element.borrow().as_ref() {
             let event_listener = EventListener::new(element, event_type, callback);
-            {
-                self.event_listeners.borrow_mut().push(event_listener);
-            }
-
-            Ok(())
-        } else {
-            Err(JsValue::from("Overlay not activate error."))
+            self.event_listeners.borrow_mut().push(event_listener);
         }
     }
     /// オーバーレイを非アクティブ化する
@@ -75,6 +67,14 @@ impl OverlayElement {
         }
 
         self.event_listeners.borrow_mut().clear();
+    }
+}
+
+impl Drop for OverlayElement {
+    fn drop(&mut self) {
+        if let Some(element) = self.element.borrow().as_ref() {
+            element.remove(); // DOMツリーから削除
+        }
     }
 }
 

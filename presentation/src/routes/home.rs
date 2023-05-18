@@ -19,6 +19,7 @@ use frontend::{
 
 use dioxus::prelude::*;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 pub fn HomePage(cx: Scope) -> Element {
     let orikou_desc_str = include_str!(concat!(
@@ -26,7 +27,7 @@ pub fn HomePage(cx: Scope) -> Element {
         "/contents/orikou_desc.html"
     ));
 
-    let episodes_ref = use_ref(cx, || Option::<Vec<Episode>>::None);
+    let episodes_ref = use_ref(cx, || Option::<Vec<Rc<Episode>>>::None);
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);
     let originals_ref = use_ref(cx, || Option::<Vec<Video<Original>>>::None);
     let kirinukis_ref = use_ref(cx, || Option::<Vec<Video<Kirinuki>>>::None);
@@ -63,7 +64,12 @@ pub fn HomePage(cx: Scope) -> Element {
                 );
                 let res = episode_usecase::order_by_date_range_episodes(cmd).await;
                 match res {
-                    Ok(episodes) => episodes_ref.set(Some(episodes)),
+                    Ok(episodes) => episodes_ref.set(Some(
+                        episodes
+                            .into_iter()
+                            .map(|episode| Rc::new(episode))
+                            .collect::<Vec<_>>(),
+                    )),
                     Err(e) => log::error!("{}", e),
                 }
             }

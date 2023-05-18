@@ -2,11 +2,11 @@
 #![allow(non_snake_case)]
 
 mod background;
-pub mod components;
+mod components;
 mod footer;
 mod header;
 mod routes;
-pub mod utils;
+mod utils;
 
 use crate::background::Background;
 use crate::footer::Footer;

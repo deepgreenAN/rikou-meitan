@@ -3,6 +3,7 @@ use domain::movie_clip::{MovieClip, MovieUrl, Second};
 
 use chrono::Local;
 use dioxus::prelude::*;
+use std::rc::Rc;
 use wasm_bindgen::UnwrapThrowExt;
 
 #[derive(Clone, Default)]
@@ -40,13 +41,13 @@ impl TryFrom<MovieClipForm> for MovieClip {
 #[derive(Props)]
 pub struct EditMovieClipProps<'a> {
     // 編集のベースとなるクリッブ．Someである場合に編集モードとなる
-    base_movie_clip: Option<MovieClip>,
+    base_movie_clip: Option<Rc<MovieClip>>,
     // 送信時の処理
     on_submit: EventHandler<'a, MovieClip>,
     // キャンセル時の処理
     on_cancel: EventHandler<'a, ()>,
     // 削除時の処理
-    on_remove: Option<EventHandler<'a, MovieClip>>,
+    on_remove: Option<EventHandler<'a, Rc<MovieClip>>>,
 }
 
 pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
@@ -153,7 +154,7 @@ pub fn EditMovieClip<'a>(cx: Scope<'a, EditMovieClipProps<'a>>) -> Element {
                     button {
                         onclick: move |_|{
                             if let Some(base_movie_clip) = cx.props.base_movie_clip.as_ref() {
-                                let mut base_movie_clip = base_movie_clip.clone();
+                                let mut base_movie_clip = MovieClip::clone(base_movie_clip);
                                 base_movie_clip.assign(movie_clip.clone());
                                 cx.props.on_submit.call(base_movie_clip);
                             } else {
