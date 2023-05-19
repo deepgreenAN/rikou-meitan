@@ -16,29 +16,16 @@
         -ms-user-select: none;
             user-select: none;
 
-    width: 15rem;
-    height: 3rem;
+    width: 100%;
     gap: 1rem;
-
-    @media screen and (max-width: static_var.$smartphone_size) {
-        & {
-            width: 25rem;
-            height: 5rem;
-        }
-    }
+    padding: 0 0.1rem 0 0.1rem;
 
     .add-button-svg {
-        width: 10%;
+        width: 2rem;
         padding-top: 0.2rem;
     }
     .add-button-text {
         font-size: 2rem;
-
-        @media screen and (max-width: static_var.$smartphone_size) {
-            & {
-                font-size: 3rem;
-            }
-        }
     }
 
     &:hover {

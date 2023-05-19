@@ -21,12 +21,6 @@
             margin-bottom: 1rem;
             color: var(--primary-color);   
 
-            @media screen and (max-width: static_var.$smartphone_size) {
-                & {
-                    font-size: 4rem;
-                    padding-left: 1.5rem;
-                }
-            }
         }
     }
 
@@ -36,13 +30,6 @@
         margin-bottom: 1rem;
         padding-left: 1rem;
         padding-right: 1rem;
-
-        @media screen and (max-width: static_var.$smartphone_size) {
-            & {
-                font-size: 2rem;
-                line-height: 3.5rem;
-            }
-        }
     }
 
     #intersection-bottom {

@@ -29,8 +29,22 @@
         display: flex;
         align-items: center;
 
-        #copy-right {
-            margin-right: 2rem;
+        #maintenance-repo {
+            margin-left: 2rem;
+
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    display: none;
+                }
+            }
+        }
+
+        #admin-link {
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    display: none;
+                }
+            }
         }
 
         a {

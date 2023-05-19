@@ -2,7 +2,7 @@ $aspect_ratio: calc(16/9);
 
 .player-container {
     width: 100%;
-    min-width: 400px;
+    min-width: var(--player-min-width);
     aspect-ratio: $aspect_ratio;
     // 何故か指定が必要
     font-size: 0;

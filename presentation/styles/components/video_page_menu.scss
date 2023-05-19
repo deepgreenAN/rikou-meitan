@@ -4,7 +4,7 @@
     display: flex;
     align-items: center;
     padding-bottom: 2rem;
-    padding-left: 2rem;
+    padding-left: 1rem;
     
     .sort-select-container {
         border-radius: 0.3rem;
@@ -13,18 +13,11 @@
         border-color: var(--primary-color);
 
         select {
-            padding: 0 1rem 0 1rem;
+            padding: 0 0.5rem 0 0.5rem;
             background-color: transparent;
             color: var(--primary-color);
-            height: 3rem;
+            height: 2.7rem;
             font-size: 2rem;
-
-            @media screen and (max-width: static_var.$smartphone_size) {
-                & {
-                    height: 5rem;
-                    font-size: 3rem;
-                }
-            }
 
             option {
                 background-color: var(--primary-bg-color);
@@ -35,13 +28,7 @@
     }
 
     .add-button {
-        padding-left: 1.5rem;
-
-        @media screen and (max-width: static_var.$smartphone_size) {
-            & {
-                padding-left: 2.5rem;
-            }
-        }
+        padding-left: 1rem;
     }
     
 }

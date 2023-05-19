@@ -13,4 +13,10 @@
     display: grid;
     place-items: center;
     padding-bottom: static_var.$footer_height;
+
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            padding-top: 0;
+        }
+    }
 }

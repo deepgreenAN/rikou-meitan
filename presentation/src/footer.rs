@@ -11,7 +11,7 @@ pub fn Footer(cx: Scope) -> Element {
                     a {href: "https://github.com/deepgreenAN/rikou-meitan", "こちら"}
                     "でメンテナンスされています．"
                 }
-                Link{ to:"/admin", "管理者用ページ"}
+                Link{ id:"admin-link", to:"/admin", "管理者用ページ"}
             }
         }
     })

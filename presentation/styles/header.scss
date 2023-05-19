@@ -2,8 +2,8 @@
 
 #header-container {
     width: 100%;
-    height: static_var.$header_height;
     position: relative;
+    height: var(--header-height);
 
     // 変数
     $title_logo_max_ml: 32px; // title-logoのmargin-left
@@ -28,7 +28,7 @@
     
             @media screen and (max-width: static_var.$smartphone_size) {
                 & {
-                    max-width: 500px;
+                    margin-left: 1rem;
                 }
             }
     
@@ -93,6 +93,7 @@
             (max-width: static_var.$smartphone_size) {
                 & {
                     width: 8rem;
+                    margin-right: 1rem;
                 }
             }
     
@@ -140,13 +141,13 @@
     
             .hamburger-menu-button {
                 display: none;
-                width: 40%;
                 color: var(--primary-color);
     
                 @media screen and (max-width: $header_menu_min_screen),
                 (max-width: static_var.$smartphone_size) {
                     & {
                         display: block;
+                        width: 50%;
                     }
                 }
             }
@@ -215,16 +216,16 @@
         z-index: 3;
         width: 50%;
 
+        height: 100vh;
+        background-color: var(--primary-bg-color);
+        color: var(--primary-color);
+        padding-top: var(--header-height);
+
         @media screen and (max-width: static_var.$smartphone_size) {
             & {
                 width: 70%;
             }
         }
-
-        height: 100vh;
-        background-color: var(--primary-bg-color);
-        color: var(--primary-color);
-        padding-top: static_var.$header_height;
 
         #hidden-menu-background {
             position: absolute;
@@ -258,13 +259,6 @@
                 z-index: 4;
                 font-size: 2rem;
                 height: 5rem;
-
-                @media screen and (max-width: static_var.$smartphone_size) {
-                    & {
-                        font-size: 4rem;
-                        height: 8rem;
-                    }
-                }
 
                 -webkit-user-select: none;
                 -moz-user-select: none;

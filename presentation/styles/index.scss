@@ -4,6 +4,7 @@
 @use "./utils.scss";
 @use "./routes/routes.scss";
 @use "./components/components.scss";
+@use "./static_var.scss";
 
 * {
     margin: 0;
@@ -33,4 +34,20 @@ body {
     --primary-color-rgb: var(--light-primary-color-rgb);
     --primary-bg-color: var(--light-primary-bg-color);
     --primary-bg-color-rgb: var(--light-primary-bg-color-rgb);
+
+    // playerの最小サイズ
+    --player-min-width: 500px;
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            --player-min-width: 350px;
+        }
+    }
+
+    // ヘッダーの高さ
+    --header-height: 8rem;
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            --header-height: 6rem;
+        }
+    }
 }
