@@ -71,6 +71,11 @@
             }
 
             //文書内
+            p::before {
+                padding-left: 1rem;
+                content: ""
+            }
+
             h2 {
                 font-size: var(--page-title-font-size);
                 padding-left: 1rem;
