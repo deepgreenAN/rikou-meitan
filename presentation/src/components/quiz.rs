@@ -51,8 +51,8 @@ pub fn Quiz<'a>(cx: Scope<'a, QuizProps<'a>>) -> Element {
             rsx! {&cx.props.children}
         } else {
             rsx! {
-                div { class: "quiz-container", onclick: move |_| {cx.props.on_cancel.call(())},
-                    div { class: "quiz-ui-container", onclick: move |e|{e.stop_propagation();},
+                div { class: "quiz-container", onmousedown: move |_| {cx.props.on_cancel.call(())},
+                    div { class: "quiz-ui-container", onmousedown: move |e|{e.stop_propagation();},
                         div { class: "quiz-caption", "おりコウクイズ"}
                         div { class: "quiz-desc", "※編集するにはクイズに正解してください(荒らし等を防ぐためです。分からない場合は管理人にお気軽にお尋ねください。)"}
                         div { class: "question", "{quiz.question}"}

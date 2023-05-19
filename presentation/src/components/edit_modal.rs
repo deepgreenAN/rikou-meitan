@@ -19,10 +19,10 @@ pub fn EditModal<'a>(cx: Scope<'a, EditModalProps<'a>>) -> Element {
 
     cx.render(rsx! {
         div { class: "edit-container",
-            onclick: move |_|{cx.props.on_cancel.call(())}, //なぜかonmousedownのstop_propagationが効かない
+            onmousedown: move |_|{cx.props.on_cancel.call(())},
             div {
                 class: "edit-ui-container",
-                onclick: move |e| {e.stop_propagation()},
+                onmousedown: move |e| {e.stop_propagation()},
                 div { class: "edit-input-container",
                     div { class: "edit-input-caption", "{cx.props.caption}"}
                     &cx.props.input

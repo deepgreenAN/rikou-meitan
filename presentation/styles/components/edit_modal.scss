@@ -20,7 +20,7 @@
 
         .edit-input-container {
             width: calc(0.75 * 100vw);
-            min-height: calc(0.4 * 100vh);
+            min-height: calc(0.5 * 100vh);
             @media  screen and (max-width: static_var.$smartphone_size) {
                 width: calc(0.9 * 100vw);
             }
