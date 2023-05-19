@@ -15,7 +15,7 @@
         display: flex;
         flex-direction: column;
         align-items: left;
-        padding-right: 3rem;
+        margin-right: 3rem;
 
 
         .toc-item {
@@ -64,15 +64,15 @@
             margin-top: 1rem;
             margin-bottom: 1rem;
 
-            //文書内
-            p {
-                font-size: 1.4rem;
-                line-height: 3.4rem;
-
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    margin-top: 0;
+                }
             }
 
+            //文書内
             h2 {
-                font-size: 2.5rem;
+                font-size: var(--page-title-font-size);
                 padding-left: 1rem;
 
             }
@@ -80,9 +80,8 @@
             .toc-content-caption {
                 margin-top: 0.5rem;
                 padding-left: 0.5rem;
-                font-size: 1.5rem;
+                font-size: var(--page-desc-font-size);
                 margin-bottom: 2rem;
-
             }
 
             a {
@@ -97,6 +96,16 @@
     }
 
     #orikou-desc {
+        #orikou-desc-string {
+            font-size: var(--page-desc-font-size);
+            line-height: 3.4rem;
+
+            @media screen and (max-width: static_var.$smartphone_size) {
+                & {
+                    line-height: 2.5rem;
+                }
+            }
+        }
 
         #orikou-desc-movie-container-outer {
             margin-top: 2rem;

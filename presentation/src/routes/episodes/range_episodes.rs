@@ -312,7 +312,9 @@ pub fn RangeEpisodes(cx: Scope<RangeEpisodesProps>) -> Element {
         }
         is_add_button_show.get().then(||{
             rsx!{
-                div {class: "episodes-add-button", AddButton{onclick: open_add_episode}}
+                div{ class: "episodes-add-button-container",
+                    div {class: "episodes-add-button", AddButton{onclick: open_add_episode}}
+                }
             }
         })
         match edit_episode_open.get() {

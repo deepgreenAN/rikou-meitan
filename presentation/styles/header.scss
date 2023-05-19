@@ -92,7 +92,7 @@
             @media screen and (max-width: $header_menu_min_screen),
             (max-width: static_var.$smartphone_size) {
                 & {
-                    width: 8rem;
+                    width: 6rem;
                     margin-right: 1rem;
                 }
             }
@@ -251,7 +251,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 100px;
             z-index: 3;
 
             .hidden-menu-item {

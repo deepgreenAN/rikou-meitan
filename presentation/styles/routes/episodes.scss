@@ -16,27 +16,33 @@
     #episodes-title-container {
         display: flex;
         #episodes-title {
-            font-size: 2.5rem;
+            font-size: var(--page-title-font-size);
             margin-bottom: 1rem;
+            padding-left: 1rem;
             color: var(--primary-color);
         }
     }
 
     #episodes-caption {
-        font-size: 1.5rem;
+        font-size: var(--page-desc-font-size);
         color: var(--primary-color);
         margin-bottom: 1rem;
         padding-left: 1rem;
         padding-right: 1rem;
     }
 
-    .episodes-add-button {
+    .episodes-add-button-container {
         width: 100%;
         margin-top: 1rem;
         margin-bottom: 1rem;
         display: grid;
         place-items: center;
+        .episodes-add-button {
+            padding: 0 1rem 0 1rem;
+        }
     }
+
+
 
     .edit-container {
         .edit-episode-input-date {

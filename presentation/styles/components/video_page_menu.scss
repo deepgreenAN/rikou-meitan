@@ -3,14 +3,20 @@
 .video-page-menu {
     display: flex;
     align-items: center;
-    padding-bottom: 2rem;
-    padding-left: 1rem;
+    margin-bottom: 2rem;
     
     .sort-select-container {
         border-radius: 0.3rem;
         border-style: solid;
         border-width: 2px;
         border-color: var(--primary-color);
+        margin-left: 1rem;
+
+        @media screen and (max-width: static_var.$smartphone_size) {
+            & {
+                margin-left: 0.5rem;
+            }
+        }
 
         select {
             padding: 0 0.5rem 0 0.5rem;
@@ -28,7 +34,13 @@
     }
 
     .add-button {
-        padding-left: 1rem;
+        margin-left: 1rem;
+
+        @media screen and (max-width: static_var.$smartphone_size) {
+            & {
+                margin-left: 0.5rem;
+            }
+        }
     }
     
 }

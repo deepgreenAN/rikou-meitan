@@ -27,13 +27,13 @@
 
             @media screen and (max-width: static_var.$smartphone_size) {
                 & {
-                    padding-left:1rem;
+                    margin-left:1rem;
                 }
             }
         }
         .accordion-title {
             width: 1fr;
-            padding-left: 1rem;
+            margin-left: 1rem;
             font-size: 2rem;
         }
     }
@@ -61,8 +61,8 @@
             .episode-item-left {
 
                 .episode-date {
-                    padding-left: 0.5rem;
-                    padding-right: 0.5rem;
+                    margin-left: 0.5rem;
+                    margin-right: 0.5rem;
                 }
                 .episode-content {
                     a {

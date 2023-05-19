@@ -9,6 +9,7 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;  // paddingとmarginの違いをはっきりさせる
 }
 
 body {
@@ -50,4 +51,15 @@ body {
             --header-height: 6rem;
         }
     }
+
+    // ページタイトルや説明のフォントサイズ
+    --page-title-font-size: 2.5rem;
+    --page-desc-font-size: 1.5rem;
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            --page-title-font-size: 1.8rem;
+            --page-desc-font-size: 1.2rem;
+        }
+    }
+
 }

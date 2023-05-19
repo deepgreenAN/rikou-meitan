@@ -5,6 +5,12 @@
     padding-top: 1rem;
     height: 2.5rem;
     font-size: 1.3rem;
+
+    @media screen and (max-width: static_var.$smartphone_size) {
+        & {
+            padding-top: 0;
+        }
+    }
     
     white-space:nowrap;
     overflow: hidden;
