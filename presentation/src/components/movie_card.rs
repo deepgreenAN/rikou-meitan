@@ -1,4 +1,5 @@
 use crate::components::{Player, TooltipMenuButton, TooltipMenuItem};
+use crate::include_str_from_root;
 use domain::{
     movie_clip::{MovieUrl, SecondRange},
     Date,
@@ -40,10 +41,7 @@ pub struct MovieCardProps<'a> {
 pub fn MovieCard<'a>(cx: Scope<'a, MovieCardProps<'a>>) -> Element {
     let is_liked = use_state(cx, ||{false}); // 最初はfalseと仮定
 
-    let like_heart_svg_str = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/like-heart.svg"
-    ));
+    let like_heart_svg_str = include_str_from_root!("images/release/like-heart.svg");
 
     // ライクされたときのクラス名
     let liked_class = match *is_liked.get() || cx.props.is_liked {

@@ -20,7 +20,9 @@ fn main() {
     dioxus_web::launch_with_props(
         App,
         AppProps {
-            admin_password: get_admin_password(include_str!("../../Secrets.toml")),
+            admin_password: get_admin_password(presentation::include_str_from_root!(
+                "../Secrets.toml"
+            )),
         },
         Config::new().with_default_panic_hook(true),
     );
@@ -35,7 +37,8 @@ fn main() {
     log::info!("リハイドレーションを開始");
 
     // admin_passwordの取得
-    let admin_password = get_admin_password(include_str!("../../Secrets.toml"));
+    let admin_password =
+        get_admin_password(presentation::include_str_from_root!("../Secrets.toml"));
     let app_props = AppProps {
         admin_password: admin_password,
     };

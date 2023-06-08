@@ -2,6 +2,7 @@ mod more_button;
 mod toc;
 
 use crate::components::{AccordionEpisodes, MovieCard, MovieContainer, Player};
+use crate::include_str_from_root;
 use crate::utils::{get_liked_ids, push_liked_id};
 use domain::{
     episode::Episode,
@@ -22,10 +23,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 pub fn HomePage(cx: Scope) -> Element {
-    let orikou_desc_str = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/contents/orikou_desc.html"
-    ));
+    let orikou_desc_str = include_str_from_root!("contents/orikou_desc.html");
 
     let episodes_ref = use_ref(cx, || Option::<Vec<Rc<Episode>>>::None);
     let movie_clips_ref = use_ref(cx, || Option::<Vec<MovieClip>>::None);

@@ -1,3 +1,5 @@
+use crate::include_str_from_root;
+
 use dioxus::prelude::*;
 use dioxus_router::Link;
 use rand::{thread_rng, Rng};
@@ -13,22 +15,10 @@ pub fn TitleLogo(cx: Scope) -> Element {
 
     let title_logo_class = cx.use_hook(|| if *is_active { "active" } else { "inactive" });
 
-    let bottle_svg = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/bottle-blackandpink-edge.svg"
-    ));
-    let moon_svg = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/moon-blackandyellow-edge.svg"
-    ));
-    let heart = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/double-heart.svg"
-    ));
-    let logo_text = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/logo-text.svg"
-    ));
+    let bottle_svg = include_str_from_root!("images/release/bottle-blackandpink-edge.svg");
+    let moon_svg = include_str_from_root!("images/release/moon-blackandyellow-edge.svg");
+    let heart = include_str_from_root!("images/release/double-heart.svg");
+    let logo_text = include_str_from_root!("images/release/logo-text.svg");
 
     cx.render(rsx! {
         div { id: "title-logo", class: "{title_logo_class}",

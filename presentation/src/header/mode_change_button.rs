@@ -1,4 +1,6 @@
+use crate::include_str_from_root;
 use crate::utils::set_dark_mode;
+
 use dioxus::prelude::*;
 use fermi::use_atom_state;
 
@@ -6,14 +8,8 @@ pub fn ModeChangeButton(cx: Scope) -> Element {
     let is_dark_mode = use_atom_state(cx, crate::IS_DARK_MODE);
 
     let button_svg = match is_dark_mode.get() {
-        true => include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/images/release/bottle-mode.svg"
-        )),
-        false => include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/images/release/moon-mode.svg"
-        )),
+        true => include_str_from_root!("images/release/bottle-mode.svg"),
+        false => include_str_from_root!("images/release/moon-mode.svg"),
     };
 
     cx.render(rsx! {

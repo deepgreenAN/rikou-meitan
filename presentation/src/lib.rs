@@ -94,3 +94,14 @@ pub fn App(cx: Scope<AppProps>) -> Element {
         }
     })
 }
+
+// -------------------------------------------------------------------------------------------------
+// 以下はマクロ
+
+/// include_str!マクロのルートバージョン．
+#[macro_export]
+macro_rules! include_str_from_root {
+    ($file:expr) => {
+        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $file))
+    };
+}

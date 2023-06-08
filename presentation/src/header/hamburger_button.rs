@@ -1,3 +1,5 @@
+use crate::include_str_from_root;
+
 use dioxus::prelude::*;
 
 #[derive(Props)]
@@ -6,10 +8,7 @@ pub struct HiddenMenuButtonProps<'a> {
 }
 
 pub fn HamburgerButton<'a>(cx: Scope<'a, HiddenMenuButtonProps<'a>>) -> Element {
-    let button_svg = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/hamburger-menu.svg"
-    ));
+    let button_svg = include_str_from_root!("images/release/hamburger-menu.svg");
 
     cx.render(rsx! {
         div {

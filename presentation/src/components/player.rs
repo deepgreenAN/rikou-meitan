@@ -1,6 +1,7 @@
 use crate::PLAYING_PLAYER_ID;
 use crate::ACTIVE_PLAYER_IDS;
 use crate::ACTIVE_PLAYER_NUMBER;
+use crate::include_str_from_root;
 use domain::movie_clip::SecondRange;
 
 const ORIGIN: &str = "https://rikou-meitan.shuttleapp.rs";
@@ -30,10 +31,7 @@ pub struct PlayerProps {
 }
 
 pub fn Player(cx: Scope<PlayerProps>) -> Element {
-    let movie_cover_svg_str = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/movie_cover.svg"
-    ));
+    let movie_cover_svg_str = include_str_from_root!("images/release/movie_cover.svg");
 
     let thumbnail_url = use_state(cx, || Option::<String>::None);
     let is_active = use_state(cx, || false);

@@ -1,4 +1,5 @@
 use crate::components::Spinner;
+use crate::include_str_from_root;
 use domain::episode::Episode;
 
 use dioxus::prelude::*;
@@ -28,14 +29,8 @@ pub fn AccordionEpisodes<'a>(cx: Scope<'a, AccordionEpisodesProps<'a>>) -> Eleme
     let is_accordion_open = use_state(cx, || cx.props.initial_is_open);
 
     let accordion_button_str = match is_accordion_open.get() {
-        true => include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/images/release/minus.svg"
-        )),
-        false => include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/images/release/plus.svg"
-        )),
+        true => include_str_from_root!("images/release/minus.svg"),
+        false => include_str_from_root!("images/release/plus.svg"),
     };
 
     cx.render(rsx! {div { class: "accordion-episodes-container",

@@ -1,3 +1,5 @@
+use crate::include_str_from_root;
+
 use dioxus::prelude::*;
 use std::cell::Cell;
 use std::rc::Rc;
@@ -49,10 +51,7 @@ pub fn TooltipMenuButton<'a>(cx: Scope<'a, TooltipMenuButtonProps<'a>>) -> Eleme
     let is_menu_active = use_state(cx, || false);
     let tooltip_menu_pos = cx.use_hook(|| Rc::new(Cell::new(TooltipPos::BottomRight)));
 
-    let dot_menu_svg_str = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/images/release/dot-menu.svg"
-    ));
+    let dot_menu_svg_str = include_str_from_root!("images/release/dot-menu.svg");
 
     let menu_width = 200; //px
     let menu_height = 120; //px

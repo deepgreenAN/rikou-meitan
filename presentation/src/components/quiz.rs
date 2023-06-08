@@ -1,3 +1,5 @@
+use crate::include_str_from_root;
+
 use dioxus::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -23,10 +25,7 @@ pub fn Quiz<'a>(cx: Scope<'a, QuizProps<'a>>) -> Element {
     let is_correct = use_state(cx, || false);
     let value_state = cx.use_hook(|| Rc::new(Cell::new(String::new())));
 
-    let quiz_list_str = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/contents/orikou_quiz.json"
-    ));
+    let quiz_list_str = include_str_from_root!("contents/orikou_quiz.json");
 
     let quiz_list: Vec<QuizJson> =
         serde_json::from_str(quiz_list_str).expect("Quiz Deserialize sanity check");
