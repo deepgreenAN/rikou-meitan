@@ -4,6 +4,35 @@ pub use self::product::*;
 #[cfg(feature = "fake")]
 pub use self::fake::*;
 
+/// APIをチェックするためのbehavior
+#[cfg(test)]
+mod _behavior {
+    use crate::commands::episode_commands;
+    use crate::AppFrontError;
+    use domain::episode::Episode;
+
+    #[cfg_attr(not(feature = "fake"), behavior::behavior(modules(super::product)))]
+    #[cfg_attr(feature = "fake", behavior::behavior(modules(super::fake)))]
+    #[async_trait::async_trait]
+    trait Behavior {
+        async fn save_episode<'a>(
+            cmd: episode_commands::SaveEpisodeCommand<'a>,
+        ) -> Result<(), AppFrontError>;
+        async fn edit_episode<'a>(
+            cmd: episode_commands::EditEpisodeCommand<'a>,
+        ) -> Result<(), AppFrontError>;
+        async fn all_episodes(
+            cmd: episode_commands::AllEpisodesCommand,
+        ) -> Result<Vec<Episode>, AppFrontError>;
+        async fn order_by_date_range_episodes(
+            cmd: episode_commands::OrderByDateRangeEpisodesCommand,
+        ) -> Result<Vec<Episode>, AppFrontError>;
+        async fn remove_episode(
+            cmd: episode_commands::RemoveEpisodeCommand,
+        ) -> Result<(), AppFrontError>;
+    }
+}
+
 #[cfg(not(feature = "fake"))]
 mod product {
     /// テストのためにuriを引数とした関数にするためのモジュール
@@ -171,55 +200,6 @@ mod fake {
 
 #[cfg(test)]
 mod test {
-    /// fakeとそうでないときにシグネチャを一致させるためのコンパイル
-    mod compile {
-        use crate::commands::episode_commands;
-        use crate::AppFrontError;
-        use domain::episode::{Episode, EpisodeId};
-        use domain::Date;
-        use fake::{Fake, Faker};
-
-        #[allow(dead_code)]
-        async fn test_save_episode() {
-            let episode = Faker.fake::<Episode>();
-            let cmd = episode_commands::SaveEpisodeCommand::new(&episode);
-
-            let _res: Result<(), AppFrontError> = super::super::save_episode(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_edit_episode() {
-            let episode = Faker.fake::<Episode>();
-            let cmd = episode_commands::EditEpisodeCommand::new(&episode);
-
-            let _res: Result<(), AppFrontError> = super::super::edit_episode(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_all_episodes() {
-            let cmd = episode_commands::AllEpisodesCommand;
-            let _res_vec: Result<Vec<Episode>, AppFrontError> =
-                super::super::all_episodes(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_date_episodes() {
-            let start = Faker.fake::<Date>();
-            let end = Faker.fake::<Date>();
-
-            let cmd = episode_commands::OrderByDateRangeEpisodesCommand::new(start, end);
-            let _res_vec: Result<Vec<Episode>, AppFrontError> =
-                super::super::order_by_date_range_episodes(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_remove_by_id_episode() {
-            let id = EpisodeId::generate();
-            let cmd = episode_commands::RemoveEpisodeCommand::new(id);
-            let _res: Result<(), AppFrontError> = super::super::remove_episode(cmd).await;
-        }
-    }
-
     #[cfg(not(feature = "fake"))]
     mod product_test {
         use super::super::product::product_inner;

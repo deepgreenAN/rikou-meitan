@@ -4,6 +4,50 @@ pub use self::product::*;
 #[cfg(feature = "fake")]
 pub use self::fake::*;
 
+/// APIをチェックするためのbehavior
+#[cfg(test)]
+mod _behavior {
+    use crate::commands::movie_clip_commands;
+    use crate::AppFrontError;
+    use domain::movie_clip::MovieClip;
+
+    #[cfg_attr(not(feature = "fake"), behavior::behavior(modules(super::product)))]
+    #[cfg_attr(feature = "fake", behavior::behavior(modules(super::fake)))]
+    #[async_trait::async_trait]
+    trait Behavior {
+        async fn save_movie_clip<'a>(
+            cmd: movie_clip_commands::SaveMovieClipCommand<'_>,
+        ) -> Result<(), AppFrontError>;
+        async fn edit_movie_clip<'a>(
+            cmd: movie_clip_commands::EditMovieClipCommand<'_>,
+        ) -> Result<(), AppFrontError>;
+        async fn increment_like_movie_clip(
+            cmd: movie_clip_commands::IncrementLikeMovieClipCommand,
+        ) -> Result<(), AppFrontError>;
+        async fn all_movie_clips(
+            cmd: movie_clip_commands::AllMovieClipsCommand,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn order_by_like_movie_clips(
+            cmd: movie_clip_commands::OrderByLikeMovieClipsCommand,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn order_by_like_later_movie_clips<'a>(
+            cmd: movie_clip_commands::OrderByLikeLaterMovieClipsCommand<'_>,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn order_by_create_date_range_movie_clips(
+            cmd: movie_clip_commands::OrderByCreateDateRangeMovieClipsCommand,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn order_by_create_date_movie_clips(
+            cmd: movie_clip_commands::OrderByCreateDateMovieClipsCommand,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn order_by_create_date_later_movie_clips<'a>(
+            cmd: movie_clip_commands::OrderByCreateDateLaterMovieClipsCommand<'_>,
+        ) -> Result<Vec<MovieClip>, AppFrontError>;
+        async fn remove_movie_clip(
+            cmd: movie_clip_commands::RemoveMovieClipCommand,
+        ) -> Result<(), AppFrontError>;
+    }
+}
+
 #[cfg(not(feature = "fake"))]
 mod product {
 
@@ -317,100 +361,6 @@ mod fake {
 
 #[cfg(test)]
 pub mod test {
-    /// fakeのときのそうでないときにシグネチャを一緒にするためのコンパイル
-    mod compile {
-        use crate::commands::movie_clip_commands;
-        use crate::AppFrontError;
-        use domain::movie_clip::{MovieClip, MovieClipId};
-        use domain::Date;
-        use fake::{Fake, Faker};
-
-        #[allow(dead_code)]
-        async fn test_save_movie_clip() {
-            let movie_clip = Faker.fake::<MovieClip>();
-
-            let cmd = movie_clip_commands::SaveMovieClipCommand::new(&movie_clip);
-            let _res: Result<(), AppFrontError> = super::super::save_movie_clip(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_edit_movie_clip() {
-            let movie_clip = Faker.fake::<MovieClip>();
-
-            let cmd = movie_clip_commands::EditMovieClipCommand::new(&movie_clip);
-            let _res: Result<(), AppFrontError> = super::super::edit_movie_clip(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_increment_like_movie_clip() {
-            let movie_clip = Faker.fake::<MovieClip>();
-
-            let cmd = movie_clip_commands::IncrementLikeMovieClipCommand::new(movie_clip.id());
-            let _res: Result<(), AppFrontError> =
-                super::super::increment_like_movie_clip(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_all_movie_clips() {
-            let cmd = movie_clip_commands::AllMovieClipsCommand;
-            let _res: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::all_movie_clips(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_like_movie_clips() {
-            let length = 0;
-            let cmd = movie_clip_commands::OrderByLikeMovieClipsCommand::new(length);
-            let _res_vec: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::order_by_like_movie_clips(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_like_later_movie_clips() {
-            let length = 0;
-            let reference = Faker.fake::<MovieClip>();
-            let cmd =
-                movie_clip_commands::OrderByLikeLaterMovieClipsCommand::new(&reference, length);
-            let _res_vec: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::order_by_like_later_movie_clips(cmd).await;
-        }
-        #[allow(dead_code)]
-        async fn test_order_by_create_date_range_movie_clips() {
-            let start = Faker.fake::<Date>();
-            let end = Faker.fake::<Date>();
-
-            let cmd = movie_clip_commands::OrderByCreateDateRangeMovieClipsCommand::new(start, end);
-            let _res_vec: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::order_by_create_date_range_movie_clips(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_create_date_movie_clips() {
-            let length = 0;
-            let cmd = movie_clip_commands::OrderByCreateDateMovieClipsCommand::new(length);
-            let _res_vec: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::order_by_create_date_movie_clips(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_create_date_later_movie_clips() {
-            let length = 0;
-            let reference = Faker.fake::<MovieClip>();
-            let cmd = movie_clip_commands::OrderByCreateDateLaterMovieClipsCommand::new(
-                &reference, length,
-            );
-            let _res_vec: Result<Vec<MovieClip>, AppFrontError> =
-                super::super::order_by_create_date_later_movie_clips(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_remove_by_id_movie_clip() {
-            let id = MovieClipId::generate();
-            let cmd = movie_clip_commands::RemoveMovieClipCommand::new(id);
-            let _res: Result<(), AppFrontError> = super::super::remove_movie_clip(cmd).await;
-        }
-    }
-
     #[cfg(not(feature = "fake"))]
     mod product_test {
         use super::super::product::product_inner;

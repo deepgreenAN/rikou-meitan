@@ -4,6 +4,56 @@ pub use self::product::*;
 #[cfg(feature = "fake")]
 pub use self::fake::*;
 
+/// APIをチェックするためのbehavior
+#[cfg(test)]
+mod _behavior {
+    use crate::commands::video_commands;
+    use crate::AppFrontError;
+    use domain::video::{Video, VideoType};
+
+    #[cfg_attr(not(feature = "fake"), behavior::behavior(modules(super::product)))]
+    // #[cfg_attr(feature = "fake", behavior::behavior(modules(super::fake)))]
+    #[async_trait::async_trait]
+    trait Behavior {
+        /// Videoを保存
+        async fn save_video<'a, T: VideoType>(
+            cmd: video_commands::SaveVideoCommand<'a, T>,
+        ) -> Result<(), AppFrontError>;
+        /// Videoを編集
+        async fn edit_video<'a, T: VideoType>(
+            cmd: video_commands::EditVideoCommand<'a, T>,
+        ) -> Result<(), AppFrontError>;
+        /// `id`を持つVideoのLikeを一つ増やす
+        async fn increment_like_video<T: VideoType>(
+            cmd: video_commands::IncrementLikeVideoCommand,
+        ) -> Result<(), AppFrontError>;
+        /// 全てのVideoを取得する
+        async fn all_videos<T: VideoType>(
+            cmd: video_commands::AllVideosCommand,
+        ) -> Result<Vec<Video<T>>, AppFrontError>;
+        /// Likeを降順・idを昇順に並べたVideoを`length`分取得
+        async fn order_by_like_videos<T: VideoType>(
+            cmd: video_commands::OrderByLikeVideosCommand,
+        ) -> Result<Vec<Video<T>>, AppFrontError>;
+        /// Likeを降順・idを昇順に並べた`reference`以降のVideoを`length`分取得
+        async fn order_by_like_later_videos<'a, T: VideoType>(
+            cmd: video_commands::OrderByLikeLaterVideosCommand<'_, T>,
+        ) -> Result<Vec<Video<T>>, AppFrontError>;
+        /// dateを降順・idを昇順に並べたVideoを`length`分取得
+        async fn order_by_date_videos<T: VideoType>(
+            cmd: video_commands::OrderByDateVideosCommand,
+        ) -> Result<Vec<Video<T>>, AppFrontError>;
+        /// dateを降順・idをしょうじゅんに並べた`reference`以降のVideoを`length`分取得
+        async fn order_by_date_later_videos<'a, T: VideoType>(
+            cmd: video_commands::OrderByDateLaterVideosCommand<'_, T>,
+        ) -> Result<Vec<Video<T>>, AppFrontError>;
+        /// `id`を持つVideoを削除
+        async fn remove_video<T: VideoType>(
+            cmd: video_commands::RemoveVideoCommand,
+        ) -> Result<(), AppFrontError>;
+    }
+}
+
 #[cfg(not(feature = "fake"))]
 mod product {
     pub(crate) mod product_inner {
@@ -327,88 +377,6 @@ mod fake {
 
 #[cfg(test)]
 mod test {
-    /// fakeとproductでシグネチャが同じであることを確認するためのコンパイル
-    mod compile {
-        use crate::commands::video_commands;
-        use crate::AppFrontError;
-        use domain::video::{Original, Video, VideoId};
-        use fake::{Fake, Faker};
-
-        #[allow(dead_code)]
-        async fn test_save_video() {
-            let video = Faker.fake::<Video<Original>>();
-
-            let cmd = video_commands::SaveVideoCommand::new(&video);
-            let _res: Result<(), AppFrontError> = super::super::save_video(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_edit_video() {
-            let video = Faker.fake::<Video<Original>>();
-
-            let cmd = video_commands::EditVideoCommand::new(&video);
-            let _res: Result<(), AppFrontError> = super::super::edit_video(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_increment_like_video() {
-            let id = VideoId::generate();
-
-            let cmd = video_commands::IncrementLikeVideoCommand::new(id);
-            let _res: Result<(), AppFrontError> =
-                super::super::increment_like_video::<Original>(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_all_videos() {
-            let cmd = video_commands::AllVideosCommand;
-            let _res: Result<Vec<Video<Original>>, AppFrontError> =
-                super::super::all_videos::<Original>(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_like_videos() {
-            let length = 100_usize;
-            let cmd = video_commands::OrderByLikeVideosCommand::new(length);
-            let _res: Result<Vec<Video<Original>>, AppFrontError> =
-                super::super::order_by_like_videos(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_like_later_videos() {
-            let length = 100_usize;
-            let reference = Faker.fake::<Video<Original>>();
-            let cmd = video_commands::OrderByLikeLaterVideosCommand::new(&reference, length);
-            let _res: Result<Vec<Video<Original>>, AppFrontError> =
-                super::super::order_by_like_later_videos(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_date_videos() {
-            let length = 100_usize;
-            let cmd = video_commands::OrderByDateVideosCommand::new(length);
-            let _res: Result<Vec<Video<Original>>, AppFrontError> =
-                super::super::order_by_date_videos(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_order_by_date_later_videos() {
-            let length = 100_usize;
-            let reference = Faker.fake::<Video<Original>>();
-            let cmd = video_commands::OrderByDateLaterVideosCommand::new(&reference, length);
-            let _res: Result<Vec<Video<Original>>, AppFrontError> =
-                super::super::order_by_date_later_videos(cmd).await;
-        }
-
-        #[allow(dead_code)]
-        async fn test_remove_video() {
-            let id = VideoId::generate();
-
-            let cmd = video_commands::RemoveVideoCommand::new(id);
-            let _res: Result<(), AppFrontError> = super::super::remove_video::<Original>(cmd).await;
-        }
-    }
-
     #[cfg(not(feature = "fake"))]
     mod product_test {
         use super::super::product::product_inner;
